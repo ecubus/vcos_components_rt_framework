@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2025 Li Auto Inc. and its affiliates
+ * Licensed under the Apache License, Version 2.0(the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef AUTOSAROS_INC_OS_ISR_H
+#define AUTOSAROS_INC_OS_ISR_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Including File */
+#include "Os_Types.h"
+#include "os_isr_internal.h"
+#include "os_context_internal.h"
+
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
+#include "os_application.h"
+#endif
+
+#include "os_task.h"
+
+/* Global Macro Definition */
+
+/*! 声明ISR */
+#define DeclareISR(section, core, isr)                                                                                 \
+	OS_LINK_ENTRY_DECLARE(section, os_obj, os_isr_inst_t, core##isr);                                               \
+	OS_LINK_ENTRY_DECLARE(section, os_obj_context, os_ctx_inst_t, core##isr);                                    \
+	OS_LINK_ENTRY_DECLARE(.rodata, os_isr, os_isr_cfg_t, core##isr)
+#define DeclareCounterISR(section, core, isr)                                                                            \
+	OS_LINK_ENTRY_DECLARE(section, os_obj, os_isr_inst_t, core##isr);                                               \
+	OS_LINK_ENTRY_DECLARE(section, os_obj_context, os_ctx_inst_t, core##isr);                                    \
+	OS_LINK_ENTRY_DECLARE(.rodata, os_isr, os_counter_isr_cfg_t, core##isr)
+
+#define ISRCFGVAR(core, isr) OS_LINK_ENTRY_NAME(os_isr, core##isr)
+#define ISROBJVAR(core, isr) OS_LINK_ENTRY_NAME(os_obj, core##isr)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* AUTOSAROS_INC_OS_ISR_H */

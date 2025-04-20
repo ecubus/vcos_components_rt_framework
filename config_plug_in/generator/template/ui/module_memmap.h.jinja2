@@ -1,0 +1,58 @@
+/*
+ * Copyright (c) 2025 Li Auto Inc. and its affiliates
+ * Licensed under the Apache License, Version 2.0(the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+{%- set module_name = get_memmap_module_name() %}
+{%- set MODULE = module_name.upper() %}
+{%- set INNER_MODULE = 'OS' %}
+
+/*
+ * Description: {{module_name}} memmap header
+ * AutoGenerate Code, DO NOT EDIT!!!
+ * {{get_generation_time()}}
+ * {{get_project_name()}}
+ * {{get_vcos_version()}}
+ */
+{% set memmap_cfg = get_memmap_cfg() %}
+{%- set ref_instance = memmap_cfg['modules'][module_name]['apps'] %}
+{%- if 0 == (ref_instance | length) %}
+/*******************************{{module_name.upper()}} is a zero instance module****************************************/
+{%- endif %}
+{%- if 1 == (ref_instance | length) %}
+/*******************************{{module_name.upper()}} is a single instance module**************************************/
+{%- endif %}
+{%- if 1 < (ref_instance | length) %}
+/*******************************{{module_name.upper()}} is a multi instance module***************************************/
+{%- endif %}
+
+#define _MEMMAP_HEADER_INCLUDE_TAG
+
+{%- set memmap_info = get_memmap_info(module_name) %}
+{%- for cfg in memmap_info['mapping_info'] %}
+{%- set object = (cfg['map_object']).upper() %}
+{%- set target = (cfg['map_target']).upper() %}
+
+#if defined({{MODULE}}_STOP_SEC_{{object}})
+#undef {{MODULE}}_STOP_SEC_{{object}}
+#undef {{MODULE}}_{{object}}
+#define {{INNER_MODULE}}_STOP_SEC_{{target}}
+#include "memmap.h"
+#elif defined({{MODULE}}_START_SEC_{{object}})
+#undef {{MODULE}}_START_SEC_{{object}}
+#define {{MODULE}}_{{object}} {{INNER_MODULE}}_{{target}}
+#define {{INNER_MODULE}}_START_SEC_{{target}}
+#include "memmap.h"
+#endif
+{%- endfor %}
+

@@ -1,0 +1,228 @@
+/*
+ * Copyright (c) 2025 Li Auto Inc. and its affiliates
+ * Licensed under the Apache License, Version 2.0(the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef AUTOSAROS_INC_OS_IPICALL_INTERNAL_H
+#define AUTOSAROS_INC_OS_IPICALL_INTERNAL_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Including File */
+#include "Os_Types.h"
+#include "os_ipicall_types.h"
+#include "Compiler.h"
+
+#if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
+#include "os_schedtable_types.h"
+#endif
+
+#include "ipicall_cfg.h"
+
+/* Global Macro Definition */
+#define SYNC_WAIT_TIMEOUT 0xFFFFU
+
+/* Global Enumeration Definition */
+
+#define OS_IPICALL_ACK ((os_ipicall_buf_state_t)0)
+#define OS_IPICALL_SYNC_NACK ((os_ipicall_buf_state_t)1)
+#define OS_IPICALL_ASYNC_NACK ((os_ipicall_buf_state_t)2)
+#define OS_IPICALL_SYNC_PENDING ((os_ipicall_buf_state_t)3)
+
+typedef enum { OS_IPICALL_UNICAST, OS_IPICALL_BROADCAST } os_ipicall_cast_mode;
+
+/* Global Type & Structure Definition */
+struct os_ipicall_activate_task_param {
+	TaskType task_id;
+};
+
+struct os_ipicall_get_app_state_param {
+	ApplicationType app_id;
+	ApplicationStateType AppState;
+};
+
+struct os_ipicall_get_event_param {
+	TaskType task_id;
+	os_event_mask_t mask;
+};
+
+struct os_ipicall_set_event_param {
+	TaskType task_id;
+	os_event_mask_t mask;
+};
+
+#if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
+struct os_ipicall_start_schtbl_rel_param {
+	ScheduleTableType schedtable_id;
+	TickType offset;
+};
+
+struct os_ipicall_start_schtbl_abs_param {
+	ScheduleTableType schedtable_id;
+	TickType start;
+};
+
+struct os_ipicall_stop_schtbl_param {
+	ScheduleTableType schedtable_id;
+};
+
+struct os_ipicall_get_schtbl_status_param {
+	ScheduleTableType schedtable_id;
+	ScheduleTableStatusType SchedTableStatus;
+};
+
+struct os_ipicall_next_schtbl_param {
+	ScheduleTableType curr_schedtable_id;
+	ScheduleTableType next_schedtable_id;
+};
+
+struct os_ipicall_next_schtbl_fromstop_param {
+	ScheduleTableType curr_schedtable_id;
+	ScheduleTableType next_schedtable_id;
+};
+
+struct os_ipicall_start_schtbl_synchron_param {
+	ScheduleTableType schedtable_id;
+};
+
+struct os_ipicall_sync_schtbl_param {
+	ScheduleTableType schedtable_id;
+	TickType tick_value;
+};
+
+struct os_ipicall_set_schtbl_async_param {
+	ScheduleTableType schedtable_id;
+};
+#endif
+union os_ipicall_param_e {
+	os_ipicall_activate_task_param_t avtivate_task_param;
+	os_ipicall_get_event_param_t get_event_param;
+	os_ipicall_set_event_param_t set_event_param;
+	os_ipicall_get_app_state_param_t get_app_state_param;
+#if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
+	os_ipicall_start_schtbl_rel_param_t start_schtbl_rel_param;
+	os_ipicall_start_schtbl_abs_param_t start_schtbl_abs_param;
+	os_ipicall_stop_schtbl_abs_param_t stop_schtbl_param;
+	os_ipicall_get_schtbl_status_param_t get_schtbl_status_param;
+	os_ipicall_next_schtbl_param_t next_schtbl_param;
+	os_ipicall_next_schtbl_from_stop_param_t next_schtbl_fromstop_param;
+	os_ipicall_start_schtbl_synchron_param_t start_schtbl_synchron_param;
+	os_ipicall_sync_schtbl_param_t sync_schtbl_param;
+	os_ipicall_set_schtbl_aysnc_param_t set_schtbl_async_param;
+#endif /* #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1) */
+};
+
+struct os_ipicall_send_s {
+	os_ipicall_param_t in_param;
+	os_ipicall_service_id_t service;
+	ApplicationIDType send_app_id;
+	os_ipicall_buf_state_t ack;
+};
+
+struct os_ipicall_return_s {
+	os_ipicall_param_t out_param;
+	Os_StatusType return_status;
+	os_ipicall_service_id_t service;
+};
+
+struct os_ipicall_data_s {
+	os_ipicall_index_t index;
+	os_ipicall_send_t send_element;
+	os_ipicall_return_t ret_element;
+};
+
+struct os_ipicall_send_ctrl_s {
+	/*! 指向下一个可用于发送的buffer位置*/
+	os_ipicall_index_t send_idx;
+	/*! 用于指向未处理返回结果的位置 */
+	os_ipicall_index_t result_idx;
+};
+
+struct os_ipicall_receive_ctrl_s {
+	os_ipicall_index_t receive_idx;
+};
+
+typedef Os_StatusType (*os_ipicall_service_t)(os_ipicall_data_t *param);
+
+/*! IPICALL Instance Description */
+struct os_ipicall_inst_s {
+	os_ipicall_send_ctrl_t send;
+	os_ipicall_receive_ctrl_t receive;
+	os_ipicall_send_t send_buffer[QUEUE_DEPTH];
+	os_ipicall_return_t result_buffer[QUEUE_DEPTH];
+};
+
+/*! IpiCall configuration by user */
+struct os_ipicall_cfg_s {
+	os_ipicall_inst_t *instance;
+	uint32 ipicall_id;
+	/*! 发起核ID */
+	CoreIdType src_core_id;
+	/*! 目标核ID */
+	CoreIdType target_core_id;
+	/*! 支持的服务列表 */
+	const os_ipicall_service_t *service_ref;
+};
+
+DeclareOsRefTable_H(ipicall) /*! Reference to OS task configuration table  */
+
+/* Global Function Declaration */
+#define OS_START_SEC_CODE
+#include "os_memmap.h"
+/* Global Function Implementation */
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task_asyn(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_get_application_state(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_get_event(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_event(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_event_asyn(os_ipicall_data_t *param);
+FUNC(Os_StatusType, OS_CODE) os_ipicall_get_app_state(uint32 target_core, ApplicationType app_id, ApplicationStateRefType state);
+#if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_start_scheduletable_rel(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_start_scheduletable_abs(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_stop_scheduletable(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_get_scheduletable_status(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_next_scheduletable(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_next_scheduletable_from_stop(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_start_scheduletable_synchron(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_sync_scheduletable(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_scheduletable_async(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_start_schedule_table_rel(uint32 target_core, ScheduleTableType schedtable_id, TickType offset);
+extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_start_schedule_table_abs(uint32 target_core, ScheduleTableType schedtable_id, TickType start);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_stop_schedule_table(uint32 target_core, ScheduleTableType schedtable_id);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_get_schedule_table_status(uint32 target_core, ScheduleTableType schedtable_id,
+								      									ScheduleTableStatusType *SchedTableStatus);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_next_schedule_table(uint32 target_core, ScheduleTableType curr_schedtable_id,
+								 									ScheduleTableType next_schedtable_id);
+extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_next_schedule_table_from_stop(uint32 target_core, ScheduleTableType curr_schedtable_id,
+					     													ScheduleTableType next_schedtable_id);
+extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_start_schedule_table_synchron(uint32 target_core, ScheduleTableType schedtable_id);
+extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_sync_schedule_table(uint32 target_core, ScheduleTableType schedtable_id, TickType tick_value);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_schedule_table_async(uint32 target_core, ScheduleTableType schedtable_id);
+#endif /* #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1) */
+extern FUNC(void, OS_CODE) os_ipicall_init(const os_ipicall_cfg_t *const os_ipicall_cfg_table[], OsObjIndexType count);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_activate_task(uint32 target_core, TaskType task_id);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_activate_task_asyn(uint32 target_core, TaskType task_id);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_get_event(uint32 target_core, TaskType task_id, os_event_mask_t *mask);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_event(uint32 target_core, TaskType task_id, os_event_mask_t mask);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_event_asyn(uint32 target_core, TaskType task_id, os_event_mask_t mask);
+#define OS_STOP_SEC_CODE
+#include "os_memmap.h"
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* AUTOSAROS_INC_OS_IPICALL_INTERNAL_H */
