@@ -1115,7 +1115,7 @@ os_schedule_table_init(const os_schedtable_cfg_t *const os_schedtable_cfg_table[
 	}
 }
 
-FUNC(void, OS_CODE) schedule_table_action_callback(const struct hrtimer_s *hrtimer)
+FUNC(void, OS_CODE) schedule_table_action_callback(struct hrtimer_s *hrtimer)
 {
 	const os_action_cfg_t *action = (const os_action_cfg_t *)(hrtimer->arg);
 	const os_schedtable_cfg_t *cfg_ptr = OS_GET_SCHEDTABLE_CFG_BY_ACTION_ADDR(action);

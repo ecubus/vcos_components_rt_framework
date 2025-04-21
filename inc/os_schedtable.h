@@ -285,7 +285,7 @@ FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_async(ScheduleTableType sched
  *
  *  \synchronous    TRUE
  */
-void schedule_table_action_callback(const struct hrtimer_s *hrtimer);
+void schedule_table_action_callback(struct hrtimer_s *hrtimer);
 
 /* Global Function Implementation */
 /*! \brief          Get the core ID that the schedule table belongs to
