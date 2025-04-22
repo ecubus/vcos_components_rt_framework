@@ -50,7 +50,7 @@ if(CONFIG_RT_FRAMEWORK)
   set(INCLUDE_DIRS ${NUTTX_DIR}/sched
                    ${CMAKE_CURRENT_LIST_DIR}/src
                    ${CMAKE_CURRENT_LIST_DIR}/inc
-                   ${NUTTX_APPS_DIR}/components/include/autosar_os)
+                   ${NUTTX_APPS_DIR}/components/include/autosar)
 
   list(APPEND INCLUDE_DIRS ${NUTTX_APPS_DIR}/${APPS_DIR}/apps)
   if(DEFINED BOARD_NAME)
@@ -68,7 +68,6 @@ list(APPEND INCLUDE_DIRS ${GENDATA_DIR}/Os
                          ${GENDATA_DIR}/Memmap)
 
   if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-	  add_compile_options(-Wno-undef)
 	  add_compile_options(-Werror -Wextra -pedantic -Wstrict-prototypes)
   endif()
   nuttx_add_library(rt_framework STATIC)

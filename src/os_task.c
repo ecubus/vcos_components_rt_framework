@@ -62,7 +62,7 @@ static FUNC(int, OS_CODE) os_prestart_task(int argc, FAR char *argv[])
 	UNUSED(argc);
 	UNUSED(argv);
 
-	(void)up_irq_save();
+	up_irq_disable();
 	this_task()->xcp.task_started = 1;
 	os_context_set_contexthdl((const os_ctx_cfg_t *const)(this_task()->xcp.contexthdl));
 	const os_ctx_cfg_t *current_context = (const os_ctx_cfg_t *)(this_task()->xcp.contexthdl);
@@ -169,7 +169,7 @@ FUNC(Os_StatusType, OS_CODE) os_terminate_task(void)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
 	os_set_task_mode_to_privilege();
 #endif
-	(void)up_irq_save();
+	up_irq_disable();
 	const os_ctx_cfg_t *current_context = os_context_get_contexthdl();
 	os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(current_context);
 

@@ -97,7 +97,7 @@ static FUNC(void, OS_CODE) os_ipicall_isr_handler(void);
 static inline Os_StatusType os_ipicall_send(uint32 target_core, os_ipicall_data_t *data)
 {
 	Os_StatusType IpiCallSendStatus;
-#if (VCOS_CONFIG_IPICALL_SYNC == 1)
+#if defined(VCOS_CONFIG_IPICALL_SYNC) && (VCOS_CONFIG_IPICALL_SYNC == 1)
 	IpiCallSendStatus = os_ipicall_send_sync(target_core, data);
 #else /* VCOS_CONFIG_IPICALL_ASYNC */
 	IpiCallSendStatus = os_ipicall_send_async(target_core, data);

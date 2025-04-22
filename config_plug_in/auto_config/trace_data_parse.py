@@ -32,6 +32,8 @@ import traceback
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
+import tkinter as tk
+from tkinter import messagebox, simpledialog
 
 # Import matplotlib for plotting
 import matplotlib.pyplot as plt
@@ -45,6 +47,11 @@ ftrace_parser_directory = os.path.abspath(os.path.join(
 sys.path.append(ftrace_parser_directory)
 from ftrace_manager import FtraceParser
 
+# Available project configurations
+PROJECT_CONFIGS = {
+    "TC397": "tc397_cfg",
+    "E3650": "e3650_cfg"
+}
 
 class FtraceLogParser:
     """
@@ -724,9 +731,103 @@ def plot_all_task_cet_samples(
         print("\nNo CET sample plots were created. No tasks have CET samples.")
 
 
+def select_project_config():
+    """
+    Display a GUI dialog for the user to select a project configuration
+
+    Returns:
+        str: Selected project configuration name
+    """
+    root = tk.Tk()
+    root.withdraw()  # Hide the main window
+
+    # Create a custom dialog for project selection
+    class ProjectSelectionDialog(simpledialog.Dialog):
+        def __init__(self, parent):
+            self.selection = None
+            super().__init__(parent, "Project Configuration Path Selection")
+
+        def body(self, frame):
+            # Set minimum width for the dialog
+            self.minsize(width=400, height=150)
+
+            # Title label with larger font and bold
+            title_font = ('Arial', 11, 'bold')
+            title_label = tk.Label(frame, text="Select a project path configuration:", font=title_font)
+            title_label.grid(row=0, columnspan=2, pady=15, padx=20, sticky="w")
+
+            # Create variable for radio button selection
+            self.var = tk.StringVar(value="TC397")  # Default selection
+
+            # Create radio buttons for each project config
+            radio_font = ('Arial', 10)
+            for i, config_name in enumerate(PROJECT_CONFIGS.keys()):
+                tk.Radiobutton(frame, text=config_name, variable=self.var, 
+                              value=config_name, font=radio_font).grid(row=i+1, column=0, sticky="w", padx=40, pady=5)
+
+            return frame
+
+        def buttonbox(self):
+            # Override to create custom buttons with better size
+            box = tk.Frame(self)
+
+            ok_button = tk.Button(box, text="OK", width=10, command=self.ok, default=tk.ACTIVE)
+            ok_button.pack(side=tk.LEFT, padx=20, pady=10)
+            cancel_button = tk.Button(box, text="Cancel", width=10, command=self.cancel)
+            cancel_button.pack(side=tk.LEFT, padx=20, pady=10)
+
+            self.bind("<Return>", self.ok)
+            self.bind("<Escape>", self.cancel)
+
+            box.pack()
+
+        def apply(self):
+            self.selection = self.var.get()
+
+    # Display dialog and get selection
+    dialog = ProjectSelectionDialog(root)
+
+    # If user closed dialog without selecting, default to TC397
+    selected_config = dialog.selection if dialog.selection else "TC397"
+
+    # Clean up
+    root.destroy()
+
+    return selected_config
+
+def check_file_exists(file_path):
+    """Check if a file exists and return result"""
+    return os.path.isfile(file_path)
+
+def get_project_paths(project_config):
+    """
+    Get the file paths for the selected project configuration
+
+    Args:
+        project_config: Selected project configuration name
+
+    Returns:
+        tuple: (ftrace_file_path, json_output_path, dt_plots_dir, cet_plots_dir)
+    """
+    # Get the configuration folder name
+    config_folder = PROJECT_CONFIGS.get(project_config, "tc397_cfg")  # Default to tc397_cfg
+
+    # Add timestamp to output directory names for better organization
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # Build the paths based on project configuration
+    base_path = f".//..//..//..//..//examples//rt_demo//platform_cfg//{config_folder}"
+
+    ftrace_file = f"{base_path}//config//Import//{project_config}_ftrace.log"
+    json_output = f"{base_path}//config//Export//ftrace_task_info_{timestamp}.json"
+    dt_plots_dir = f"{base_path}//config//Export//DT_Sample_Plots_{timestamp}"
+    cet_plots_dir = f"{base_path}//config//Export//CET_Sample_Plots_{timestamp}"
+
+    return ftrace_file, json_output, dt_plots_dir, cet_plots_dir
+
 if __name__ == '__main__':
     try:
-        # 获取命令行参数
+        # Get command line arguments
         plot_type = None
 
         if len(sys.argv) > 1:
@@ -735,34 +836,60 @@ if __name__ == '__main__':
             elif sys.argv[1].lower() == 'cet':
                 plot_type = 'cet'
 
-        # Add timestamp to output directory names for better organization
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Let user select which project configuration to use
+        selected_project = select_project_config()
 
-        FTRACE_FILE = ".//..//..//..//..//examples//rt_demo//platform_cfg//tc397_cfg//config//Import//TC397_ftrace.log"
-        JSON_OUTPUT = f".//..//..//..//..//examples//rt_demo//platform_cfg//tc397_cfg//config////Export//ftrace_task_info_{timestamp}.json"
+        # Get the paths for the selected project
+        FTRACE_FILE, JSON_OUTPUT, DT_PLOTS_DIR, CET_PLOTS_DIR = get_project_paths(selected_project)
+
+        # Display the selected configuration to the user
+        print(f"\nUsing project configuration: {selected_project}")
+        print(f"Ftrace file path: {FTRACE_FILE}")
+
+        # Check if ftrace file exists
+        if not check_file_exists(FTRACE_FILE):
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror("File Not Found",
+                                f"The ftrace file for {selected_project} was not found at:\n\n{FTRACE_FILE}\n\nPlease check if the file exists.")
+            root.destroy()
+            print(f"ERROR: The ftrace file for {selected_project} was not found at: {FTRACE_FILE}")
+            print("Please check if the file exists and try again.")
+            sys.exit(1)
+
         task_params = parse_ftrace_log(FTRACE_FILE)
         if task_params:
             cores_dict = organize_tasks_by_core(task_params)
 
-            # 将plot_type传递给print_formatted_output函数
+            # Pass plot_type to print_formatted_output function
             print_formatted_output(task_params, plot_type)
 
             # Save to JSON file
+            # Ensure the output directory exists
+            os.makedirs(os.path.dirname(JSON_OUTPUT), exist_ok=True)
             save_cores_dict_to_json(cores_dict, JSON_OUTPUT)
             print(f"\nSuccessfully saved task parameters to: {JSON_OUTPUT}")
 
-            # 只有在指定 dt 或 cet 参数时才生成采样点图像
+            # Only generate sample point images when dt or cet parameter is specified
             if plot_type == 'dt':
-                PLOTS_OUTPUT_DIR = f".//..//..//..//..//examples//rt_demo//platform_cfg//tc397_cfg//config////Export//DT_Sample_Plots_{timestamp}"
-                plot_all_task_dt_samples(task_params, PLOTS_OUTPUT_DIR)
+                plot_all_task_dt_samples(task_params, DT_PLOTS_DIR)
             elif plot_type == 'cet':
-                PLOTS_OUTPUT_DIR = f".//..//..//..//..//examples//rt_demo//platform_cfg//tc397_cfg//config////Export//CET_Sample_Plots_{timestamp}"
-                plot_all_task_cet_samples(task_params, PLOTS_OUTPUT_DIR)
+                plot_all_task_cet_samples(task_params, CET_PLOTS_DIR)
             else:
                 print("\nSkip generating plots. Use 'python trace_data_parse.py dt' to generate DT plots or 'python trace_data_parse.py cet' to generate CET plots.")
 
         else:
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror("Parse Error",
+                               f"Failed to parse the ftrace file for {selected_project}.\n\nPlease check if the file format is correct.")
+            root.destroy()
             print("Failed to parse task parameters")
 
     except Exception as e:
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showerror("Error", f"An error occurred:\n\n{str(e)}")
+        root.destroy()
         print(f"Error in main program: {str(e)}")
+        traceback.print_exc()

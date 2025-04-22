@@ -173,7 +173,7 @@ FUNC(void, OS_CODE) os_int_resume_global(const os_int_state_t *const int_state)
 
 FUNC(void, OS_CODE) os_int_disable_global(void)
 {
-	(void)up_irq_save();
+	up_irq_disable();
 }
 
 FUNC(void, OS_CODE) os_int_enable_global(void)
@@ -306,7 +306,7 @@ FUNC(Os_StatusType, OS_CODE) os_clear_pending_interrupt(isr_id_t isr_id)
 
 FUNC(void, OS_CODE) os_disable_level_km(void)
 {
-	(void)up_irq_save();
+	up_irq_disable();
 }
 
 FUNC(void, OS_CODE) os_enable_level_km(void)
