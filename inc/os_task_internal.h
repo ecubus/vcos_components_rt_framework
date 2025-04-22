@@ -50,12 +50,10 @@ extern "C" {
 /* 通过 os_task_cfg_t(task_cfg) 获取 (task_cfg) 的内部信息 */
 #define OS_TASK_GET_CONTEXT_REF(task_cfg) (&((task_cfg)->context))
 #define OS_TASK_GET_BASEPRIORITY(task_cfg) ((task_cfg)->base_priority)
-#define OS_TASK_GET_TICKSTOWAIT(task_cfg) ((task_cfg)->ticks_to_wait)
 #define OS_TASK_GET_TASKID(task_cfg) ((task_cfg)->task_id)
 #define OS_TASK_GET_AUTOSTARTMODE(task_cfg) ((task_cfg)->autostart_mode)
 #define OS_TASK_GET_ACTIVATIONLIMIT(task_cfg) ((task_cfg)->activation_limit)
 #define OS_TASK_GET_ISEXTENDED(task_cfg) ((task_cfg)->is_extended)
-#define OS_TASK_GET_PREEMPTIONDISABLED(task_cfg) ((task_cfg)->preemption_disable)
 
 /* 通过 os_task_cfg_t(task_cfg) 获取 os_ctx_cfg_t(ContextRef) 的内部信息 */
 #define OS_TASK_GET_INSTANCE_REF(task_cfg) ((os_task_inst_t *)((task_cfg)->context.instance))
@@ -104,7 +102,6 @@ struct os_task_cfg_s {
 	os_ctx_cfg_t context; /*! Context configuration. Must be the first member !!! */
 
 	OsTaskPrioType base_priority; /*! The configured priority of a task. */
-	TickType ticks_to_wait; /*! Ticks to wait for events */
 	/* enum */
 
 	/* 16 bit */
@@ -114,8 +111,6 @@ struct os_task_cfg_s {
 	AppModeType autostart_mode; /*! Application modes where the task shall be activated during OS initialization. */
 	uint8 activation_limit; /*! Task activation limited, which must be > 1 */
 	boolean is_extended; /*! Tells whether a task is extended (TRUE) or not (FALSE). */
-	boolean preemption_disable; /*! Disable task preemption (TRUE) or not (FALSE). */
-	boolean allow_schedule; /*! Whether Schedule() allow be called*/
 }; /* os_task_cfg_t */
 
 DeclareOsRefTable_H(task) /*! Reference to OS task configuration table  */

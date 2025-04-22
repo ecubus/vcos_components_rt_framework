@@ -46,7 +46,7 @@ class Function(FunctionBase):
     def get_access_app_mask(context, app_set, index_size):
         app_mask = ""
         indent = " " * index_size
-        app_set = list(set(app_set))
+        app_set = sorted(list(set(app_set)))
         app_cfg = Function.get_app_cfg(context)
         for app in app_set:
             if app != '':
@@ -121,15 +121,11 @@ class Function(FunctionBase):
                 task_cfg[name]["TaskAutostart"] = "TRUE" if OsTaskAutostart == "OSAUTOSTARTMODE" else "FALSE"
             else:
                 task_cfg[name]["TaskAutostart"] = "FALSE"
-            task_cfg[name]["TaskType"] = "TRUE" if value["OsTaskType"]["Value"] == "EXTENDED" else "FALSE"
-            task_cfg[name]["TaskSchedule"] = "FALSE" if value["OsTaskSchedule"]["Value"] == "FULL" else "TRUE"
+            task_cfg[name]["TaskType"] = value["OsTaskType"]["Value"]
 
             task_cfg[name]["TaskPriority"] = value["OsTaskPriority"]["Value"]
             task_cfg[name]["TaskActivation"] = value["OsTaskActivation"]["Value"]
             task_cfg[name]["TaskStackSize"] = value["OsTaskStackSize"]["Value"]
-            task_cfg[name]["TaskTicksToWait"] = value["OsTaskTicksToWait"]["Value"]
-
-            task_cfg[name]["TaskId"] = f"Os_Task_{name}_ID"
 
             task_cfg[name]["TaskAccessApp"] = \
                 Function.resolve_ref_list("OsTaskAccessingApplication", value)
@@ -181,7 +177,6 @@ class Function(FunctionBase):
                 name.lower() + "_schedtable_cfg_ref_table"
 
             app_cfg[name]["AppPrivileged"] = "TRUE" if value["OsIsPrivileged"]["Value"] else "FALSE"
-            app_cfg[name]["AppTrusted"] = "TRUE" if value["OsTrusted"]["Value"] else "FALSE"
 
             app_cfg[name]["app_name"] = f"OS_CORE{app_coreid}_{name}"
             app_cfg[name]["AppId"] = f"{app_cfg[name]['app_name'].upper()}_ID"
@@ -393,15 +388,16 @@ class Function(FunctionBase):
                 return isr_cfg[isr_name]["IsrIntSource"] == 808
             else:
                 return False
-        return True
+        elif target in ("E3650"):
+            return isr_cfg[isr_name]["IsrIntSource"] == 30
+        else:
+            raise TypeError("没有适配的架构！")
 
     @staticmethod
     @pass_context
     def check_isrhandler_correspond_to_timer(context, isr_name):
         target = Function.get_target(context)
         isr_cfg = Function.get_isr_cfg(context)
-        if target in ("AURIX2G_TC397"):
-            return isr_cfg[isr_name]["IsrEntryFunc"] == "os_timer_hrt_handler"
         return True
 
     @staticmethod
@@ -409,8 +405,7 @@ class Function(FunctionBase):
     def check_isr_is_initialenable(context, isr_name):
         target = Function.get_target(context)
         isr_cfg = Function.get_isr_cfg(context)
-        if target in ("AURIX2G_TC397"):
-            return isr_cfg[isr_name]["IsrEnableOnInit"] == "FALSE"
+        return isr_cfg[isr_name]["IsrEnableOnInit"] == "FALSE"
         return True
 
     @staticmethod

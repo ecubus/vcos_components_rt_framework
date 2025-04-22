@@ -70,8 +70,8 @@ FUNC(Os_StatusType, OS_CODE) os_wait_event(os_event_mask_t mask)
 	}
 	os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(cur_context);
 
-	ret = nxevent_tickwait(&(task_inst->event), mask, NXEVENT_WAIT_NOCLEAR, task_cfg->ticks_to_wait);
-	/* returns 0 when wait timeout */
+	ret = nxevent_tickwait(&(task_inst->event), mask, NXEVENT_WAIT_NOCLEAR, UINT32_MAX);
+	/* returns 0 when events were not received */
 	if (UNLIKELY(ret == (nxevent_mask_t)0)) {
 		return OS_STATUS_NOT_OK;
 	}

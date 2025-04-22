@@ -504,7 +504,7 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_rel(ScheduleTableType sched
 		schtbl_ptr->state = SCHEDULETABLE_RUNNING;
 		os_int_resume_global(&Int_state);
 	} else {
-#if (CONFIG_RT_FRAMEWORK_IPICALL == 1)
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_start_schedule_table_rel((uint32)coreId, schedtable_id, offset);
 #else
 		return OS_STATUS_ID_1;
@@ -558,7 +558,7 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_abs(ScheduleTableType sched
 
 		os_int_resume_global(&Int_state);
 	} else {
-#if (CONFIG_RT_FRAMEWORK_IPICALL == 1)
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_start_schedule_table_abs((uint32)coreId, schedtable_id, start);
 #else
 		return OS_STATUS_ID_1;
@@ -611,7 +611,7 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType 
 
 		os_int_resume_global(&Int_state);
 	} else {
-#if (CONFIG_RT_FRAMEWORK_IPICALL == 1)
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_start_schedule_table_synchron((uint32)coreId, schedtable_id);
 #else
 		return OS_STATUS_ID_1;
@@ -657,7 +657,7 @@ FUNC(Os_StatusType, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable
 
 		os_int_resume_global(&Int_state);
 	} else {
-#if (CONFIG_RT_FRAMEWORK_IPICALL == 1)
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_stop_schedule_table((uint32)coreId, schedtable_id);
 #else
 		return OS_STATUS_ID_1;
@@ -712,7 +712,7 @@ os_next_schedule_table(ScheduleTableType schedule_table_id_from, ScheduleTableTy
 
 		os_int_resume_global(&Int_state);
 	} else {
-#if (CONFIG_RT_FRAMEWORK_IPICALL == 1)
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_next_schedule_table((uint32)coreId, schedule_table_id_from, schedule_table_id_to);
 #else
 		return OS_STATUS_ID_1;
@@ -767,7 +767,7 @@ os_next_schedule_table_from_stop(ScheduleTableType schedule_table_id_from, Sched
 
 		os_int_resume_global(&Int_state);
 	} else {
-#if (CONFIG_RT_FRAMEWORK_IPICALL == 1)
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_next_schedule_table_from_stop((uint32)coreId, schedule_table_id_from,
 								schedule_table_id_to);
 #else
@@ -845,7 +845,7 @@ FUNC(Os_StatusType, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable
 
 		os_int_resume_global(&Int_state);
 	} else {
-#if (CONFIG_RT_FRAMEWORK_IPICALL == 1)
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_sync_schedule_table((uint32)coreId, schedtable_id, sync_time_now);
 #else
 		return OS_STATUS_ID_1;
@@ -892,7 +892,7 @@ os_get_schedule_table_status(ScheduleTableType schedtable_id, ScheduleTableStatu
 
 		os_int_resume_global(&Int_state);
 	} else {
-#if (CONFIG_RT_FRAMEWORK_IPICALL == 1)
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_get_schedule_table_status((uint32)coreId, schedtable_id, ScheduleStatus);
 #else
 		return OS_STATUS_ID_1;
@@ -927,7 +927,7 @@ FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_async(ScheduleTableType sched
 
 		os_int_resume_global(&Int_state);
 	} else {
-#if (CONFIG_RT_FRAMEWORK_IPICALL == 1)
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_set_schedule_table_async((uint32)coreId, schedtable_id);
 #else
 		return OS_STATUS_ID_1;

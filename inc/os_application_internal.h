@@ -65,7 +65,6 @@ struct os_app_cfg_s {
 #endif
 	CoreIdType core_id; /*! The core to which this application belongs. */
 	ApplicationIDType app_id; /*! Application ID. */
-	boolean IsTrusted; /*! Tells whether the application is trusted. */
 	boolean IsPrivileged; /*! Tells whether the application is privileged. */
 };
 
@@ -85,11 +84,6 @@ extern FUNC(void, OS_CODE) os_app_init(const os_app_cfg_t *const os_app_cfg_tabl
 
 #define OS_STOP_SEC_CODE
 #include "os_memmap.h"
-
-static inline boolean os_app_is_trusted(const os_app_cfg_t *App)
-{
-	return (App->IsTrusted);
-}
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 static inline Os_StatusType os_app_check_access(ApplicationIDType app_id, uint32 AccessMask)

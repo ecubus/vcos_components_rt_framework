@@ -43,7 +43,7 @@ from matplotlib.ticker import MaxNLocator
 # Add ftrace parser to path
 base_directory = os.path.dirname(os.path.abspath(__file__))
 ftrace_parser_directory = os.path.abspath(os.path.join(
-    base_directory, '..', '..', '..', '..', 'vcos_studio', 'halo_trace'))
+    base_directory, '..', '..', '..', '..', '..','tools', 'halo_trace'))
 sys.path.append(ftrace_parser_directory)
 from ftrace_manager import FtraceParser
 
@@ -816,7 +816,7 @@ def get_project_paths(project_config):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # Build the paths based on project configuration
-    base_path = f".//..//..//..//..//examples//rt_demo//platform_cfg//{config_folder}"
+    base_path = f".//..//..//..//..//..//apps//rt_demo//platform_cfg//{config_folder}"
 
     ftrace_file = f"{base_path}//config//Import//{project_config}_ftrace.log"
     json_output = f"{base_path}//config//Export//ftrace_task_info_{timestamp}.json"

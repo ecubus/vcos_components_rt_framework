@@ -377,12 +377,11 @@ class OsCfgExcelImporter:
                 "OsTaskActivation": 5,
                 "OsTaskPriority": 6,
                 "OsTaskStackSize": 7,
-                "OsTaskTicksToWait": 8,
             },
             "reference":
             {
-                "OsTaskEventRef": 9,
-                "OsTaskAccessingApplication": 10,
+                "OsTaskEventRef": 8,
+                "OsTaskAccessingApplication": 9,
             }
         }
         header_mapping = {
@@ -459,17 +458,16 @@ class OsCfgExcelImporter:
             "OsApplication(s)": 1,
             "parameter":
             {
-                "OsTrusted": 2,
-                "OsIsPrivileged": 3,
-                "OsAppEcucPartitionRef": 4,
-                "OsApplicationCoreRef": 5,
+                "OsIsPrivileged": 2,
+                "OsAppEcucPartitionRef": 3,
+                "OsApplicationCoreRef": 4,
             },
             "reference":
             {
-                "OsAppCounterRef": 6,
-                "OsAppTaskRef": 7,
-                "OsAppScheduleTableRef": 8,
-                "OsAppIsrRef": 9,
+                "OsAppCounterRef": 5,
+                "OsAppTaskRef": 6,
+                "OsAppScheduleTableRef": 7,
+                "OsAppIsrRef": 8,
             }
         }
         header_mapping = {
@@ -957,7 +955,6 @@ class OsCfgExcelExporter:
         default = {
             "Default":
             {
-                "OsTrusted": "true",
                 "OsIsPrivileged": "true",
                 "OsAppEcucPartitionRef": None,
                 "OsApplicationCoreRef": None,
@@ -978,7 +975,6 @@ class OsCfgExcelExporter:
                 "OsTaskActivation": None,
                 "OsTaskPriority": None,
                 "OsTaskStackSize": None,
-                "OsTaskTicksToWait": "4294967295",
                 "OsTaskEventRef": [""],
                 "OsTaskAccessingApplication": [""],
                 "OsTaskAutostart": None

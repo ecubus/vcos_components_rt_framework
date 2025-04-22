@@ -36,7 +36,6 @@ static FUNC(void, OS_CODE) sw_counter_hrtimer_set_compare(struct hrtimer_queue_s
 	counter_inst->hrtimer_sw_compare = value;
 }
 
-
 static FUNC(void, OS_CODE) sw_counter_htimer_start(struct hrtimer_queue_s *queue)
 {
 	(void)queue;
@@ -195,11 +194,6 @@ FUNC(void, OS_CODE) os_counter_start(const os_counter_cfg_t *const os_counter_cf
 		counter_inst->hrtimer_value = hrtimer_get_time(hrtimer_queue);
 		os_counter_set_compare_value(counter_cfg, counter_inst->hrtimer_value);
 	}
-}
-
-FUNC(void, OS_CODE) os_counter_perform_actions(const os_counter_cfg_t *counter_cfg)
-{
-	hrtimer_process(&(counter_cfg->obj_desc->hrtimer_queue));
 }
 
 FUNC(void, OS_CODE) os_counter_add_rel_action(const os_action_cfg_t *action_cfg, TickType increment)
@@ -403,15 +397,14 @@ FUNC(Os_StatusType, OS_CODE) os_counter_increment(CounterType counter_id)
 	return OS_STATUS_OK;
 }
 
-FUNC(void, OS_CODE) os_timer_hrt_handler(void)
+FUNC(void, OS_CODE) os_counter_hrt_handler(void)
 {
 	const os_counter_cfg_t *counter_cfg =
 		((os_counter_isr_cfg_t *)OS_CONTEXT_GET_ISR_CFG_REF(os_context_get_contexthdl()))->counter;
 
-	if (UNLIKELY((NULL == counter_cfg) || (TIMERTYPE_HIGH_RESOLUTION != counter_cfg->timer_type))) {
-		//todo
+	if (LIKELY((NULL != counter_cfg) && (TIMERTYPE_HIGH_RESOLUTION == counter_cfg->timer_type))) {
+		hrtimer_process(&(counter_cfg->obj_desc->hrtimer_queue));
 	}
-	os_counter_perform_actions(counter_cfg);
 }
 
 #define OS_STOP_SEC_CODE

@@ -56,14 +56,14 @@ FUNC(void, OS_CODE) os_counter_start(const os_counter_cfg_t *const os_counter_cf
 
 FUNC(Os_StatusType, OS_CODE) os_counter_increment(CounterType counter_id);
 
-FUNC(void, OS_CODE) os_counter_perform_actions(const os_counter_cfg_t *counter_cfg);
+FUNC(void, OS_CODE) os_counter_check(void);
+
+FUNC(void, OS_CODE) os_counter_hrt_handler(void);
 
 FUNC(Os_StatusType, OS_CODE) os_counter_get_value(CounterType counter_id, TickRefType value);
 
 FUNC(Os_StatusType, OS_CODE)
 os_counter_get_elapsed_value(CounterType counter_id, TickRefType value, TickRefType elapsed_value_ref);
-
-FUNC(void, OS_CODE) os_counter_check(void);
 
 FUNC(void, OS_CODE) os_counter_add_abs_action(const os_action_cfg_t *action_cfg, TickType start);
 
@@ -77,15 +77,16 @@ FUNC(TickType, OS_CODE) os_counter_get_user_value(const os_counter_cfg_t *counte
 #define OS_STOP_SEC_CODE
 #include "os_memmap.h"
 
-static inline TickType os_counter_diff(TickType curr, TickType old, TickType max)
+static inline_function TickType os_counter_diff(TickType curr, TickType old, TickType max)
 {
 	return (curr >= old) ? (curr - old) : (curr + (max - old) + 1u);
 }
 
-static inline TickType os_counter_add(TickType curr, TickType add, TickType max)
+static inline_function TickType os_counter_add(TickType curr, TickType add, TickType max)
 {
 	return curr + add > max ? (curr + add - max - 1u) : (curr + add);
 }
+
 
 #ifdef __cplusplus
 }

@@ -114,29 +114,32 @@ DeclareExpiryPoint(SchedTable_{{SchedTable_Name}}_ExpiryPointList[]) =
 
 DeclareSchedTable({{appval["AppInstSection"]}}, SCHEDTABLE_{{SchedTable_Name.upper()}}_CFG) = {
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-    /* .applOwnerId  = */    {{appval["AppId"]}},
+    /* .app_owner_id  = */    {{appval["AppId"]}},
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1) */
     /* .schedtable_id  = */   OS_SCHEDTABLE_{{SchedTable_Name.upper()}}_ID,
     /* .instance  = */        &SCHEDTABLEOBJVAR(SCHEDTABLE_{{SchedTable_Name.upper()}}_CFG),
-    /* .SchedTableName  = */ "SchedTable_{{SchedTable_Name}}",
-    /* .ActionConfig  = */   {
+    /* .schedtable_name  = */ "SchedTable_{{SchedTable_Name}}",
+    /* .action_config  = */   {
         /* .hrtimer  = */           &SCHEDTABLEOBJVAR(SCHEDTABLE_{{SchedTable_Name.upper()}}_CFG).hrtimer,
         /* .Counter  = */          (os_counter_cfg_t*)&COUNTERCFGVAR({% if "OsScheduleTableCounterRef" in SchedTable_Cfg[SchedTable_Name] %}{{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableCounterRef"]}}{% else %}{{system_counter_list[appval["CoreNumber"]|int]}}{% endif %}_cfg),
         /* .ActionCallback  = */   &schedule_table_action_callback,
     },
-    /* .Repeating = */       {% if "OsScheduleTableRepeating" in SchedTable_Cfg[SchedTable_Name] and SchedTable_Cfg[SchedTable_Name]["OsScheduleTableRepeating"] %}SCHTBL_REPEATING{% else %}SCHTBL_SINGLE_SHOT{% endif %},
-    /* .Duration = */        {{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableDuration"]}},
-    /* .ExpirePointList = */ EXPIREPOINTCFGVAR(SchedTable_{{SchedTable_Name}}_ExpiryPointList),
-    /* .ExpiryPointCnt = */  NELEMENTS(EXPIREPOINTCFGVAR(SchedTable_{{SchedTable_Name}}_ExpiryPointList)),
-    /* .SyncStrategy = */    {% if "OsScheduleTableSync" in SchedTable_Cfg[SchedTable_Name] and "OsScheduleTblSyncStrategy" in SchedTable_Cfg[SchedTable_Name]["OsScheduleTableSync"] %}{{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableSync"]["OsScheduleTblSyncStrategy"]}}{% else %}NONE{% endif %},
+    /* .repeating = */       {% if "OsScheduleTableRepeating" in SchedTable_Cfg[SchedTable_Name] and SchedTable_Cfg[SchedTable_Name]["OsScheduleTableRepeating"] %}SCHTBL_REPEATING{% else %}SCHTBL_SINGLE_SHOT{% endif %},
+    /* .duration = */        {{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableDuration"]}},
+    /* .expire_point_list = */ EXPIREPOINTCFGVAR(SchedTable_{{SchedTable_Name}}_ExpiryPointList),
+    /* .expiry_point_cnt = */  NELEMENTS(EXPIREPOINTCFGVAR(SchedTable_{{SchedTable_Name}}_ExpiryPointList)),
+    /* .sync_strategy = */    {% if "OsScheduleTableSync" in SchedTable_Cfg[SchedTable_Name] and "OsScheduleTblSyncStrategy" in SchedTable_Cfg[SchedTable_Name]["OsScheduleTableSync"] %}{{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableSync"]["OsScheduleTblSyncStrategy"]}}{% else %}NONE{% endif %},
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-    /* .accessingApplMask = */ (OS_APPID2MASK({{appval["AppId"]}})),
+    {%- set access_app = SchedTable_Cfg[SchedTable_Name]["OsSchTblAccessingApplication"] + [appname] %}
+    {%- set access_str = get_access_app_mask(access_app, index_size=31) %}
+    /* .access_app_mask = */  ({{access_str}}),
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1) */
-    /* .Autostart = */ {
+    /* .autostart = */ {
         /* .app_mode = */     {{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableAutostart"]["OsScheduleTableAppModeRef"]}},
         /* .type = */        {{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableAutostart"]["OsScheduleTableAutostartType"]}},
         /* .Offset = */      {{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableAutostart"]["OsScheduleTableStartValue"]}},
     },
+    /* precision = */ 0
 };
             {%- endif %}
         {%- endfor %}

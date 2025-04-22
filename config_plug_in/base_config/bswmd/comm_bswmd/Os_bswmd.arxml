@@ -86,34 +86,6 @@
                   <UPPER-MULTIPLICITY>32</UPPER-MULTIPLICITY>
                   <PARAMETERS>
                     <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:97ddd259-bb90-4c42-af70-aa8b24630faf">
-                      <SHORT-NAME>OsTrusted</SHORT-NAME>
-                      <DESC>
-                        <L-2 L="EN">Parameter to specify if an OS-Application is trusted or not.</L-2>
-                        <L-2 L="ZH">概述：OsTrusted配置项用于定义操作系统(OS)对象（如任务或中断服务例程）的信任级别，指示该对象是否有权访问受保护的OS资源或执行特定的OS操作。</L-2>
-                        <L-2 L="ZH">注意：在AUTOSAR CP 4.4标准中，确保只有那些需要访问敏感或受保护资源的OS对象被配置为OsTrusted；非信任对象应受到严格限制，以防止潜在的安全风险；正确配置信任级别对于系统的安全性至关重要。</L-2>
-                      </DESC>
-                      <INTRODUCTION>
-                        <P>
-                          <L-1 L="EN">true: OS-Application is trusted
-                                        false: OS-Application is not trusted (default)</L-1>
-                        </P>
-                      </INTRODUCTION>
-                      <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00115</RELATED-TRACE-ITEM-REF>
-                      <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
-                      <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
-                      <SCOPE>ECU</SCOPE>
-                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
-                      <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
-                      <VALUE-CONFIG-CLASSES>
-                        <ECUC-VALUE-CONFIGURATION-CLASS>
-                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
-                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
-                        </ECUC-VALUE-CONFIGURATION-CLASS>
-                      </VALUE-CONFIG-CLASSES>
-                      <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                      <DEFAULT-VALUE>false</DEFAULT-VALUE>
-                    </ECUC-BOOLEAN-PARAM-DEF>
-                    <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:97ddd259-bb90-4c42-af70-aa8b24630faf">
                       <SHORT-NAME>OsIsPrivileged</SHORT-NAME>
                       <DESC>
                         <L-2 L="EN">Parameter to specify if an OS-Application is privileged or not.</L-2>
@@ -228,7 +200,7 @@
                         <L-2 L="ZH">注意：在多核系统中，正确配置OsApplicationCoreRef对于确保应用程序的分配和隔离至关重要；必须确保引用的核心在系统中存在且可用；在配置时应遵循AUTOSAR的多核处理器支持规范。</L-2>
                       </DESC>
                       <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00393</RELATED-TRACE-ITEM-REF>
-                      <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                      <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
                       <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
                       <SCOPE>LOCAL</SCOPE>
                       <MULTIPLICITY-CONFIG-CLASSES>
@@ -570,42 +542,6 @@
                       <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
                       <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
                       <REFERENCES>
-                        <ECUC-REFERENCE-DEF UUID="ECUC:7a91b0f3-8545-4fb3-aa38-252294367014">
-                          <SHORT-NAME>OsGptChannelRef</SHORT-NAME>
-                          <DESC>
-                            <L-2 L="EN">Reference to the GPT channel.</L-2>
-                            <L-2 L="ZH">概述：OsGptChannelRef 是一个配置项，用于指定操作系统定时器（General Purpose Timer，GPT）通道的引用，这样系统就可以使用该通道来实现定时功能。</L-2>
-                            <L-2 L="ZH">注意：在配置OsGptChannelRef时，需要确保引用的GPT通道已在系统中定义并可用；此外，应当检查该通道是否与其他系统组件的需求发生冲突；在AUTOSAR CP 4.4标准中，应当遵循模块间的接口和配置规范来确保正确的引用和使用。</L-2>
-                          </DESC>
-                          <ADMIN-DATA>
-                            <SDGS>
-                              <SDG GID="VCOS:CfgUnrealized">
-                                <SD GID="VCOS:CfgLock">true</SD>
-                              </SDG>
-                            </SDGS>
-                          </ADMIN-DATA>
-                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00032</RELATED-TRACE-ITEM-REF>
-                          <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
-                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
-                          <SCOPE>ECU</SCOPE>
-                          <MULTIPLICITY-CONFIG-CLASSES>
-                            <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
-                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
-                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
-                            </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
-                          </MULTIPLICITY-CONFIG-CLASSES>
-                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
-                          <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
-                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
-                          <VALUE-CONFIG-CLASSES>
-                            <ECUC-VALUE-CONFIGURATION-CLASS>
-                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
-                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
-                            </ECUC-VALUE-CONFIGURATION-CLASS>
-                          </VALUE-CONFIG-CLASSES>
-                          <REQUIRES-SYMBOLIC-NAME-VALUE>true</REQUIRES-SYMBOLIC-NAME-VALUE>
-                          <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Gpt/GptChannelConfigSet/GptChannelConfiguration</DESTINATION-REF>
-                        </ECUC-REFERENCE-DEF>
                         <ECUC-REFERENCE-DEF UUID="ECUC:6fcce2b4-e71f-42c7-a607-6bf0d4a3e947">
                           <SHORT-NAME>OsIsrRef</SHORT-NAME>
                           <DESC>
@@ -665,54 +601,6 @@
                           <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsPublishedInformation/OsDerivativeInformation/OsHardWareTimer</DESTINATION-REF>
                         </ECUC-REFERENCE-DEF>
                       </REFERENCES>
-                    </ECUC-PARAM-CONF-CONTAINER-DEF>
-                    <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:6488e442-e1ab-4d9a-9974-22cb3a102f4a">
-                      <SHORT-NAME>OsTimeConstant</SHORT-NAME>
-                      <DESC>
-                        <L-2 L="EN">Allows the user to define constants which can be e.g. used to compare time values with timer tick values.</L-2>
-                        <L-2 L="ZH">概述：OsTimeConstant 用于定义操作系统中的时间常量，如系统时钟的周期或任务的时间间隔。</L-2>
-                        <L-2 L="ZH">注意：确保OsTimeConstant与硬件时钟能力相匹配；在多任务系统中，合理配置时间常量以避免任务冲突和资源竞争；时间常量的配置应符合AUTOSAR CP 4.4标准的时间管理要求。</L-2>
-                      </DESC>
-                      <INTRODUCTION>
-                        <P>
-                          <L-1 L="EN">A time value will be converted to a timer tick value during generation and can later on accessed via the OsConstName. The conversation is done by rounding time values to the nearest fitting tick value.</L-1>
-                        </P>
-                      </INTRODUCTION>
-                      <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00386</RELATED-TRACE-ITEM-REF>
-                      <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
-                      <UPPER-MULTIPLICITY-INFINITE>true</UPPER-MULTIPLICITY-INFINITE>
-                      <PARAMETERS>
-                        <ECUC-FLOAT-PARAM-DEF UUID="ECUC:daba8b10-b46e-4dc9-a6d3-8f6ab1126f30">
-                          <SHORT-NAME>OsTimeValue</SHORT-NAME>
-                          <DESC>
-                            <L-2 L="EN">This parameter contains the value of the constant in seconds.</L-2>
-                            <L-2 L="ZH">概述：OsTimeValue 用于表示操作系统中的时间值，通常用于配置任务或中断的时间属性，如周期时间或延迟时间。</L-2>
-                            <L-2 L="ZH">注意：确保时间值符合实际硬件和操作系统的时间分辨率和范围；在多任务和多核环境中，时间配置应考虑任务间的同步和资源共享问题；避免设置过小的时间值，可能导致系统过载或响应不及时。</L-2>
-                          </DESC>
-                          <ADMIN-DATA>
-                            <SDGS>
-                              <SDG GID="VCOS:CfgUnrealized">
-                                <SD GID="VCOS:CfgLock">true</SD>
-                              </SDG>
-                            </SDGS>
-                          </ADMIN-DATA>
-                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00002</RELATED-TRACE-ITEM-REF>
-                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
-                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
-                          <SCOPE>ECU</SCOPE>
-                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
-                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
-                          <VALUE-CONFIG-CLASSES>
-                            <ECUC-VALUE-CONFIGURATION-CLASS>
-                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
-                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
-                            </ECUC-VALUE-CONFIGURATION-CLASS>
-                          </VALUE-CONFIG-CLASSES>
-                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                          <MAX INTERVAL-TYPE="CLOSED">458129844</MAX>
-                          <MIN INTERVAL-TYPE="CLOSED">0</MIN>
-                        </ECUC-FLOAT-PARAM-DEF>
-                      </PARAMETERS>
                     </ECUC-PARAM-CONF-CONTAINER-DEF>
                   </SUB-CONTAINERS>
                 </ECUC-PARAM-CONF-CONTAINER-DEF>
@@ -1006,7 +894,7 @@
                         <L-2 L="ZH">注意：在配置时需确保只有被信任的应用程序被授权访问调度表；不当的访问权限配置可能导致系统安全性降低；AUTOSAR CP 4.4标准中对于操作系统调度表的访问控制提供了详细的规范，需要严格遵守。</L-2>
                       </DESC>
                       <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00054</RELATED-TRACE-ITEM-REF>
-                      <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                      <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
                       <UPPER-MULTIPLICITY>32</UPPER-MULTIPLICITY>
                       <SCOPE>LOCAL</SCOPE>
                       <MULTIPLICITY-CONFIG-CLASSES>
@@ -1620,6 +1508,13 @@
                           <L-1 L="EN">If this attribute is set to NON, no internal resources may be assigned to this task.</L-1>
                         </P>
                       </INTRODUCTION>
+                      <ADMIN-DATA>
+                        <SDGS>
+                          <SDG GID="VCOS:CfgUnrealized">
+                            <SD GID="VCOS:CfgLock">true</SD>
+                          </SDG>
+                        </SDGS>
+                      </ADMIN-DATA>
                       <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00076</RELATED-TRACE-ITEM-REF>
                       <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
                       <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
@@ -1753,30 +1648,6 @@
                       <MAX>65535</MAX>
                       <MIN>128</MIN>
                     </ECUC-INTEGER-PARAM-DEF>
-                    <ECUC-INTEGER-PARAM-DEF UUID="ECUC:61428e85-21e3-4df8-980f-9a985a02ede4">
-                      <SHORT-NAME>OsTaskTicksToWait</SHORT-NAME>
-                      <DESC>
-                        <L-2 L="EN">The ticks to wait is defined by the value of this attribute.</L-2>
-                        <L-2 L="ZH">概述：OsTaskTicksToWait配置项用于定义操作系统任务在等待某事件或条件时，可以等待的最大tick数，超过这个值任务将停止等待。</L-2>
-                        <L-2 L="ZH">注意：该配置项的值需要根据系统的实时性要求和任务的优先级仔细设置；过小的值可能导致任务频繁唤醒，增加系统开销；AUTOSAR CP 4.4标准中没有直接对应的配置项，具体实现可能依赖于底层OS的配置。</L-2>
-                      </DESC>
-                      <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00075</RELATED-TRACE-ITEM-REF>
-                      <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
-                      <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
-                      <SCOPE>LOCAL</SCOPE>
-                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
-                      <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
-                      <VALUE-CONFIG-CLASSES>
-                        <ECUC-VALUE-CONFIGURATION-CLASS>
-                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
-                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
-                        </ECUC-VALUE-CONFIGURATION-CLASS>
-                      </VALUE-CONFIG-CLASSES>
-                      <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                      <DEFAULT-VALUE>4294967295</DEFAULT-VALUE>
-                      <MAX>4294967295</MAX>
-                      <MIN>0</MIN>
-                    </ECUC-INTEGER-PARAM-DEF>
                   </PARAMETERS>
                   <REFERENCES>
                     <ECUC-REFERENCE-DEF UUID="ECUC:171cf36f-49fc-411f-a6a6-1d7b2ad3980c">
@@ -1787,7 +1658,7 @@
                         <L-2 L="ZH">注意：在配置时需确保只有授权的应用程序能够访问对应的任务；此配置项与系统的安全等级和隔离机制密切相关；在多应用系统中，正确配置此项对于避免潜在的安全风险至关重要。</L-2>
                       </DESC>
                       <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00077</RELATED-TRACE-ITEM-REF>
-                      <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                      <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
                       <UPPER-MULTIPLICITY>32</UPPER-MULTIPLICITY>
                       <SCOPE>LOCAL</SCOPE>
                       <MULTIPLICITY-CONFIG-CLASSES>
@@ -1891,8 +1762,8 @@
                     <L-2 L="ZH">概述：OsPublishedInformation配置项定义了操作系统模块发布的信息，这些信息通常包括操作系统的供应商、版本号以及其他相关的标识信息。</L-2>
                     <L-2 L="ZH">注意：在AUTOSAR CP 4.4标准中，确保OsPublishedInformation中的信息准确反映了当前使用的操作系统的实际属性；此配置项通常由操作系统供应商预先定义，用户不需要修改；在整个项目或产品的生命周期中，应保持此信息的一致性，以便于软件的维护和兼容性检查。</L-2>
                   </DESC>
-                  <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
-                  <UPPER-MULTIPLICITY>65535</UPPER-MULTIPLICITY>
+                  <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                  <UPPER-MULTIPLICITY>2</UPPER-MULTIPLICITY>
                   <PARAMETERS>
                     <ECUC-STRING-PARAM-DEF UUID="ECUC:f2fb51fb-7e81-486d-a6d4-c4eac7cec4c5">
                       <SHORT-NAME>OsKernelVersion</SHORT-NAME>
