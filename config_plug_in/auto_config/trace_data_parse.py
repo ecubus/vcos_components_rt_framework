@@ -32,8 +32,8 @@ import traceback
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
-import tkinter as tk
-from tkinter import messagebox, simpledialog
+from PySide6.QtWidgets import QApplication, QDialog, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QPushButton, QMessageBox, QButtonGroup, QWidget
+from PySide6.QtCore import Qt
 
 # Import matplotlib for plotting
 import matplotlib.pyplot as plt
@@ -738,62 +738,131 @@ def select_project_config():
     Returns:
         str: Selected project configuration name
     """
-    root = tk.Tk()
-    root.withdraw()  # Hide the main window
+    app = QApplication.instance() or QApplication([])
+    dialog = QDialog()
+    dialog.setWindowTitle("Project Configuration Path Selection")
+    # Set exact size to match the reference image
+    dialog.setFixedSize(390, 170)
 
-    # Create a custom dialog for project selection
-    class ProjectSelectionDialog(simpledialog.Dialog):
-        def __init__(self, parent):
-            self.selection = None
-            super().__init__(parent, "Project Configuration Path Selection")
+    # Set up the layout with proper margins to match the reference
+    layout = QVBoxLayout()
+    layout.setContentsMargins(15, 15, 15, 15)
+    layout.setSpacing(10)
 
-        def body(self, frame):
-            # Set minimum width for the dialog
-            self.minsize(width=400, height=150)
+    # Title label with proper font size and weight
+    title_label = QLabel("Select a project path configuration:")
+    font = title_label.font()
+    font.setPointSize(11)
+    font.setBold(True)
+    title_label.setFont(font)
+    layout.addWidget(title_label)
 
-            # Title label with larger font and bold
-            title_font = ('Arial', 11, 'bold')
-            title_label = tk.Label(frame, text="Select a project path configuration:", font=title_font)
-            title_label.grid(row=0, columnspan=2, pady=15, padx=20, sticky="w")
+    # Use vertical spacing to match reference image
+    layout.addSpacing(8)
 
-            # Create variable for radio button selection
-            self.var = tk.StringVar(value="TC397")  # Default selection
+    # Store the selected config name as an attribute of the dialog
+    dialog.selected_config = "TC397"  # Default selection
 
-            # Create radio buttons for each project config
-            radio_font = ('Arial', 10)
-            for i, config_name in enumerate(PROJECT_CONFIGS.keys()):
-                tk.Radiobutton(frame, text=config_name, variable=self.var, 
-                              value=config_name, font=radio_font).grid(row=i+1, column=0, sticky="w", padx=40, pady=5)
+    # Create radio buttons for each project config
+    radio_buttons = {}
+    button_group = QButtonGroup(dialog)
 
-            return frame
+    # Radio buttons container with proper indentation
+    radio_container = QWidget()
+    radio_layout = QVBoxLayout(radio_container)
+    radio_layout.setContentsMargins(25, 0, 0, 0)
+    radio_layout.setSpacing(8)  # Spacing between radio buttons
 
-        def buttonbox(self):
-            # Override to create custom buttons with better size
-            box = tk.Frame(self)
+    # Create radio buttons with proper styling
+    for config_name in PROJECT_CONFIGS.keys():
+        radio_button = QRadioButton(config_name)
 
-            ok_button = tk.Button(box, text="OK", width=10, command=self.ok, default=tk.ACTIVE)
-            ok_button.pack(side=tk.LEFT, padx=20, pady=10)
-            cancel_button = tk.Button(box, text="Cancel", width=10, command=self.cancel)
-            cancel_button.pack(side=tk.LEFT, padx=20, pady=10)
+        # Set font to match the reference image
+        btn_font = radio_button.font()
+        btn_font.setPointSize(10)
+        radio_button.setFont(btn_font)
 
-            self.bind("<Return>", self.ok)
-            self.bind("<Escape>", self.cancel)
+        if config_name == "TC397":
+            radio_button.setChecked(True)
 
-            box.pack()
+        button_group.addButton(radio_button)
+        radio_button.toggled.connect(
+            lambda checked, name=config_name: setattr(dialog, 'selected_config', name) if checked else None
+        )
 
-        def apply(self):
-            self.selection = self.var.get()
+        radio_layout.addWidget(radio_button)
+        radio_buttons[config_name] = radio_button
 
-    # Display dialog and get selection
-    dialog = ProjectSelectionDialog(root)
+    layout.addWidget(radio_container)
 
-    # If user closed dialog without selecting, default to TC397
-    selected_config = dialog.selection if dialog.selection else "TC397"
+    # Add spacing before buttons
+    layout.addSpacing(5)
 
-    # Clean up
-    root.destroy()
+    # Button layout with proper spacing
+    button_layout = QHBoxLayout()
+    button_layout.setSpacing(20)
 
-    return selected_config
+    # Create buttons with exact sizes matching reference
+    ok_button = QPushButton("OK")
+    ok_button.setFixedSize(100, 25)
+    ok_button.clicked.connect(dialog.accept)
+
+    cancel_button = QPushButton("Cancel")
+    cancel_button.setFixedSize(100, 25)
+    cancel_button.clicked.connect(dialog.reject)
+
+    # Add buttons with proper spacing
+    button_layout.addStretch(1)
+    button_layout.addWidget(ok_button)
+    button_layout.addWidget(cancel_button)
+    button_layout.addStretch(1)
+
+    layout.addLayout(button_layout)
+    dialog.setLayout(layout)
+
+    # Set a style sheet for better text clarity and visual appearance
+    dialog.setStyleSheet("""
+        QDialog {
+            background-color: #f0f0f0;
+        }
+        QLabel {
+            color: #000000;
+            font-family: Arial, sans-serif;
+        }
+        QRadioButton {
+            color: #000000;
+            font-family: Arial, sans-serif;
+            padding: 2px;
+        }
+        QRadioButton::indicator {
+            width: 14px;
+            height: 14px;
+        }
+        QPushButton {
+            background-color: #e1e1e1;
+            border: 1px solid #a0a0a0;
+            border-radius: 2px;
+            padding: 4px 8px;
+            color: #000000;
+            font-family: Arial, sans-serif;
+            min-height: 23px;
+        }
+        QPushButton:hover {
+            background-color: #e9e9e9;
+        }
+        QPushButton:pressed {
+            background-color: #d0d0d0;
+        }
+    """)
+
+    # Execute the dialog
+    result = dialog.exec()
+
+    # Return the selected project or default to TC397 if canceled
+    if result == QDialog.Accepted:
+        return dialog.selected_config
+    else:
+        return "TC397"
 
 def check_file_exists(file_path):
     """Check if a file exists and return result"""
@@ -836,6 +905,9 @@ if __name__ == '__main__':
             elif sys.argv[1].lower() == 'cet':
                 plot_type = 'cet'
 
+        # Initialize Qt application
+        app = QApplication.instance() or QApplication([])
+
         # Let user select which project configuration to use
         selected_project = select_project_config()
 
@@ -848,11 +920,8 @@ if __name__ == '__main__':
 
         # Check if ftrace file exists
         if not check_file_exists(FTRACE_FILE):
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showerror("File Not Found",
-                                f"The ftrace file for {selected_project} was not found at:\n\n{FTRACE_FILE}\n\nPlease check if the file exists.")
-            root.destroy()
+            QMessageBox.critical(None, "File Not Found",
+                               f"The ftrace file for {selected_project} was not found at:\n\n{FTRACE_FILE}\n\nPlease check if the file exists.")
             print(f"ERROR: The ftrace file for {selected_project} was not found at: {FTRACE_FILE}")
             print("Please check if the file exists and try again.")
             sys.exit(1)
@@ -879,17 +948,11 @@ if __name__ == '__main__':
                 print("\nSkip generating plots. Use 'python trace_data_parse.py dt' to generate DT plots or 'python trace_data_parse.py cet' to generate CET plots.")
 
         else:
-            root = tk.Tk()
-            root.withdraw()
-            messagebox.showerror("Parse Error",
-                               f"Failed to parse the ftrace file for {selected_project}.\n\nPlease check if the file format is correct.")
-            root.destroy()
+            QMessageBox.critical(None, "Parse Error",
+                              f"Failed to parse the ftrace file for {selected_project}.\n\nPlease check if the file format is correct.")
             print("Failed to parse task parameters")
 
     except Exception as e:
-        root = tk.Tk()
-        root.withdraw()
-        messagebox.showerror("Error", f"An error occurred:\n\n{str(e)}")
-        root.destroy()
+        QMessageBox.critical(None, "Error", f"An error occurred:\n\n{str(e)}")
         print(f"Error in main program: {str(e)}")
         traceback.print_exc()
