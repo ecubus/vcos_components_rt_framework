@@ -320,7 +320,7 @@ class Function(FunctionBase):
             task_event_list = task_value['TaskEventRef']
             for ev in task_event_list:
                 ev_mask = event_dict[ev]["OsEventMask"]["Value"]
-                if ev_mask:
+                if ev_mask is not None and ev_mask != "":
                     task_event_cfg[ev] = int(ev_mask)
                     mask_set.add(int(ev_mask))
                 else:

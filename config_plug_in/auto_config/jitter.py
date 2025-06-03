@@ -63,8 +63,8 @@ from multiprocessing import Pool
 from ui_adaptor.ui_interaction.ui_logger import logger
 
 # Local application imports
-from components.rt_framework.config_plug_in.auto_config.scheduler import Scheduler, Task
-from components.rt_framework.config_plug_in.auto_config.trace_data_parse import (
+from .scheduler import Scheduler, Task
+from .trace_data_parse import (
     parse_ftrace_log,parse_binary_data,
     organize_tasks_by_core as organize_ftrace_tasks
 )
