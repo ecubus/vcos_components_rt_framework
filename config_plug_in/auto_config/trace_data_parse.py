@@ -32,7 +32,7 @@ import traceback
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
-from PySide6.QtWidgets import QApplication, QDialog, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QPushButton, QMessageBox, QButtonGroup, QWidget
+from PySide6.QtWidgets import QApplication, QDialog, QVBoxLayout, QHBoxLayout, QRadioButton, QLabel, QPushButton, QMessageBox, QButtonGroup, QWidget, QFileDialog, QLineEdit
 from PySide6.QtCore import Qt
 
 # Import matplotlib for plotting
@@ -43,15 +43,10 @@ from matplotlib.ticker import MaxNLocator
 # Add ftrace parser to path
 base_directory = os.path.dirname(os.path.abspath(__file__))
 ftrace_parser_directory = os.path.abspath(os.path.join(
-    base_directory, '..', '..', '..', '..', '..','tools', 'halo_trace'))
+    base_directory, '..', '..', '..', '..', '..', 'tools', 'halo_trace'))
 sys.path.append(ftrace_parser_directory)
 from ftrace_manager import FtraceParser
-
-# Available project configurations
-PROJECT_CONFIGS = {
-    "TC397": "tc397_cfg",
-    "E3650": "e3650_cfg"
-}
+from trace_util import TraceComputeUtils
 
 class FtraceLogParser:
     """
@@ -258,7 +253,110 @@ def parse_ftrace_log(ftrace_file: str) -> Optional[Dict[str, Dict[str, Any]]]:
         print(f"Error type: {type(e).__name__}")
         traceback.print_exc()
         return None
+class BinaryTraceParser:
+    """
+    Parser for binary trace data files containing task timing information.
+    """
+    def __init__(self, bin_file: str):
+        self.bin_file = bin_file
+        self.data_dir = os.path.dirname(os.path.abspath(bin_file))
+        self.device_name = os.path.basename(bin_file).split('_data.bin')[0]
+        self.config_file = os.path.join(self.data_dir, "config.json")
+        self.priority_map = self._load_priority_map()
 
+    def _load_priority_map(self):
+        priority_map = {}
+        try:
+            with open(self.config_file, 'r', encoding='utf-8') as f:
+                config_data = json.load(f)
+            for tid, tinfo in config_data[self.device_name]["Task"].items():
+                priority_map[tinfo[0]] = tinfo[1]
+        except Exception:
+            pass
+        return priority_map
+
+    def get_task_parameters(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Extract task parameters from binary file using TraceComputeUtils.
+        Returns:
+            Dictionary mapping task names to their parameters (单位全部us)
+        """
+        if not os.path.exists(self.config_file):
+            print(f"[ERROR] config.json not found in {self.data_dir}!")
+            return {}
+
+        input_task_dict = {}
+        success, task_info = TraceComputeUtils.trace_get_task_statistics(self.data_dir, input_task_dict)
+        if not (success and task_info):
+            print("Binary parsing failed to extract task data")
+            return {}
+
+        if len(task_info) == 1 and self.device_name in task_info:
+            task_info = task_info[self.device_name]
+
+        task_params = {}
+        for task_name, params in task_info.items():
+            try:
+                # 统一输出结构，全部转us
+                period = round(params.get("dt_avg", 0) / 1000) if params.get("dt_avg", 0) > 0 else 0
+                cet_max = round(params.get("cet_max", 0) / 1000)
+                cet_avg = round(params.get("cet_avg", 0) / 1000)
+
+                # 正确获取dt_list和cet_list
+                dt_list = [round(x / 1000) for x in params.get("dt_list", [])]
+                cet_list = [round(x / 1000) for x in params.get("cet_list", [])]
+
+                # 计算CET标准差（单位us）
+                if cet_list:
+                    mean = sum(cet_list) / len(cet_list)
+                    variance = sum((x - mean) ** 2 for x in cet_list) / len(cet_list)
+                    cet_std_dev = round(variance ** 0.5)
+                else:
+                    cet_std_dev = 0
+
+                pcet = []
+                if cet_list:
+                    pcet = [int(round(x)) for x in calculate_percentiles(sorted(cet_list), [99,98,97,96,95,94,93,92,91,90])]
+
+                priority = self.priority_map.get(task_name, -1)
+                if period > 0 or cet_max > 0 or cet_avg > 0:
+                    task_params[task_name] = {
+                        'priority': priority,
+                        'period': period,
+                        'cet_max': cet_max,
+                        'cet_avg': cet_avg,
+                        'cet_std_dev': cet_std_dev,
+                        'PCET': pcet,
+                        'dt_list': dt_list,
+                        'cet_list': cet_list
+                    }
+            except Exception as e:
+                continue
+
+        return task_params
+
+def parse_binary_data(bin_file: str) -> Optional[Dict[str, Dict[str, Any]]]:
+    """
+    Parse binary trace data file and extract task information
+    """
+    parser = BinaryTraceParser(bin_file)
+    return parser.get_task_parameters()
+
+def calculate_percentiles(data, percentiles):
+    """Calculate the specified percentiles of a list of numbers."""
+    data.sort()
+    results = []
+    for percentile in percentiles:
+        k = (len(data) - 1) * (percentile / 100)
+        f = math.floor(k)
+        c = math.ceil(k)
+        if f == c:
+            results.append(data[int(k)])
+        else:
+            d0 = data[int(f)] * (c - k)
+            d1 = data[int(c)] * (k - f)
+            results.append(d0 + d1)
+    return results
 
 def print_formatted_output(task_params: Dict[str, Dict[str, Any]], plot_type: str = None) -> None:
     """
@@ -485,31 +583,13 @@ def plot_dt_samples(
             shadow=True
         )
 
-        # Set y-axis range with consistent scale for same-period tasks
-        if fixed_y_range and period > 0:
-            # Calculate a fixed range based on the period
-            # For 1ms period tasks, use range from 700 to 1400
-            if 900 <= period <= 1100:  # Around 1ms period
-                y_min = 700
-                y_max = 1400
-            # For 5ms period tasks
-            elif 4900 <= period <= 5100:  # Around 5ms period
-                y_min = 4500
-                y_max = 5500
-            # For 10ms period tasks
-            elif 9900 <= period <= 10100:  # Around 10ms period
-                y_min = 9000
-                y_max = 11000
-            # For other periods, calculate a reasonable range
-            else:
-                y_min = max(0, period - period * 0.3)
-                y_max = period + period * 0.4
+        # 纵轴严格以Mean为中心，上下对称，上下偏移 4 * std_dt
+        y_lower = mean_dt - 4 * std_dt
+        y_upper = mean_dt + 4 * std_dt
+        ax.set_ylim(y_lower, y_upper)
 
-            ax.set_ylim(y_min, y_max)
-        else:
-            # Use data-driven range with margin if fixed range is not requested
-            margin = (max_dt - min_dt) * 0.1 if max_dt > min_dt else mean_dt * 0.1
-            ax.set_ylim(max(0, min_dt - margin), max_dt + margin)
+        ax.axhline(y=y_lower, color='gray', linestyle=':', linewidth=0.8)
+        ax.axhline(y=y_upper, color='gray', linestyle=':', linewidth=0.8)
 
         # For large datasets, use fewer x-axis labels to avoid crowding
         if len(dt_list) > 1000:
@@ -649,16 +729,12 @@ def plot_cet_samples(
             shadow=True
         )
 
-        # Set y-axis range with consistent scale
-        if fixed_y_range:
-            # Calculate a reasonable range based on data
-            y_min = max(0, min_cet - std_cet * 0.5)
-            y_max = max_cet + std_cet * 0.5
-            ax.set_ylim(y_min, y_max)
-        else:
-            # Use data-driven range with margin if fixed range is not requested
-            margin = (max_cet - min_cet) * 0.1 if max_cet > min_cet else mean_cet * 0.1
-            ax.set_ylim(max(0, min_cet - margin), max_cet + margin)
+        y_lower = mean_cet - 4 * std_cet
+        y_upper = mean_cet + 4 * std_cet
+        ax.set_ylim(y_lower, y_upper)
+
+        ax.axhline(y=y_lower, color='gray', linestyle=':', linewidth=0.8)
+        ax.axhline(y=y_upper, color='gray', linestyle=':', linewidth=0.8)
 
         # For large datasets, use fewer x-axis labels to avoid crowding
         if len(cet_list) > 1000:
@@ -731,202 +807,153 @@ def plot_all_task_cet_samples(
         print("\nNo CET sample plots were created. No tasks have CET samples.")
 
 
-def select_project_config():
+def select_log_file():
     """
-    Display a GUI dialog for the user to select a project configuration
-
-    Returns:
-        str: Selected project configuration name
+    弹窗选择trace文件路径，带有提示和路径栏
     """
     app = QApplication.instance() or QApplication([])
     dialog = QDialog()
-    dialog.setWindowTitle("Project Configuration Path Selection")
-    # Set exact size to match the reference image
-    dialog.setFixedSize(390, 170)
+    dialog.setWindowTitle("Select Trace File")
+    dialog.resize(750, 180)
+    dialog.setMinimumWidth(700)
 
-    # Set up the layout with proper margins to match the reference
-    layout = QVBoxLayout()
-    layout.setContentsMargins(15, 15, 15, 15)
-    layout.setSpacing(10)
+    layout = QVBoxLayout(dialog)
+    label = QLabel("Please select the Trace file (.log or .bin):")
+    label.setStyleSheet("font-size: 15px; font-weight: bold; margin-bottom: 10px;")
+    layout.addWidget(label)
 
-    # Title label with proper font size and weight
-    title_label = QLabel("Select a project path configuration:")
-    font = title_label.font()
-    font.setPointSize(11)
-    font.setBold(True)
-    title_label.setFont(font)
-    layout.addWidget(title_label)
+    # 路径输入栏和选择按钮
+    path_layout = QHBoxLayout()
+    path_edit = QLineEdit()
+    path_edit.setPlaceholderText("Click 'Browse...' to select a log or binary file")
+    path_edit.setMinimumHeight(28)
+    path_edit.setStyleSheet("font-size: 13px;")
+    browse_btn = QPushButton("Browse...")
+    browse_btn.setMinimumHeight(28)
+    browse_btn.setFixedWidth(110)
+    browse_btn.setStyleSheet("font-size: 13px; margin-left: 8px;")
+    path_layout.addWidget(path_edit)
+    path_layout.addWidget(browse_btn)
+    layout.addLayout(path_layout)
 
-    # Use vertical spacing to match reference image
-    layout.addSpacing(8)
+    # OK/Cancel按钮
+    btn_layout = QHBoxLayout()
+    ok_btn = QPushButton("OK")
+    cancel_btn = QPushButton("Cancel")
+    ok_btn.setMinimumHeight(28)
+    cancel_btn.setMinimumHeight(28)
+    ok_btn.setStyleSheet("font-size: 13px; min-width: 80px;")
+    cancel_btn.setStyleSheet("font-size: 13px; min-width: 80px; margin-left: 10px;")
+    btn_layout.addStretch(1)
+    btn_layout.addWidget(ok_btn)
+    btn_layout.addWidget(cancel_btn)
+    btn_layout.addStretch(1)
+    layout.addSpacing(10)
+    layout.addLayout(btn_layout)
 
-    # Store the selected config name as an attribute of the dialog
-    dialog.selected_config = "TC397"  # Default selection
+    # 选择文件逻辑
+    def on_browse():
+        file_path, _ = QFileDialog.getOpenFileName(dialog, "Select Trace File", "", "Trace Files (*.log *.bin);;Log Files (*.log);;Binary Files (*.bin);;All Files (*)")
+        if file_path:
+            path_edit.setText(file_path)
+    browse_btn.clicked.connect(on_browse)
 
-    # Create radio buttons for each project config
-    radio_buttons = {}
-    button_group = QButtonGroup(dialog)
+    # OK/Cancel逻辑
+    def on_ok():
+        if path_edit.text():
+            dialog.accept()
+        else:
+            path_edit.setFocus()
+    ok_btn.clicked.connect(on_ok)
+    cancel_btn.clicked.connect(dialog.reject)
 
-    # Radio buttons container with proper indentation
-    radio_container = QWidget()
-    radio_layout = QVBoxLayout(radio_container)
-    radio_layout.setContentsMargins(25, 0, 0, 0)
-    radio_layout.setSpacing(8)  # Spacing between radio buttons
-
-    # Create radio buttons with proper styling
-    for config_name in PROJECT_CONFIGS.keys():
-        radio_button = QRadioButton(config_name)
-
-        # Set font to match the reference image
-        btn_font = radio_button.font()
-        btn_font.setPointSize(10)
-        radio_button.setFont(btn_font)
-
-        if config_name == "TC397":
-            radio_button.setChecked(True)
-
-        button_group.addButton(radio_button)
-        radio_button.toggled.connect(
-            lambda checked, name=config_name: setattr(dialog, 'selected_config', name) if checked else None
-        )
-
-        radio_layout.addWidget(radio_button)
-        radio_buttons[config_name] = radio_button
-
-    layout.addWidget(radio_container)
-
-    # Add spacing before buttons
-    layout.addSpacing(5)
-
-    # Button layout with proper spacing
-    button_layout = QHBoxLayout()
-    button_layout.setSpacing(20)
-
-    # Create buttons with exact sizes matching reference
-    ok_button = QPushButton("OK")
-    ok_button.setFixedSize(100, 25)
-    ok_button.clicked.connect(dialog.accept)
-
-    cancel_button = QPushButton("Cancel")
-    cancel_button.setFixedSize(100, 25)
-    cancel_button.clicked.connect(dialog.reject)
-
-    # Add buttons with proper spacing
-    button_layout.addStretch(1)
-    button_layout.addWidget(ok_button)
-    button_layout.addWidget(cancel_button)
-    button_layout.addStretch(1)
-
-    layout.addLayout(button_layout)
+    # 居中显示
     dialog.setLayout(layout)
+    dialog.setWindowModality(Qt.ApplicationModal)
+    dialog.move(
+        app.primaryScreen().geometry().center() - dialog.rect().center()
+    )
 
-    # Set a style sheet for better text clarity and visual appearance
-    dialog.setStyleSheet("""
-        QDialog {
-            background-color: #f0f0f0;
-        }
-        QLabel {
-            color: #000000;
-            font-family: Arial, sans-serif;
-        }
-        QRadioButton {
-            color: #000000;
-            font-family: Arial, sans-serif;
-            padding: 2px;
-        }
-        QRadioButton::indicator {
-            width: 14px;
-            height: 14px;
-        }
-        QPushButton {
-            background-color: #e1e1e1;
-            border: 1px solid #a0a0a0;
-            border-radius: 2px;
-            padding: 4px 8px;
-            color: #000000;
-            font-family: Arial, sans-serif;
-            min-height: 23px;
-        }
-        QPushButton:hover {
-            background-color: #e9e9e9;
-        }
-        QPushButton:pressed {
-            background-color: #d0d0d0;
-        }
-    """)
-
-    # Execute the dialog
     result = dialog.exec()
-
-    # Return the selected project or default to TC397 if canceled
-    if result == QDialog.Accepted:
-        return dialog.selected_config
+    if result == QDialog.Accepted and path_edit.text():
+        return path_edit.text()
     else:
-        return "TC397"
+        return None
 
-def check_file_exists(file_path):
-    """Check if a file exists and return result"""
-    return os.path.isfile(file_path)
-
-def get_project_paths(project_config):
+def get_project_paths_from_log(log_path):
     """
-    Get the file paths for the selected project configuration
-
-    Args:
-        project_config: Selected project configuration name
-
-    Returns:
-        tuple: (ftrace_file_path, json_output_path, dt_plots_dir, cet_plots_dir)
+    根据log文件路径推导出输出路径
     """
-    # Get the configuration folder name
-    config_folder = PROJECT_CONFIGS.get(project_config, "tc397_cfg")  # Default to tc397_cfg
+    # 假设log_path为 .../system_cfg/xxx/config/Import/XXX_ftrace.log 或 XXX_data.bin
+    # base_dir = .../system_cfg/xxx
+    config_dir = os.path.dirname(os.path.dirname(log_path))  # .../system_cfg/xxx/config
+    base_dir = os.path.dirname(config_dir)                   # .../system_cfg/xxx
 
-    # Add timestamp to output directory names for better organization
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    json_output = os.path.join(base_dir, "config", "Export", f"trace_task_info_{timestamp}.json")
+    dt_plots_dir = os.path.join(base_dir, "config", "Export", f"DT_Sample_Plots_{timestamp}")
+    cet_plots_dir = os.path.join(base_dir, "config", "Export", f"CET_Sample_Plots_{timestamp}")
 
-    # Build the paths based on project configuration
-    base_path = f".//..//..//..//..//..//apps//rt_demo//platform_cfg//{config_folder}"
+    return log_path, json_output, dt_plots_dir, cet_plots_dir
 
-    ftrace_file = f"{base_path}//config//Import//{project_config}_ftrace.log"
-    json_output = f"{base_path}//config//Export//ftrace_task_info_{timestamp}.json"
-    dt_plots_dir = f"{base_path}//config//Export//DT_Sample_Plots_{timestamp}"
-    cet_plots_dir = f"{base_path}//config//Export//CET_Sample_Plots_{timestamp}"
-
-    return ftrace_file, json_output, dt_plots_dir, cet_plots_dir
+# 文件存在性检查函数
+def check_file_exists(file_path):
+    """
+    检查文件是否存在
+    """
+    return os.path.isfile(file_path)
 
 if __name__ == '__main__':
     try:
-        # Get command line arguments
         plot_type = None
-
         if len(sys.argv) > 1:
             if sys.argv[1].lower() == 'dt':
                 plot_type = 'dt'
             elif sys.argv[1].lower() == 'cet':
                 plot_type = 'cet'
 
-        # Initialize Qt application
         app = QApplication.instance() or QApplication([])
 
-        # Let user select which project configuration to use
-        selected_project = select_project_config()
-
-        # Get the paths for the selected project
-        FTRACE_FILE, JSON_OUTPUT, DT_PLOTS_DIR, CET_PLOTS_DIR = get_project_paths(selected_project)
-
-        # Display the selected configuration to the user
-        print(f"\nUsing project configuration: {selected_project}")
-        print(f"Ftrace file path: {FTRACE_FILE}")
-
-        # Check if ftrace file exists
-        if not check_file_exists(FTRACE_FILE):
-            QMessageBox.critical(None, "File Not Found",
-                               f"The ftrace file for {selected_project} was not found at:\n\n{FTRACE_FILE}\n\nPlease check if the file exists.")
-            print(f"ERROR: The ftrace file for {selected_project} was not found at: {FTRACE_FILE}")
-            print("Please check if the file exists and try again.")
+        # 1. 弹窗选择trace文件（log或bin）
+        trace_file = select_log_file()
+        if not trace_file:
+            print("No trace file selected. Exiting.")
             sys.exit(1)
 
-        task_params = parse_ftrace_log(FTRACE_FILE)
+        # 2. 推导输出路径
+        TRACE_FILE, JSON_OUTPUT, DT_PLOTS_DIR, CET_PLOTS_DIR = get_project_paths_from_log(trace_file)
+
+        print(f"\nUsing trace file: {TRACE_FILE}")
+
+        if not check_file_exists(TRACE_FILE):
+            QMessageBox.critical(None, "File Not Found",
+                f"The trace file was not found at:\n\n{TRACE_FILE}\n\nPlease check if the file exists.")
+            print(f"ERROR: The trace file was not found at: {TRACE_FILE}")
+            sys.exit(1)
+        # 3. 根据文件类型选择解析方法
+        file_ext = os.path.splitext(TRACE_FILE)[1].lower()
+        if file_ext == '.log':
+            print("Detected log file format, using ftrace parser")
+            task_params = parse_ftrace_log(TRACE_FILE)
+            if not task_params:
+                QMessageBox.critical(None, "Parse Error",
+                    f"Failed to parse the log trace file.\n\nPlease check if the file format is correct.")
+                print("Failed to parse log file.")
+                sys.exit(1)
+        elif file_ext == '.bin':
+            print("Detected binary file format, using binary parser")
+            task_params = parse_binary_data(TRACE_FILE)
+            if not task_params:
+                QMessageBox.critical(None, "Parse Error",
+                    f"Failed to parse the binary trace file.\n\nPlease check if the file format and config.json are correct.")
+                print("Failed to parse binary file.")
+                sys.exit(1)
+        else:
+            QMessageBox.critical(None, "Unsupported File Type",
+                f"Unsupported file extension: {file_ext}.\nPlease select a .log or .bin file.")
+            print(f"ERROR: Unsupported file extension: {file_ext}")
+            sys.exit(1)
+
         if task_params:
             cores_dict = organize_tasks_by_core(task_params)
 
@@ -949,7 +976,7 @@ if __name__ == '__main__':
 
         else:
             QMessageBox.critical(None, "Parse Error",
-                              f"Failed to parse the ftrace file for {selected_project}.\n\nPlease check if the file format is correct.")
+                f"Failed to parse the trace file.\n\nPlease check if the file format is correct.")
             print("Failed to parse task parameters")
 
     except Exception as e:

@@ -13,14 +13,18 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_APPLICATION_INTERNAL_H
-#define AUTOSAROS_INC_OS_APPLICATION_INTERNAL_H
+#ifndef RT_FRAMEWORK_INC_OS_APPLICATION_INTERNAL_H
+#define RT_FRAMEWORK_INC_OS_APPLICATION_INTERNAL_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Including File */
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION== 1)
+#include <arch/chip/mpu.h>
+#endif
+
 #include "Os_Types.h"
 #include "os_task_types.h"
 #include "os_isr_types.h"
@@ -36,11 +40,7 @@ extern "C" {
 #define OS_APPLICATION_GET_APPID(ApplicationRef) ((ApplicationRef)->app_id)
 #define OS_APPLICATION_GET_APP_OWNERCOREID(ApplicationRef) ((ApplicationRef)->core_id)
 #define INVALID_OSAPPLICATION (os_app_cfg_ref_table_size)
-/* Global Enumeration Definition */
 
-/* Global Type & Structure Definition */
-
-/*! Application Instance Description */
 struct os_app_inst {
 	ApplicationStateType state; /*! Application State. */
 };
@@ -63,9 +63,12 @@ struct os_app_cfg_s {
 	const os_counter_cfg_t *const *counter_refs;
 	const OsObjIndexType *counter_count;
 #endif
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+	const struct mpu_access_right_s *mpu_access_right;
+#endif
 	CoreIdType core_id; /*! The core to which this application belongs. */
 	ApplicationIDType app_id; /*! Application ID. */
-	boolean IsPrivileged; /*! Tells whether the application is privileged. */
+	boolean is_privileged; /*! Tells whether the application is privileged. */
 };
 
 /* Global Variable Definition */
@@ -113,10 +116,8 @@ static inline Os_StatusType os_app_check_is_accessible(const os_app_cfg_t *App)
 	return OS_STATUS_NOT_OK;
 }
 
-/* Global Function Implementation */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_APPLICATION_INTERNAL_H */
+#endif /* RT_FRAMEWORK_INC_OS_APPLICATION_INTERNAL_H */

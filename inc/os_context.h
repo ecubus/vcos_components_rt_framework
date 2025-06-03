@@ -24,18 +24,6 @@ extern "C" {
 #include <nuttx/config.h>
 #include "os_context_internal.h"
 
-/* Global Macro Definition */
-
-/* Global Enumeration Definition */
-
-/* Global Type & Structure Definition */
-
-/* Global Variable Declaration */
-
-/* Global Function Declaration */
-
-/* Global Function Implementation */
-
 #ifdef __cplusplus
 }
 #endif

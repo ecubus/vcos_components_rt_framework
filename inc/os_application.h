@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_APPLICATION_H
-#define AUTOSAROS_INC_OS_APPLICATION_H
+#ifndef RT_FRAMEWORK_INC_OS_APPLICATION_H
+#define RT_FRAMEWORK_INC_OS_APPLICATION_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,16 +23,12 @@ extern "C" {
 /* Including File */
 #include "os_application_internal.h"
 
-/* Global Type & Structure Definition */
-
-/* Global Macro Definition */
-
 /*! Application declare*/
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
 
-#define DeclareOsApplication(section, app_id)                                                                 \
-	OS_LINK_ENTRY_DECLARE(section, os_obj, os_app_inst_t, app_id);                                         \
-	OS_LINK_ENTRY_DECLARE(.rodata, OsApplication, os_app_cfg_t, app_id)
+#define DeclareOsApplication(section_const, section_var, app_id)                    \
+	OS_LINK_ENTRY_DECLARE(section_var, os_obj, os_app_inst_t, app_id);              \
+	OS_LINK_ENTRY_DECLARE(section_const, OsApplication, const os_app_cfg_t, app_id)
 
 #define OSAPPCFGVAR(app_id) OS_LINK_ENTRY_NAME(OsApplication, app_id)
 #define OSAPPOBJVAR(app_id) OS_LINK_ENTRY_NAME(os_obj, app_id)
@@ -45,6 +41,4 @@ extern "C" {
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_APPLICATION_H */
-/*! @} */
-/*! @} */
+#endif /* RT_FRAMEWORK_INC_OS_APPLICATION_H */

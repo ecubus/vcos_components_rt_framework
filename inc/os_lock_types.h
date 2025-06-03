@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_LOCK_TYPES_H
-#define AUTOSAROS_INC_OS_LOCK_TYPES_H
+#ifndef RT_FRAMEWORK_INC_OS_LOCK_TYPES_H
+#define RT_FRAMEWORK_INC_OS_LOCK_TYPES_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,12 +26,8 @@ extern "C" {
 struct os_lock_cfg_s;
 typedef struct os_lock_cfg_s os_lock_cfg_t;
 
-/* Global Function Declaration */
-
-/* Global Function Implementation */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_LOCK_TYPES_H */
+#endif /* RT_FRAMEWORK_INC_OS_LOCK_TYPES_H */

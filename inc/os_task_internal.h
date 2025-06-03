@@ -13,14 +13,15 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_TASK_INTERNAL_H
-#define AUTOSAROS_INC_OS_TASK_INTERNAL_H
+#ifndef RT_FRAMEWORK_INC_OS_TASK_INTERNAL_H
+#define RT_FRAMEWORK_INC_OS_TASK_INTERNAL_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Including File */
+#include <nuttx/config.h>
 #include "os_task_types.h"
 #include "Os_Types.h"
 #include "os_list.h"
@@ -35,12 +36,12 @@ extern "C" {
 
 /* Global Macro Definition */
 
-#define OS_TASK_NO_ACTIVATION_CNT ((uint8)0U) /* 任务没有激活 */
-#define OS_TASK_MIN_ACTIVATION_CNT ((uint8)1U) /* 任务最小激活次数 */
+#define OS_TASK_NO_ACTIVATION_CNT ((uint8)0) /* 任务没有激活 */
+#define OS_TASK_MIN_ACTIVATION_CNT ((uint8)1) /* 任务最小激活次数 */
 #if (CONFIG_RT_FRAMEWORK_TASK_MULTIPLE_ACTIVATION == 1)
-#define OS_TASK_MAX_ACTIVATION_CNT ((uint8)255U) /* 任务最大激活次数 */
+#define OS_TASK_MAX_ACTIVATION_CNT ((uint8)255) /* 任务最大激活次数 */
 #else
-#define OS_TASK_MAX_ACTIVATION_CNT ((uint8)1U) /* 任务最大激活次数 */
+#define OS_TASK_MAX_ACTIVATION_CNT ((uint8)1) /* 任务最大激活次数 */
 #endif /* CONFIG_RT_FRAMEWORK_TASK_MULTIPLE_ACTIVATION */
 
 /* 通过 os_task_cfg_t(task_cfg) 获取各种 object ID */
@@ -86,14 +87,14 @@ extern "C" {
 /* Global Enumeration Definition */
 
 /* Global Type & Structure Definition */
-struct os_task_inst {
-#ifdef __NuttX__
+struct os_task_inst_s {
+	os_ctx_inst_t ctx_instance; /*! Context instance. Must be the first member !!! */
 	uint32 activate_cnt;
 	jmp_buf jmpbuf;
 	struct tcb_s tcb;
 	sem_t act_sem;
+	nxevent_wait_t wait;
 	nxevent_t event;
-#endif
 }; /* os_task_inst_t */
 
 /*! Task configuration by user */
@@ -119,23 +120,7 @@ DeclareOsRefTable_H(task) /*! Reference to OS task configuration table  */
 #define OS_START_SEC_CODE
 #include "os_memmap.h"
 
-/*!  \brief         Init AUTOSAR OS Task
- *  \details        None
- *
- *  \param[in]      os_task_cfg_table  Reference to the task configure table
- *  \param[in]      size            Size of task configure table
- *  \param[out]     None
- *
- *  \return         None
- *
- *  \context        ANY|TASK|KERNEL
- *
- *  \reentrant      FALSE
- *
- *  \synchronous    TRUE
- */
-extern FUNC(void, OS_CODE) os_task_init(const os_task_cfg_t *const os_task_cfg_table[], OsObjIndexType size);
-
+	extern FUNC(void, OS_CODE) os_task_init(const os_task_cfg_t *const os_task_cfg_table[], OsObjIndexType size);
 extern FUNC(void, OS_CODE) os_disable_level_km(void);
 extern FUNC(void, OS_CODE) os_enable_level_km(void);
 extern FUNC(Os_StatusType, OS_CODE) os_activate_task(TaskType task_id);
@@ -145,10 +130,8 @@ extern FUNC(Os_StatusType, OS_CODE) os_terminate_task(void);
 #define OS_STOP_SEC_CODE
 #include "os_memmap.h"
 
-/* Global Function Implementation */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_TASK_INTERNAL_H */
+#endif /* RT_FRAMEWORK_INC_OS_TASK_INTERNAL_H */

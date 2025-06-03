@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_EVENT_H
-#define AUTOSAROS_INC_OS_EVENT_H
+#ifndef RT_FRAMEWORK_INC_OS_EVENT_H
+#define RT_FRAMEWORK_INC_OS_EVENT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,18 +23,8 @@ extern "C" {
 /* Including File */
 #include "os_event_internal.h"
 
-/* Global Macro Definition */
-
-/* Global Enumeration Definition */
-
-/* Global Type & Structure Definition */
-
-/* Global Function Declaration */
-
-/* Global Function Implementation */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_EVENT_H */
+#endif /* RT_FRAMEWORK_INC_OS_EVENT_H */

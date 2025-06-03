@@ -1,0 +1,132 @@
+/*
+ * Copyright (c) 2025 Li Auto Inc. and its affiliates
+ * Licensed under the Apache License, Version 2.0(the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Description: task Configuration
+ * AutoGenerate Code, DO NOT EDIT!!!
+ * {{get_generation_time()}}
+ * {{get_project_name()}}
+ * {{get_vcos_version()}}
+ */
+
+/* Including File */
+#include <nuttx/config.h>
+#include "os_thread_types.h"
+#include "task_cfg.h"
+#include "stack_cfg.h"
+#include "os_context.h"
+#include "os_compiler_cfg.h"
+#include "application_cfg.h"
+#include "os_core.h"
+#include "core_cfg.h"
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+#include "memory_protection_cfg.h"
+#endif
+
+/* Local Enumeration Definition */
+
+/* Local type & Structure Definition */
+
+/* global Variable Definition */
+
+/* Local Variable Definition */
+
+/* Local Function Declaration */
+
+/* Local Function Implementation */
+
+/* global Function Implementation */
+
+{%- set task_cfg = get_task_cfg() %}
+{%- set app_cfg = get_app_cfg() %}
+
+{%- for app in app_cfg %}
+    {%- if app_cfg[app]["AppTaskList"] %}
+        {%- for task in app_cfg[app]["AppTaskList"] %}
+        {%- set bsw_appname = app_cfg[app]["BswAppName"] %}
+        {%- set t_cfg = task.upper() + "_CFG" %}
+
+DeclareThreadStack({{task_cfg[task]["TaskStackSection"]}}, {{t_cfg}}, {{t_cfg}}_STACK_SIZE);
+{%- if task_cfg[task]["TaskType"] == 'BASIC' %}
+DeclareBasicTask(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{t_cfg}}) = {
+{%- else %}
+DeclareExtendedTask(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{t_cfg}}) = {
+{%- endif %}
+    /* .context      = */
+    {
+        /* .instance             = */            &TASKOBJVAR({{t_cfg}}),
+        /* .instance_name        = */            "{{task}}",
+        /* .core                = */             &OSCORECFGVAR(Os_Core{{app_cfg[bsw_appname]['CoreNumber']}}),
+        /* .int_api_state         = */           &(OSCOREOBJVAR(Os_Core{{app_cfg[bsw_appname]['CoreNumber']}}).int_api_state),
+        /* .arch_ctx_cfg      = */
+        {
+            /* .stack_addr       = */            (OsStackAddrType)THREADSTACKVAR({{t_cfg}}),
+            /* .stack_size       = */            (OsStackSizeType)THREADSTACKSIZEVAR({{t_cfg}}_STACK_SIZE),
+            /* .entry_addr       = */            (os_context_entry_t)&os_task_{{task.lower()}},
+            /* .exit_addr        = */            (os_context_exit_t)NULL_PTR,
+            /* .entry_param      = */            (os_context_entry_para_t)NULL_PTR,
+        },
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
+        /* .app_owner_cfg        = */            &OSAPPCFGVAR({{app}}),
+        {%- set access_app = task_cfg[task]["TaskAccessApp"] + [app] %}
+        {%- set access_str = get_access_app_mask(access_app, index_size=50) %}
+        /* .access_app_mask   = */               ({{access_str}}),
+#endif /* #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1) */
+        /* .initial_ctx_id    = */            OS_TASK_CONTEXT_ID,
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+        /* .mpu_access_right  = */              &{{task.lower()}}_access_right,
+#endif
+    },
+    /* .base_priority            = */            {{t_cfg}}_PRIORITY,
+    /* .task_id                  = */            OS_TASK_{{task.upper()}}_ID,
+    /* .autostart_mode           = */            {{task_cfg[task]["TaskAutostart"]}},
+    /* .activation_limit         = */            {{task_cfg[task]["TaskActivation"]}},
+{%- if task_cfg[task]["TaskType"] == 'EXTENDED' %}
+    /* .is_extended              = */            TRUE,
+{%- else %}
+    /* .is_extended              = */            FALSE,
+{%- endif %}
+};
+        {%- endfor %}
+    {%- endif %}
+{%- endfor %}
+
+
+#define OS_START_SEC_CONST
+#include "os_memmap.h"
+{%- for app, app_val in app_cfg.items() %}
+    {%- if app_val["AppTaskList"] %}
+
+CONSTP2CONST(os_task_cfg_t, AUTOMATIC, OS_CONST) {{app_val["AppTaskTable"]}}[] = {
+        {%- for task in app_cfg[app]["AppTaskList"] %}
+    &TASKCFGVAR({{task.upper()}}_CFG),
+        {%- endfor %}
+};
+
+CONST(OsObjIndexType, OS_CONST) {{app_val["AppTaskTable"]}}_size = NELEMENTS({{app_val["AppTaskTable"]}});
+    {%- endif %}
+{%- endfor %}
+
+#define OS_STOP_SEC_CONST
+#include "os_memmap.h"
+
+DeclareOsRefTable(OS_CONST_SECTION, task, OS_TASK_CNT) = {
+{%- for app in app_cfg %}
+    {%- for task in app_cfg[app]["AppTaskList"] %}
+    &TASKCFGVAR({{task.upper()}}_CFG),
+    {%- endfor %}
+{%- endfor %}
+};
+

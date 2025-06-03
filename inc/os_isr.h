@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_ISR_H
-#define AUTOSAROS_INC_OS_ISR_H
+#ifndef RT_FRAMEWORK_INC_OS_ISR_H
+#define RT_FRAMEWORK_INC_OS_ISR_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,14 +34,12 @@ extern "C" {
 /* Global Macro Definition */
 
 /*! 声明ISR */
-#define DeclareISR(section, core, isr)                                                                                 \
-	OS_LINK_ENTRY_DECLARE(section, os_obj, os_isr_inst_t, core##isr);                                               \
-	OS_LINK_ENTRY_DECLARE(section, os_obj_context, os_ctx_inst_t, core##isr);                                    \
-	OS_LINK_ENTRY_DECLARE(.rodata, os_isr, os_isr_cfg_t, core##isr)
-#define DeclareCounterISR(section, core, isr)                                                                            \
-	OS_LINK_ENTRY_DECLARE(section, os_obj, os_isr_inst_t, core##isr);                                               \
-	OS_LINK_ENTRY_DECLARE(section, os_obj_context, os_ctx_inst_t, core##isr);                                    \
-	OS_LINK_ENTRY_DECLARE(.rodata, os_isr, os_counter_isr_cfg_t, core##isr)
+#define DeclareISR(section_const, section_var, core, isr)                                 \
+	OS_LINK_ENTRY_DECLARE(section_var, os_obj, os_isr_inst_t, core##isr);                 \
+	OS_LINK_ENTRY_DECLARE(section_const, os_isr, const os_isr_cfg_t, core##isr)
+#define DeclareCounterISR(section_const, section_var, core, isr)                          \
+	OS_LINK_ENTRY_DECLARE(section_var, os_obj, os_isr_inst_t, core##isr);                 \
+	OS_LINK_ENTRY_DECLARE(section_const, os_isr, const os_counter_isr_cfg_t, core##isr)
 
 #define ISRCFGVAR(core, isr) OS_LINK_ENTRY_NAME(os_isr, core##isr)
 #define ISROBJVAR(core, isr) OS_LINK_ENTRY_NAME(os_obj, core##isr)
@@ -50,4 +48,4 @@ extern "C" {
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_ISR_H */
+#endif /* RT_FRAMEWORK_INC_OS_ISR_H */

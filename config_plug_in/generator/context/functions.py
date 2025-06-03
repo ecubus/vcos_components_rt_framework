@@ -13,10 +13,12 @@
 #  limitations under the License.
 ############################################################################
 
-from rt_framework.config_plug_in.generator import utils
+from components.rt_framework.config_plug_in.generator import utils
 from func_module.generator.common.common import FunctionBase
+from components.memory.mempool.config_plug_in.generator.utils import get_os_mempool_all_config_dict
 from jinja2 import pass_context
 from decimal import Decimal
+from collections import defaultdict
 
 
 class Function(FunctionBase):
@@ -35,11 +37,7 @@ class Function(FunctionBase):
     @pass_context
     def get_os_module_list(context, module_path):
         """get os module list"""
-        os_mod_list = {}
-        for name, value in context["os_ui"].items():
-            if "DefinitionRef" in value and module_path in value["DefinitionRef"]:
-                os_mod_list[name] = value
-        return os_mod_list
+        return utils.get_module_list(context['os_ui'], module_path)
 
     @staticmethod
     @pass_context
@@ -94,48 +92,33 @@ class Function(FunctionBase):
         return log2hw_map
 
     @staticmethod
-    def resolve_ref_list(ref_type, cfg_dict):
-        ref_list = list()
-        # When only one reference is configurated,
-        # the ValueRef is an instance of str instead of list.
-        if isinstance(cfg_dict[ref_type]["ValueRef"], str):
-            ref_list.append(utils.get_last_item(
-                cfg_dict[ref_type]["ValueRef"]))
-        elif isinstance(cfg_dict[ref_type]["ValueRef"], list):
-            for item_dir in cfg_dict[ref_type]["ValueRef"]:
-                ref_list.append(utils.get_last_item(item_dir))
-        return sorted(list(set(ref_list)), key=lambda x: (len(x), x.lower()))
-
-    @staticmethod
     @pass_context
     @utils.cache_once(_cache)
     def get_task_cfg(context):
-        task_dict = Function.get_os_module_list(context, '/AUTOSAR/EcucDefs/Os/OsTask')
-        task_cfg = {}
+        task_dict = Function.get_os_module_list(context, '/Os/OsTask')
+        all_task_cfg = {}
 
         for name, value in task_dict.items():
-            task_cfg[name] = {}
+            task_cfg = {
+                "TaskType": value["OsTaskType"]["Value"],
+                "TaskPriority": value["OsTaskPriority"]["Value"],
+                "TaskActivation": value["OsTaskActivation"]["Value"],
+                "TaskStackSize": value["OsTaskStackSize"]["Value"],
+                "TaskStackSection": f'OS_{name.upper()}_STACK_SECTION',
+                "TaskAccessApp": utils.resolve_ref_list("OsTaskAccessingApplication", value),
+                "TaskEventRef": utils.resolve_ref_list("OsTaskEventRef", value),
+                "TaskResourceRef": utils.resolve_ref_list("OsTaskResourceRef", value),
+                "TaskUsesFpu": 1 if value["OsTaskUsesFpu"]["Value"] else 0,
+                "TaskAutostart": "FALSE"
+            }
+
             if "OsTaskAutostart" in value:
-                OsTaskAutostart = utils.get_last_item(
-                    value["OsTaskAutostart"]["OsTaskAppModeRef"]["ValueRef"])
-                task_cfg[name]["TaskAutostart"] = "TRUE" if OsTaskAutostart == "OSAUTOSTARTMODE" else "FALSE"
-            else:
-                task_cfg[name]["TaskAutostart"] = "FALSE"
-            task_cfg[name]["TaskType"] = value["OsTaskType"]["Value"]
+                task_auto_start = utils.get_last_item(value["OsTaskAutostart"]["OsTaskAppModeRef"]["ValueRef"])
+                task_cfg["TaskAutostart"] = "TRUE" if task_auto_start == "OSAUTOSTARTMODE" else "FALSE"
 
-            task_cfg[name]["TaskPriority"] = value["OsTaskPriority"]["Value"]
-            task_cfg[name]["TaskActivation"] = value["OsTaskActivation"]["Value"]
-            task_cfg[name]["TaskStackSize"] = value["OsTaskStackSize"]["Value"]
+            all_task_cfg[name] = task_cfg
 
-            task_cfg[name]["TaskAccessApp"] = \
-                Function.resolve_ref_list("OsTaskAccessingApplication", value)
-            task_cfg[name]["TaskEventRef"] = \
-                Function.resolve_ref_list("OsTaskEventRef", value)
-
-            # add OsTaskUsesFpu
-            task_cfg[name]["TaskUsesFpu"] = 1 if value["OsTaskUsesFpu"]["Value"] else 0
-
-        return task_cfg
+        return all_task_cfg
 
     @staticmethod
     @pass_context
@@ -151,87 +134,75 @@ class Function(FunctionBase):
     @utils.cache_once(_cache)
     def get_app_cfg(context):
         app_dict = Function.get_os_module_list(context, '/Os/OsApplication')
-        app_cfg = {}
+        all_app_cfg = {}
 
         # solve the basic information about application config
         for name, value in app_dict.items():
-            app_cfg[name] = {}
             app_coreid = value["OsApplicationCoreRef"]["ValueRef"][-1]
-            app_cfg[name]["CoreNumber"] = app_coreid
 
-            app_cfg[name]["AppTaskList"] = \
-                Function.resolve_ref_list("OsAppTaskRef", value)
-            app_cfg[name]["AppTaskTable"] = \
-                name.lower() + "_task_cfg_ref_table"
-            app_cfg[name]["AppCounterList"] = \
-                Function.resolve_ref_list("OsAppCounterRef", value)
-            app_cfg[name]["AppCounterTable"] = \
-                name.lower() + "_counter_cfg_ref_table"
-            app_cfg[name]["AppIsrList"] = \
-                Function.resolve_ref_list("OsAppIsrRef", value)
-            app_cfg[name]["AppIsrTable"] = \
-                name.lower() + "_isr_cfg_ref_table"
-            app_cfg[name]["AppScheduleTableList"] =\
-                Function.resolve_ref_list("OsAppScheduleTableRef", value)
-            app_cfg[name]["AppSchedTblTable"] = \
-                name.lower() + "_schedtable_cfg_ref_table"
-
-            app_cfg[name]["AppPrivileged"] = "TRUE" if value["OsIsPrivileged"]["Value"] else "FALSE"
-
-            app_cfg[name]["app_name"] = f"OS_CORE{app_coreid}_{name}"
-            app_cfg[name]["AppId"] = f"{app_cfg[name]['app_name'].upper()}_ID"
-            app_cfg[name]["AppInstSection"] = f"OS_{name.upper()}_VAR_NO_INIT_SECTION"
+            app_cfg = {
+                "CoreNumber": app_coreid,
+                "AppMemoryProtectionIdentifier": value["OsAppMemoryProtectionIdentifier"]["Value"],
+                "AppTaskList": utils.resolve_ref_list("OsAppTaskRef", value),
+                "AppTaskTable": name.lower() + "_task_cfg_ref_table",
+                "AppCounterList": utils.resolve_ref_list("OsAppCounterRef", value),
+                "AppCounterTable": name.lower() + "_counter_cfg_ref_table",
+                "AppIsrList": utils.resolve_ref_list("OsAppIsrRef", value),
+                "AppIsrTable": name.lower() + "_isr_cfg_ref_table",
+                "AppScheduleTableList": utils.resolve_ref_list("OsAppScheduleTableRef", value),
+                "AppSchedTblTable": name.lower() + "_schedtable_cfg_ref_table",
+                "AppPrivileged": "TRUE" if value["OsIsPrivileged"]["Value"] else "FALSE",
+                "AppId": f"OS_CORE{app_coreid}_{name.upper()}_ID",
+                "AppInstSection": f"OS_{name.upper()}_BSS_SECTION"
+            }
+            all_app_cfg[name] = app_cfg
 
         # get the mapping between coreid and bsw app
         core_bsw_app_dict = {}
         cores_list = Function.get_os_module_list(context, "/Os/OsCore")
         for value in cores_list.values():
             bsw_appname = utils.get_last_item(value["OsCoreBswApplicationRef"]["ValueRef"])
-            core_bsw_app_dict[app_cfg[bsw_appname]["CoreNumber"]] = bsw_appname
+            core_bsw_app_dict[all_app_cfg[bsw_appname]["CoreNumber"]] = bsw_appname
 
         # find the bsw app for every applition
         for name, value in app_dict.items():
-            app_cfg[name]["BswAppName"] = core_bsw_app_dict[app_cfg[name]["CoreNumber"]]
+            all_app_cfg[name]["BswAppName"] = core_bsw_app_dict[all_app_cfg[name]["CoreNumber"]]
 
-        return app_cfg
+        return all_app_cfg
 
     @staticmethod
     @pass_context
     def get_isr_cfg(context):
         isr_dict = Function.get_os_module_list(context, "/Os/OsIsr")
-        isr_cfg = {}
+        all_isr_cfg = {}
 
         for name, value in isr_dict.items():
-
-            isr_cfg[name] = {}
+            isr_cfg = {
+                'IsrEnableOnInit': "FALSE",
+                'IsrIntPriority': value["OsIsrInterruptPriority"]["Value"],
+                'IsrIntSource': value["OsIsrInterruptSource"]["Value"],
+                'IsrCategory': 'ISR_CAT0',
+                'IsrContext': 'OS_ISR0_CONTEXT_ID',
+                'IsrEntryFunc': value["OsIsrEntryFunctionName"]["Value"],
+                'IsrEntryParam': 'NULL_PTR'
+            }
 
             if value["OsIsrInitialEnableInterruptSource"]["Value"]:
-                isr_cfg[name]["IsrEnableOnInit"] = "TRUE"
-            else:
-                isr_cfg[name]["IsrEnableOnInit"] = "FALSE"
-
-
-            isr_cfg[name]["IsrIntPriority"] = value["OsIsrInterruptPriority"]["Value"]
-            isr_cfg[name]["IsrIntSource"] = value["OsIsrInterruptSource"]["Value"]
+                isr_cfg["IsrEnableOnInit"] = "TRUE"
 
             if value["OsIsrCategory"]["Value"] == "CATEGORY_2":
-                isr_cfg[name]["IsrCategory"] = "ISR_CAT2"
-                isr_cfg[name]["IsrContext"] = "OS_ISR2_CONTEXT_ID"
+                isr_cfg["IsrCategory"] = "ISR_CAT2"
+                isr_cfg["IsrContext"] = "OS_ISR2_CONTEXT_ID"
             elif value["OsIsrCategory"]["Value"] == "CATEGORY_1":
-                isr_cfg[name]["IsrCategory"] = "ISR_CAT1"
-                isr_cfg[name]["IsrContext"] = "OS_ISR1_CONTEXT_ID"
+                isr_cfg["IsrCategory"] = "ISR_CAT1"
+                isr_cfg["IsrContext"] = "OS_ISR1_CONTEXT_ID"
             elif value["OsIsrCategory"]["Value"] == "CATEGORY_TP":
-                isr_cfg[name]["IsrCategory"] = "ISR_TP"
-                isr_cfg[name]["IsrContext"] = "OS_TPISR_CONTEXT_ID"
-            else:
-                isr_cfg[name]["IsrCategory"] = "ISR_CAT0"
-                isr_cfg[name]["IsrContext"] = "OS_ISR0_CONTEXT_ID"
+                isr_cfg["IsrCategory"] = "ISR_TP"
+                isr_cfg["IsrContext"] = "OS_TPISR_CONTEXT_ID"
 
-            isr_cfg[name]["IsrEntryFunc"] = value["OsIsrEntryFunctionName"]["Value"]
-            # not supported value
-            isr_cfg[name]["IsrEntryParam"] = "NULL_PTR"
+            all_isr_cfg[name] = isr_cfg
 
-        return isr_cfg
+        return all_isr_cfg
 
     @staticmethod
     def solve_spinlock_order(spinlock_cfg):
@@ -282,15 +253,57 @@ class Function(FunctionBase):
             else:
                 cfg_i["LockType"] = "SPINLOCKCHECK_ENABLED"
 
-            cfg_i["Successor"] = Function.resolve_ref_list('OsSpinlockSuccessor', spin_val)
+            cfg_i["Successor"] = utils.resolve_ref_list('OsSpinlockSuccessor', spin_val)
 
             cfg_i["AccessingApplication"] = \
-                Function.resolve_ref_list('OsSpinlockAccessingApplication', spin_val)
-            spinlock_cfg.update({spin: cfg_i})
+                utils.resolve_ref_list('OsSpinlockAccessingApplication', spin_val)
+            spinlock_cfg[spin] = cfg_i
 
         Function.solve_spinlock_order(spinlock_cfg)
 
         return utils.sort_dict_by_key(spinlock_cfg)
+
+    @staticmethod
+    @pass_context
+    def get_resource_referenced_task(context, resource_name):
+        """
+        返回引用该Resource的所有Task的(task_name, priority)元组列表
+        """
+        task_cfg = Function.get_task_cfg(context)
+        referenced = []
+        for task_name, task_val in task_cfg.items():
+            res_refs = task_val.get("TaskResourceRef", [])
+            if isinstance(res_refs, str):
+                res_refs = [res_refs]
+            for res_ref in res_refs:
+                res_name = utils.get_last_item(res_ref)
+                if res_name == resource_name:
+                    prio = int(task_val.get("TaskPriority", 0))
+                    referenced.append((task_name, prio))
+        return referenced
+
+    @staticmethod
+    @pass_context
+    def get_resource_cfg(context):
+        resource_cfg = {}
+        resource_list = Function.get_os_module_list(context, "/Os/OsResource")
+        app_cfg = Function.get_app_cfg(context)
+        for res_name, res_val in resource_list.items():
+            cfg_i = {}
+            cfg_i["OsResourceAccessingApplication"] = utils.resolve_ref_list("OsResourceAccessingApplication", res_val)
+            core_id = '0'
+            if cfg_i["OsResourceAccessingApplication"]:
+                app_name = cfg_i["OsResourceAccessingApplication"][0]
+                core_id = Function.get_coreid_by_app_name(context, app_name)
+            cfg_i["CoreID"] = core_id
+            # CeilingPriority
+            referenced_tasks = Function.get_resource_referenced_task(context, res_name)
+            if referenced_tasks:
+                cfg_i["CeilingPriority"] = max(prio for _, prio in referenced_tasks) + 1
+            else:
+                cfg_i["CeilingPriority"] = 1
+            resource_cfg[res_name] = cfg_i
+        return utils.sort_dict_by_key(resource_cfg)
 
     @staticmethod
     @pass_context
@@ -352,81 +365,12 @@ class Function(FunctionBase):
 
     @staticmethod
     @pass_context
-    def get_hardware_timer_channel(context, hardware_timer_name):
-        for name, value in context["os_ui"].items():
-            if "DefinitionRef" in value and "/Os/OsPublishedInformation" in value["DefinitionRef"]:
-                publish_info = value["OsDerivativeInformation"]
-                break
-        return publish_info.get(hardware_timer_name,"").get("OsHardWareTimerChannel",{}).get("Value","")
-
-    @staticmethod
-    @pass_context
-    def get_hardware_timer_frequence(context, hardware_timer_channel_name):
-        for name, value in context["os_ui"].items():
-            if "DefinitionRef" in value and "/Os/OsPublishedInformation" in value["DefinitionRef"]:
-                publish_info = value["OsDerivativeInformation"]
-                break
-        return publish_info[hardware_timer_channel_name]["OsHardWareTimerClockFrequency"]["Value"]
-
-    @staticmethod
-    @pass_context
-    def check_interruptsource_correspond_to_timer(context, isr_name, hardware_timer_channel_name):
-        target = Function.get_target(context)
-        isr_cfg = Function.get_isr_cfg(context)
-        if target in ("AURIX2G_TC397"):
-            if hardware_timer_channel_name == "STM0":
-                return isr_cfg[isr_name]["IsrIntSource"] == 768
-            elif hardware_timer_channel_name == "STM1":
-                return isr_cfg[isr_name]["IsrIntSource"] == 776
-            elif hardware_timer_channel_name == "STM2":
-                return isr_cfg[isr_name]["IsrIntSource"] == 784
-            elif hardware_timer_channel_name == "STM3":
-                return isr_cfg[isr_name]["IsrIntSource"] == 792
-            elif hardware_timer_channel_name == "STM4":
-                return isr_cfg[isr_name]["IsrIntSource"] == 800
-            elif hardware_timer_channel_name == "STM5":
-                return isr_cfg[isr_name]["IsrIntSource"] == 808
-            else:
-                return False
-        elif target in ("E3650"):
-            return isr_cfg[isr_name]["IsrIntSource"] == 30
-        else:
-            raise TypeError("没有适配的架构！")
-
-    @staticmethod
-    @pass_context
-    def check_isrhandler_correspond_to_timer(context, isr_name):
-        target = Function.get_target(context)
-        isr_cfg = Function.get_isr_cfg(context)
-        return True
-
-    @staticmethod
-    @pass_context
-    def check_isr_is_initialenable(context, isr_name):
-        target = Function.get_target(context)
-        isr_cfg = Function.get_isr_cfg(context)
-        return isr_cfg[isr_name]["IsrEnableOnInit"] == "FALSE"
-        return True
-
-    @staticmethod
-    @pass_context
     def get_isr_counter(context):
-        target = Function.get_target(context)
         isr_counter = {}
         counter_list = Function.get_os_module_list(context, "/Os/OsCounter")
         for counter_name, counter_value in counter_list.items():
             if "OsDriver" in counter_value:
                 isr_name = utils.get_last_item(counter_value["OsDriver"]["OsIsrRef"]["ValueRef"])
-                if isr_name in isr_counter:
-                    raise Exception(f"{counter_name} OsIsrRef is used to multiple counter !!!!!!!!\n")
-                HardwareTimerName = utils.get_last_item(counter_value["OsDriver"]["OsHardwareTimerChannelRef"]["ValueRef"])
-                HardwareTimerChannelName = Function.get_hardware_timer_channel(context, HardwareTimerName)
-                if Function.check_interruptsource_correspond_to_timer(context, isr_name, HardwareTimerChannelName) == False:
-                    raise Exception(f"{counter_name} OsIsrRef does not correspond to the OsHardwareTimerChannelRef !!!!!!!!\n")
-                if Function.check_isrhandler_correspond_to_timer(context, isr_name) == False:
-                    raise Exception(f"{counter_name} OsIsrRef handler is invailed !!!!!!!!\n")
-                if Function.check_isr_is_initialenable(context, isr_name) == False:
-                    raise Exception(f"{counter_name} OsIsrRef must not be InitialEnable !!!!!!!!\n")
                 isr_counter.update({isr_name : counter_name})
         return isr_counter
 
@@ -455,8 +399,6 @@ class Function(FunctionBase):
             CounterMaxAllowedValue = counter_value["OsCounterMaxAllowedValue"]["Value"]
             CounterMinCycle = counter_value["OsCounterMinCycle"]["Value"]
             SecondsPerTick = counter_value["OsSecondsPerTick"]["Value"]
-            if CounterType == "HARDWARE" and "OsDriver" not in counter_value:
-                raise Exception(f"{counter_name} is {CounterType} Counter, which must have OsDriver !!!!!!!!\n")
             if CounterType == "SOFTWARE":
                 TimerType = "TIMERTYPE_SOFTWARE"
                 CounterTicksPerBase = 1
@@ -466,16 +408,10 @@ class Function(FunctionBase):
                 TimerType = "TIMERTYPE_HIGH_RESOLUTION"
                 if CounterMaxAllowedValue != 1073741823:
                     CounterMaxAllowedValue = 1073741823
-                HardwareTimerName = utils.get_last_item(counter_value["OsDriver"]["OsHardwareTimerChannelRef"]["ValueRef"])
-                HardwareTimerChannelName = Function.get_hardware_timer_channel(context, HardwareTimerName)
-                HardwareTimer = float(Decimal("0.000001") / Decimal(str(Function.get_hardware_timer_frequence(context, HardwareTimerName))))
-                if (SecondsPerTick > HardwareTimer + 0.00000001) or (SecondsPerTick < HardwareTimer - 0.00000001):
-                    raise Exception(f"{counter_name} OsSecondsPerTick must be set to {HardwareTimer} !!!!!!!!\n")
-                    SecondsPerTick = HardwareTimer
                 CounterTicksPerBase = 1
                 IsrRef = utils.get_last_item(counter_value["OsDriver"]["OsIsrRef"]["ValueRef"])
                 CounterMaxInternalTickValue = 4 * CounterMaxAllowedValue + 3
-            CounterAccessApp = Function.resolve_ref_list('OsCounterAccessingApplication', counter_value)
+            CounterAccessApp = utils.resolve_ref_list('OsCounterAccessingApplication', counter_value)
             if counter_name in action_cnt:
                 ActionCnt = action_cnt[counter_name] + 2
             else:
@@ -580,7 +516,7 @@ class Function(FunctionBase):
             # Accessing application
             if "OsSchTblAccessingApplication" in value:
                 schedtable_cfg[name]["OsSchTblAccessingApplication"] = \
-                    Function.resolve_ref_list("OsSchTblAccessingApplication", value)
+                    utils.resolve_ref_list("OsSchTblAccessingApplication", value)
             else:
                 schedtable_cfg[name]["OsSchTblAccessingApplication"] = []
 
@@ -677,185 +613,355 @@ class Function(FunctionBase):
 
     @staticmethod
     @pass_context
-    def get_memmap_module_name(context):
-        return context['module']
+    def get_osos_cfg(context):
+        osos_cfg = {}
+        for name, value in context["os_ui"].items():
+            if "DefinitionRef" in value and "/EcucDefs/Os/OsOS" in value["DefinitionRef"]:
+                osos_cfg.update({"ScalabilityClass": value.get("OsScalabilityClass","").get("Value","")})
+                break
+        return osos_cfg
+
+    @staticmethod
+    @pass_context
+    def get_core_mpu_cfg(context, coreid, region_cfg):
+        core_mpu_cfg = {}
+        target = Function.get_target(context)
+        core_mpu_cfg.update({"data_region":{}})
+        core_mpu_cfg.update({"code_region":{}})
+        for region_name, region_value in region_cfg.items():
+            if '' == region_value["MemoryRegionOwner"] and "Core"+ str(coreid) in region_value["MemoryRegionProtectionUnit"]:
+                if target not in ("AURIX2G_TC397") or '_R' in region_value["MemoryRegionAccessRights"]:
+                    core_mpu_cfg["data_region"].update({region_name:region_value})
+                if target in ("AURIX2G_TC397") and ('_X' in region_value["MemoryRegionAccessRights"] or '_RX' in region_value["MemoryRegionAccessRights"]):
+                    core_mpu_cfg["code_region"].update({region_name:region_value})
+        core_mpu_cfg["data_region"].update({"data_region_cnt":(len(core_mpu_cfg["data_region"]) + 1)})
+        core_mpu_cfg["data_region"].update({"data_region_start":0})
+        core_mpu_cfg["data_region"].update({"data_region_end":core_mpu_cfg["data_region"]["data_region_cnt"]})
+        core_mpu_cfg["code_region"].update({"code_region_cnt":len(core_mpu_cfg["code_region"])})
+        core_mpu_cfg["code_region"].update({"code_region_start":0})
+        core_mpu_cfg["code_region"].update({"code_region_end":core_mpu_cfg["code_region"]["code_region_cnt"]})
+        return core_mpu_cfg
+
+    @staticmethod
+    @pass_context
+    def get_app_mpu_cfg(context, coreid, region_cfg, core_mpu_cfg):
+        app_cfg = Function.get_app_cfg(context)
+        set0_mpu_cfg = {}
+        target = Function.get_target(context)
+        set0_mpu_cfg.update({"data_region":{}})
+        set0_mpu_cfg.update({"code_region":{}})
+        app_mpu_cfg = {}
+        for app_name, app_value in app_cfg.items():
+            if str(coreid) == app_value["CoreNumber"]:
+                app_mpu_cfg.update({app_name:{}})
+                app_mpu_cfg[app_name].update({"data_region":{}})
+                app_mpu_cfg[app_name].update({"code_region":{}})
+                for region_name, region_value in region_cfg.items():
+                    if app_name == region_value["MemoryRegionOwner"] and "Core"+ str(coreid) in region_value["MemoryRegionProtectionUnit"]:
+                        if target not in ("AURIX2G_TC397") or '_R' in region_value["MemoryRegionAccessRights"]:
+                            if 0 == app_value["AppMemoryProtectionIdentifier"]:
+                                set0_mpu_cfg["data_region"].update({region_name:region_value})
+                            else:
+                                app_mpu_cfg[app_name]["data_region"].update({region_name:region_value})
+                        if target in ("AURIX2G_TC397") and ('_X' in region_value["MemoryRegionAccessRights"] or '_RX' in region_value["MemoryRegionAccessRights"]):
+                            if 0 == app_value["AppMemoryProtectionIdentifier"]:
+                                set0_mpu_cfg["code_region"].update({region_name:region_value})
+                            else:
+                                app_mpu_cfg[app_name]["code_region"].update({region_name:region_value})
+        set0_mpu_cfg["data_region"].update({"data_region_cnt":len(set0_mpu_cfg["data_region"])})
+        set0_mpu_cfg["data_region"].update({"data_region_start":core_mpu_cfg["data_region"]["data_region_end"]})
+        set0_mpu_cfg["data_region"].update({"data_region_end":(core_mpu_cfg["data_region"]["data_region_end"] + set0_mpu_cfg["data_region"]["data_region_cnt"])})
+        set0_mpu_cfg["code_region"].update({"code_region_cnt":len(set0_mpu_cfg["code_region"])})
+        set0_mpu_cfg["code_region"].update({"code_region_start":core_mpu_cfg["code_region"]["code_region_end"]})
+        set0_mpu_cfg["code_region"].update({"code_region_end":(core_mpu_cfg["code_region"]["code_region_end"] + set0_mpu_cfg["code_region"]["code_region_cnt"])})
+        for app_name, app_value in app_cfg.items():
+            if str(coreid) == app_value["CoreNumber"]:
+                app_mpu_cfg[app_name]["data_region"].update({"data_region_cnt":len(app_mpu_cfg[app_name]["data_region"])})
+                app_mpu_cfg[app_name]["data_region"].update({"data_region_start":set0_mpu_cfg["data_region"]["data_region_end"]})
+                app_mpu_cfg[app_name]["data_region"].update({"data_region_end":(set0_mpu_cfg["data_region"]["data_region_end"] + app_mpu_cfg[app_name]["data_region"]["data_region_cnt"])})
+                app_mpu_cfg[app_name]["code_region"].update({"code_region_cnt":len(app_mpu_cfg[app_name]["code_region"])})
+                app_mpu_cfg[app_name]["code_region"].update({"code_region_start":set0_mpu_cfg["code_region"]["code_region_end"]})
+                app_mpu_cfg[app_name]["code_region"].update({"code_region_end":(set0_mpu_cfg["code_region"]["code_region_end"] + app_mpu_cfg[app_name]["code_region"]["code_region_cnt"])})
+        return set0_mpu_cfg, app_mpu_cfg
+
+    @staticmethod
+    @pass_context
+    def get_task_mpu_cfg(context, coreid, region_cfg, set0_mpu_cfg, app_mpu_cfg):
+        app_cfg = Function.get_app_cfg(context)
+        task_mpu_cfg = {}
+        target = Function.get_target(context)
+        for app_name, app_value in app_cfg.items():
+            if str(coreid) == app_value["CoreNumber"]:
+                for task_name in app_value["AppTaskList"]:
+                    task_mpu_cfg.update({task_name:{}})
+                    task_mpu_cfg[task_name].update({"data_region":{}})
+                    task_mpu_cfg[task_name].update({"code_region":{}})
+                    for region_name, region_value in region_cfg.items():
+                        if task_name == region_value["MemoryRegionOwner"] and "Core"+ str(coreid) in region_value["MemoryRegionProtectionUnit"]:
+                            if target not in ("AURIX2G_TC397") or '_R' in region_value["MemoryRegionAccessRights"]:
+                                task_mpu_cfg[task_name]["data_region"].update({region_name:region_value})
+                            if target in ("AURIX2G_TC397") and ('_X' in region_value["MemoryRegionAccessRights"] or '_RX' in region_value["MemoryRegionAccessRights"]):
+                                task_mpu_cfg[task_name]["code_region"].update({region_name:region_value})
+                    task_mpu_cfg[task_name]["data_region"].update({"data_region_cnt":len(task_mpu_cfg[task_name]["data_region"])})
+                    task_mpu_cfg[task_name]["data_region"].update({"data_region_start":app_mpu_cfg[app_name]["data_region"]["data_region_end"]})
+                    task_mpu_cfg[task_name]["data_region"].update({"data_region_end":(app_mpu_cfg[app_name]["data_region"]["data_region_end"] + task_mpu_cfg[task_name]["data_region"]["data_region_cnt"])})
+                    task_mpu_cfg[task_name]["code_region"].update({"code_region_cnt":len(task_mpu_cfg[task_name]["code_region"])})
+                    task_mpu_cfg[task_name]["code_region"].update({"code_region_start":app_mpu_cfg[app_name]["code_region"]["code_region_end"]})
+                    task_mpu_cfg[task_name]["code_region"].update({"code_region_end":(app_mpu_cfg[app_name]["code_region"]["code_region_end"] + task_mpu_cfg[task_name]["code_region"]["code_region_cnt"])})
+        task_name = "Os_PreStart_Task_Core" + str(coreid)
+        task_mpu_cfg.update({task_name:{}})
+        task_mpu_cfg[task_name].update({"data_region":{}})
+        task_mpu_cfg[task_name].update({"code_region":{}})
+        for region_name, region_value in region_cfg.items():
+            if task_name == region_value["MemoryRegionOwner"] and "Core"+ str(coreid) in region_value["MemoryRegionProtectionUnit"]:
+                if target not in ("AURIX2G_TC397") or '_R' in region_value["MemoryRegionAccessRights"]:
+                    task_mpu_cfg[task_name]["data_region"].update({region_name:region_value})
+                if target in ("AURIX2G_TC397") and ('_X' in region_value["MemoryRegionAccessRights"] or '_RX' in region_value["MemoryRegionAccessRights"]):
+                    task_mpu_cfg[task_name]["code_region"].update({region_name:region_value})
+        task_mpu_cfg[task_name]["data_region"].update({"data_region_cnt":len(task_mpu_cfg[task_name]["data_region"])})
+        task_mpu_cfg[task_name]["data_region"].update({"data_region_start":set0_mpu_cfg["data_region"]["data_region_end"]})
+        task_mpu_cfg[task_name]["data_region"].update({"data_region_end":(set0_mpu_cfg["data_region"]["data_region_end"] + task_mpu_cfg[task_name]["data_region"]["data_region_cnt"])})
+        task_mpu_cfg[task_name]["code_region"].update({"code_region_cnt":len(task_mpu_cfg[task_name]["code_region"])})
+        task_mpu_cfg[task_name]["code_region"].update({"code_region_start":set0_mpu_cfg["code_region"]["code_region_end"]})
+        task_mpu_cfg[task_name]["code_region"].update({"code_region_end":(set0_mpu_cfg["code_region"]["code_region_end"] + task_mpu_cfg[task_name]["code_region"]["code_region_cnt"])})
+        return task_mpu_cfg
+
+    @staticmethod
+    @pass_context
+    def get_isr_mpu_cfg(context,coreid, region_cfg, app_mpu_cfg):
+        app_cfg = Function.get_app_cfg(context)
+        isr_mpu_cfg = {}
+        target = Function.get_target(context)
+        for app_name, app_value in app_cfg.items():
+            if str(coreid) == app_value["CoreNumber"]:
+                for isr_name in app_value["AppIsrList"]:
+                    isr_mpu_cfg.update({isr_name:{}})
+                    isr_mpu_cfg[isr_name].update({"data_region":{}})
+                    isr_mpu_cfg[isr_name].update({"code_region":{}})
+                    for region_name, region_value in region_cfg.items():
+                        if isr_name == region_value["MemoryRegionOwner"] and "Core"+ str(coreid) in region_value["MemoryRegionProtectionUnit"]:
+                            if target not in ("AURIX2G_TC397") or '_R' in region_value["MemoryRegionAccessRights"]:
+                                isr_mpu_cfg[isr_name]["data_region"].update({region_name:region_value})
+                            if target in ("AURIX2G_TC397") and ('_X' in region_value["MemoryRegionAccessRights"] or '_RX' in region_value["MemoryRegionAccessRights"]):
+                                isr_mpu_cfg[isr_name]["code_region"].update({region_name:region_value})
+                    isr_mpu_cfg[isr_name]["data_region"].update({"data_region_cnt":len(isr_mpu_cfg[isr_name]["data_region"])})
+                    isr_mpu_cfg[isr_name]["data_region"].update({"data_region_start":app_mpu_cfg[app_name]["data_region"]["data_region_end"]})
+                    isr_mpu_cfg[isr_name]["data_region"].update({"data_region_end":(app_mpu_cfg[app_name]["data_region"]["data_region_end"] + isr_mpu_cfg[isr_name]["data_region"]["data_region_cnt"])})
+                    isr_mpu_cfg[isr_name]["code_region"].update({"code_region_cnt":len(isr_mpu_cfg[isr_name]["code_region"])})
+                    isr_mpu_cfg[isr_name]["code_region"].update({"code_region_start":app_mpu_cfg[app_name]["code_region"]["code_region_end"]})
+                    isr_mpu_cfg[isr_name]["code_region"].update({"code_region_end":(app_mpu_cfg[app_name]["code_region"]["code_region_end"] + isr_mpu_cfg[isr_name]["code_region"]["code_region_cnt"])})
+        return isr_mpu_cfg
+
+    @staticmethod
+    @pass_context
+    def get_mpu_cfg(context):
+        region_list = Function.get_os_module_list(context, "/Os/OsMemoryProtection")
+        if region_list:
+            region_list	 = region_list["OsMemoryProtection"]
+        osos_cfg = Function.get_osos_cfg(context)
+        region_cfg = {}
+        mpu_cfg = {}
+        extern_addr_list = list()
+        if osos_cfg.get("ScalabilityClass","") in ("SC3","SC4"):
+            for region_name, region_value in region_list.items():
+                if "DefinitionRef" == region_name:
+                    continue
+                region_cfg.update({region_name:{}})
+                addr_str = region_value.get("OsMemoryRegionStartAddress",{}).get("Value","")
+                if addr_str.startswith("0x") or addr_str.startswith("0X"):
+                    region_cfg[region_name]["MemoryRegionStartAddress"] = "(uint32)" + addr_str + "uL"
+                else:
+                    region_cfg[region_name]["MemoryRegionStartAddress"] = "(uint32)&" + addr_str
+                    extern_addr_list.append("extern uint8 " + addr_str + "[]")
+                addr_str = region_value.get("OsMemoryRegionEndAddress",{}).get("Value","")
+                if addr_str.startswith("0x") or addr_str.startswith("0X"):
+                    region_cfg[region_name]["MemoryRegionEndAddress"] = "(uint32)" + addr_str + "uL"
+                else:
+                    region_cfg[region_name]["MemoryRegionEndAddress"] = "(uint32)&" + addr_str
+                    extern_addr_list.append("extern uint8 " + addr_str + "[]")
+                region_cfg[region_name]["MemoryRegionIndex"] = region_value.get("OsMemoryRegionIndex",{}).get("Value","")
+                region_cfg[region_name]["MemoryRegionOwner"] = utils.get_last_item(region_value.get("OsMemoryRegionOwner",{}).get("ValueRef",""))
+                region_cfg[region_name]["MemoryRegionProtectionUnit"] = utils.get_last_item(region_value.get("OsMemoryRegionProtectionUnit",{}).get("ValueRef",""))
+                region_cfg[region_name]["MemoryRegionAccessRights"] = utils.get_last_item(region_value.get("OsMemoryRegionAccessRights",{}).get("ValueRef",""))
+                region_cfg[region_name]["MemoryRegionFlags"] = utils.get_last_item(region_value.get("OsMemoryRegionFlags",{}).get("ValueRef",""))
+
+            core_cnt = Function.get_core_cnt(context)
+            for coreid in range(core_cnt):
+                mpu_cfg.update({coreid:{}})
+                core_mpu_cfg = Function.get_core_mpu_cfg(context, coreid, region_cfg)
+                set0_mpu_cfg, app_mpu_cfg = Function.get_app_mpu_cfg(context, coreid, region_cfg, core_mpu_cfg)
+                task_mpu_cfg = Function.get_task_mpu_cfg(context, coreid, region_cfg, set0_mpu_cfg, app_mpu_cfg)
+                isr_mpu_cfg = Function.get_isr_mpu_cfg(context, coreid, region_cfg, app_mpu_cfg)
+                mpu_cfg[coreid]["core_mpu_cfg"] = core_mpu_cfg
+                mpu_cfg[coreid]["set0_mpu_cfg"] = set0_mpu_cfg
+                mpu_cfg[coreid]["app_mpu_cfg"] = app_mpu_cfg
+                mpu_cfg[coreid]["task_mpu_cfg"] = task_mpu_cfg
+                mpu_cfg[coreid]["isr_mpu_cfg"] = isr_mpu_cfg
+            mpu_cfg["extern_addr_list"] = sorted(list(set(extern_addr_list)))
+
+        return mpu_cfg
+
+    @staticmethod
+    @pass_context
+    def get_app_name_list_by_core(context, coreid):
+        ret = []
+        app_list = Function.get_app_cfg(context)
+        for app_name, app_cfg in app_list.items():
+            if int(app_cfg['CoreNumber']) == coreid:
+                ret.append(app_name)
+        return ret
+
+    @staticmethod
+    @pass_context
+    def get_coreid_by_app_name(context, app_name):
+        """
+        通过应用名称获取对应的核号
+        """
+        app_cfg = Function.get_app_cfg(context)
+        if app_name in app_cfg:
+            return app_cfg[app_name]['CoreNumber']
+        return ''
 
     @staticmethod
     @pass_context
     @utils.cache_once(_cache)
-    def get_memmap_cfg(context):
-        memmap_dict = Function.get_os_module_list(context, '/AUTOSAR/EcucDefs/Os/OsMemmoryMap')['OsMemmoryMap']
-        internal_layer = ''
-        layer_dict = {}
-        module_dict = {}
-        for key, mem_cfg in memmap_dict.items():
-            if not isinstance(mem_cfg, dict):
-                continue
-            item_type = mem_cfg.get('DefinitionRef', '')
-            if item_type.endswith('OsMemmapModule'):
-                mod_dict = {
-                    'use_calib': mem_cfg['OsMemmapUseCalibration']['Value'],
-                    'apps': Function.resolve_ref_list('OsMemmapApplicationRef', mem_cfg),
-                    'layer': utils.get_last_item(mem_cfg['OsMemmapUseLayer']['ValueRef'])
-                }
-                module_dict[key.lower()] = mod_dict
+    def get_os_hook_cfg(context):
+        OsOS_cfg = Function.get_os_module_list(context, "/Os/OsOS")
+        os_hooks = {}
+        os_hooks = OsOS_cfg.get("OsOS",{}).get("OsHooks",{})
+        os_hooks_cfg = {}
+        os_hooks_cfg["os_errorhook"] = {}
+        os_hooks_cfg["os_protectionhook"] = {}
+        os_hooks_cfg["os_shutdownhook"] = {}
+        os_hooks_cfg["os_startuphook"] = {}
+        os_hooks_cfg["os_errorhook"]["enabled"] = False
+        os_hooks_cfg["os_protectionhook"]["enabled"] = False
+        os_hooks_cfg["os_shutdownhook"]["enabled"] = False
+        os_hooks_cfg["os_startuphook"]["enabled"] = False
+        os_hook_cnt = 0
 
-            elif item_type.endswith('OsMemmapLayer'):
-                layer = {
-                    'internal': mem_cfg['OsInternalLayer']['Value']
-                }
-                if layer['internal']:
-                    internal_layer = key
-                layer_dict[key.lower()] = layer
-        memmap_cfg = {
-            "layers": layer_dict,
-            "modules": module_dict,
-            "intenral_layer": internal_layer
-        }
+        if os_hooks:
+            os_hooks_cfg["os_errorhook"]["enabled"] = os_hooks.get("OsErrorHook",{}).get("Value","")
+            os_hooks_cfg["os_errorhook"]["stack_size"] = os_hooks.get("OsErrorHookStackSize",{}).get("Value","")
+            os_hooks_cfg["os_errorhook"]["nesting_mask"] = "OS_ERRORHOOK_HOOKNESTINGMASK"
+            if os_hooks_cfg["os_errorhook"]["enabled"]:
+                os_hook_cnt = os_hook_cnt + 1
 
-        return memmap_cfg
+            os_hooks_cfg["os_protectionhook"]["enabled"] = os_hooks.get("OsProtectionHook",{}).get("Value","")
+            os_hooks_cfg["os_protectionhook"]["stack_size"] = os_hooks.get("OsProtectionHookStackSize",{}).get("Value","")
+            os_hooks_cfg["os_protectionhook"]["nesting_mask"] = "OS_PROTECTIONHOOK_HOOKNESTINGMASK"
+            if os_hooks_cfg["os_protectionhook"]["enabled"]:
+                os_hook_cnt = os_hook_cnt + 1
 
+            os_hooks_cfg["os_shutdownhook"]["enabled"] = os_hooks.get("OsShutdownHook",{}).get("Value","")
+            os_hooks_cfg["os_shutdownhook"]["stack_size"] = os_hooks.get("OsShutdownHookStackSize",{}).get("Value","")
+            os_hooks_cfg["os_shutdownhook"]["nesting_mask"] = "OS_SHUTDOWNHOOK_HOOKNESTINGMASK"
+            if os_hooks_cfg["os_shutdownhook"]["enabled"]:
+                os_hook_cnt = os_hook_cnt + 1
+
+            os_hooks_cfg["os_startuphook"]["enabled"] = os_hooks.get("OsStartupHook",{}).get("Value","")
+            os_hooks_cfg["os_startuphook"]["stack_size"] = os_hooks.get("OsStartupHookStackSize",{}).get("Value","")
+            os_hooks_cfg["os_startuphook"]["nesting_mask"] = "OS_STARTUPHOOK_HOOKNESTINGMASK"
+            if os_hooks_cfg["os_startuphook"]["enabled"]:
+                os_hook_cnt = os_hook_cnt + 1
+
+        return os_hooks_cfg, os_hook_cnt
     @staticmethod
-    def __format_map_info(key, val):
-        return {
-            'map_object': key,
-            'map_target': val
-        }
+    @pass_context
+    def get_osmempool_spinlock_id_set_ui(context):
+        os_mempool_ui_dict = context["config_dict"].get("bsw",{}).get("mempool",{}).get("ArPackages",{}).get("ActiveEcuC",{}).get("MemPool",{})
+        os_mempool_all_cfg = get_os_mempool_all_config_dict(os_mempool_ui_dict, context["config_dict"])
+        osmempool_spinlockid_list = []
+        for pool_name in os_mempool_all_cfg["pool_cfg"]:
+            if os_mempool_all_cfg["pool_cfg"][pool_name]["MemType"] == "OS_MEMPOOLTYPE_GLOBAL":
+                osmempool_spinlockid_list.append("OS_SPINLOCK_MEMPOOL_" + pool_name + "_ID")
+        return osmempool_spinlockid_list
 
-    @staticmethod
-    def _gen_flash_map_info(layer, apps):
-        if len(apps) != 1:
-            app = 'BSW_APPS'
-        else:
-            app = apps[0]
-        ret = [
-            Function.__format_map_info("CALLOUT_CODE", f'{app}_CODE_{layer}_TEXT'),
-            Function.__format_map_info("CODE", f'{app}_CODE_{layer}_TEXT'),
-            Function.__format_map_info("CONST", f'{app}_CONST_{layer}_RODATA')
-        ]
-
-        return ret
-
-    @staticmethod
-    def _gen_calib_map_info(layer, calib_app):
-        ret = [
-            Function.__format_map_info("CALIB_CONST", f'{calib_app}_CALIBRATION_{layer}_RODATA')
-        ]
-        return ret
-
-    @staticmethod
-    def __common_gen_apps_map_info(scope_map, apps, layer):
-        data_types = ['DATA', 'BSS']
-        ret = []
-        if isinstance(apps, str):
-            for scope_key, scope_val in scope_map.items():
-                for d_type in data_types:
-                    ret.append(Function.__format_map_info(f'{scope_key}_{d_type}',
-                                                          f'{apps}_{scope_val}_{layer}_{d_type}'))
-        elif isinstance(apps, list):
-            for app in apps:
-                for scope_key, scope_val in scope_map.items():
-                    for d_type in data_types:
-                        ret.append(Function.__format_map_info(f'{app}_{scope_key}_{d_type}',
-                                                              f'{app}_{scope_val}_{layer}_{d_type}'))
-        return ret
-
-    @staticmethod
-    def _gen_no_app_map_info(layer):
-        var_scope_property_map = {
-            "PRIVATE":"MULTI_APP_SHARE"
-        }
-        app = 'BSW_APPS'
-        ret = Function.__common_gen_apps_map_info(var_scope_property_map,
-                                                  app, layer)
-
-        return ret
-
-
-    @staticmethod
-    def _gen_single_app_map_info(layer, apps):
-        var_scope_property_map = {
-            "PRIVATE":"PRIVATE",
-            "SEMISHARED":"SEMISHARED"
-        }
-        return Function.__common_gen_apps_map_info(var_scope_property_map,
-                                                  apps[0], layer)
-
-    @staticmethod
-    def _gen_multi_app_map_info(layer, apps):
-        var_scope_property_map = {
-            "PRIVATE":"PRIVATE",
-            "SEMISHARED":"SEMISHARED"
-        }
-        return Function.__common_gen_apps_map_info(var_scope_property_map,
-                                                  apps, layer)
 
     @staticmethod
     @pass_context
-    def get_memmap_info(context, module):
-        memmap_cfg = Function.get_memmap_cfg(context)
-        mod_cfg = memmap_cfg['modules'][module]
-        ref_apps = mod_cfg['apps']
-        ref_layer = mod_cfg['layer']
-        memmap_info = []
+    @utils.cache_once(_cache)
+    def get_rtfw_config(context):
 
-        memmap_info += Function._gen_flash_map_info(ref_layer, ref_apps)
-        if mod_cfg['use_calib']:
-            # We now use the bsw app of the master core as the
-            # default calibration app as a temporary strategy.
-            default_calib_app = Function.get_bsw_app_from_coreid(context, coreid=0)
-            memmap_info += Function._gen_calib_map_info(ref_layer, default_calib_app)
+        rtfw_config = []
 
-        if len(ref_apps) == 0:
-            memmap_info += Function._gen_no_app_map_info(ref_layer)
-        elif len(ref_apps) == 1:
-            memmap_info += Function._gen_single_app_map_info(ref_layer, ref_apps)
-        else:
-            memmap_info += Function._gen_multi_app_map_info(ref_layer, ref_apps)
-
-        ret_info = {'mapping_info': memmap_info}
-
-        return ret_info
-
-    @staticmethod
-    def __gen_memmap_internal_info(apps, attr_pairs, layers):
-        ret = {}
-        for app in apps:
-            for attr in attr_pairs:
-                for layer in layers:
-                    map_key = (f'{app}_{attr[0]}_{layer}_{attr[1]}').upper()
-                    map_val = (f'.{attr[1]}.{attr[0]}.{app}.{layer}').lower()
-                    ret[map_key] = map_val
-        return ret
-
-    @staticmethod
-    @pass_context
-    def get_memmap_internal_cfg(context):
-        ret = {}
-        memmap_cfg = Function.get_memmap_cfg(context)
+        # CONFIG_RT_FRAMEWORK_MULTIAPP
+        ########################################################
         app_cfg = Function.get_app_cfg(context)
+        if len(app_cfg) > 1:
+            rtfw_config.append("CONFIG_RT_FRAMEWORK_MULTIAPP=y")
+        ########################################################
 
-        int_layer = memmap_cfg['intenral_layer']
-        all_layer = memmap_cfg['layers']
-        ret.update({
-            'CODE': f'.text.code.all_apps.{int_layer}',
-            'CALLOUT_CODE': f'.text.code.all_apps.{int_layer}',
-            'CONST': f'.rodata.const.all_apps.{int_layer}'
-        })
+        # CONFIG_RT_FRAMEWORK_COUNTER
+        ########################################################
+        counter_cfg = Function.get_counter_cfg(context)
+        if counter_cfg:
+            rtfw_config.append("CONFIG_RT_FRAMEWORK_COUNTER=y")
+        ########################################################
 
-        apps = ['all_apps', 'bsw_apps']
-        core_num = Function.get_core_cnt(context)
-        apps += [f'core{x}_apps' for x in range(core_num)]
+        # CONFIG_RT_FRAMEWORK_MEMPOOL
+        ########################################################
+        # mempool is a standalone configuration module not controled in rt_framework
+        ########################################################
 
-        attr_pairs = [('multi_app_share', 'data'), ('multi_app_share', 'bss'),
-                      ('code', 'text'), ('const', 'rodata')]
-        ret.update(Function.__gen_memmap_internal_info(apps, attr_pairs, all_layer))
+        # CONFIG_RT_FRAMEWORK_IPICALL
+        ########################################################
+        core_cnt = Function.get_core_cnt(context)
+        if core_cnt > 1:
+            rtfw_config.append("CONFIG_RT_FRAMEWORK_IPICALL=y")
+        ########################################################
 
-        # per application
-        attr_pairs = [('semishared', 'data'), ('private', 'data'),
-                      ('semishared', 'bss'), ('private', 'bss'),
-                      ('calibration', 'rodata'), ('const', 'rodata'),
-                      ('code', 'text')]
-        ret.update(Function.__gen_memmap_internal_info(app_cfg.keys(), attr_pairs, all_layer))
+        # CONFIG_RT_FRAMEWORK_SPINLOCK
+        ########################################################
+        spinlock_cfg = Function.get_spinlock_cfg(context)
+        osmempool_spinlockid_set = Function.get_osmempool_spinlock_id_set_ui(context)
+        spinlock_is_configured = (spinlock_cfg or osmempool_spinlockid_set)
 
-        return ret
+        core_cnt = Function.get_core_cnt(context)
+
+        if (core_cnt > 1) and spinlock_is_configured:
+            rtfw_config.append("CONFIG_RT_FRAMEWORK_SPINLOCK=y")
+        ########################################################
+
+        # CONFIG_RT_FRAMEWORK_RESOURCE
+        ########################################################
+        resource_cfg = Function.get_resource_cfg(context)
+        if resource_cfg:
+            rtfw_config.append("CONFIG_RT_FRAMEWORK_RESOURCE=y")
+        ########################################################
+
+        # CONFIG_RT_FRAMEWORK_TIMER
+        ########################################################
+        # rtfw timer is determined by board， so it is set in board/config/defconfig
+        ########################################################
+
+        # CONFIG_RT_FRAMEWORK_SCHTBL
+        ########################################################
+        schedtable_cfg = Function.get_schedtable_cfg(context)
+        if schedtable_cfg:
+            rtfw_config.append("CONFIG_RT_FRAMEWORK_SCHTBL=y")
+        ########################################################
+
+        # CONFIG_RT_FRAMEWORK_HOOK
+        ########################################################
+        os_hook_cfg, os_hook_cnt = Function.get_os_hook_cfg(context)
+        if os_hook_cnt > 0:
+            rtfw_config.append("CONFIG_RT_FRAMEWORK_HOOK=y")
+        ########################################################
+
+        # CONFIG_RT_FRAMEWORK_SYSCALL
+        ########################################################
+        # syscall is determined by the board， so it is set in board/config/defconfig
+        ########################################################
+
+        # CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION
+        ########################################################
+        # mpu is determined by the board， so it is set in board/config/defconfig
+        ########################################################
+
+        # CONFIG_RT_FRAMEWORK_ISOLATE
+        ########################################################
+        # isolate is a standalone configuration module not controled in rt_framework
+        ########################################################
+
+        return rtfw_config

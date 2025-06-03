@@ -23,21 +23,6 @@
 #include "os_lock_internal.h"
 #include "os_event_internal.h"
 
-/* Local Macro Definition */
-
-/* Local Enumeration Definition */
-
-/* Local type & Structure Definition */
-
-/* global Variable Definition */
-
-/* Local Variable Definition */
-
-/* Local Function Declaration */
-
-/* Local Function Implementation */
-
-/* global Function Declaration */
 #define OS_START_SEC_CODE
 #include "os_memmap.h"
 
@@ -70,7 +55,7 @@ FUNC(Os_StatusType, OS_CODE) os_wait_event(os_event_mask_t mask)
 	}
 	os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(cur_context);
 
-	ret = nxevent_tickwait(&(task_inst->event), mask, NXEVENT_WAIT_NOCLEAR, UINT32_MAX);
+	ret = nxevent_tickwait(&(task_inst->wait), &(task_inst->event), mask, NXEVENT_WAIT_NOCLEAR, UINT32_MAX);
 	/* returns 0 when events were not received */
 	if (UNLIKELY(ret == (nxevent_mask_t)0)) {
 		return OS_STATUS_NOT_OK;

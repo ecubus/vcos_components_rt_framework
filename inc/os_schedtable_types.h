@@ -13,20 +13,14 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_SCHED_TABLE_TYPES_H
-#define AUTOSAROS_INC_OS_SCHED_TABLE_TYPES_H
+#ifndef RT_FRAMEWORK_INC_OS_SCHED_TABLE_TYPES_H
+#define RT_FRAMEWORK_INC_OS_SCHED_TABLE_TYPES_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 /* Including File */
 #include <nuttx/config.h>
-
-/* Global Function Declaration */
-
-/* Global Function Implementation */
-
-/* Global Enumeration Definition */
 
 /* Global Type & Structure Definition */
 struct os_schedtable_inst;
@@ -50,13 +44,8 @@ typedef struct os_schedtable_cfg os_schedtable_cfg_t;
 struct os_schedtable_autostart;
 typedef struct os_schedtable_autostart os_schedtable_autostart_t;
 
-/* Global Macro Definition */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_SCHED_TABLE_TYPES_H */
-
-/*! @} */
-/*! @} */
+#endif /* RT_FRAMEWORK_INC_OS_SCHED_TABLE_TYPES_H */

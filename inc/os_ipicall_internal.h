@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_IPICALL_INTERNAL_H
-#define AUTOSAROS_INC_OS_IPICALL_INTERNAL_H
+#ifndef RT_FRAMEWORK_INC_OS_IPICALL_INTERNAL_H
+#define RT_FRAMEWORK_INC_OS_IPICALL_INTERNAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,7 +50,7 @@ struct os_ipicall_activate_task_param {
 
 struct os_ipicall_get_app_state_param {
 	ApplicationType app_id;
-	ApplicationStateType AppState;
+	ApplicationStateType app_state;
 };
 
 struct os_ipicall_get_event_param {
@@ -80,7 +80,7 @@ struct os_ipicall_stop_schtbl_param {
 
 struct os_ipicall_get_schtbl_status_param {
 	ScheduleTableType schedtable_id;
-	ScheduleTableStatusType SchedTableStatus;
+	ScheduleTableStatusType schedtable_status;
 };
 
 struct os_ipicall_next_schtbl_param {
@@ -105,6 +105,21 @@ struct os_ipicall_sync_schtbl_param {
 struct os_ipicall_set_schtbl_async_param {
 	ScheduleTableType schedtable_id;
 };
+
+struct os_ipicall_deviate_schtbl_param {
+	ScheduleTableType schedtable_id;
+	TickType deviate_value;
+};
+
+struct os_ipicall_set_schtbl_appid_param {
+	ScheduleTableType schedtable_id;
+	ApplicationIDType app_id;
+};
+
+struct os_ipicall_clear_schtbl_appid_param {
+	ScheduleTableType schedtable_id;
+	ApplicationIDType app_id;
+};
 #endif
 union os_ipicall_param_e {
 	os_ipicall_activate_task_param_t avtivate_task_param;
@@ -121,6 +136,9 @@ union os_ipicall_param_e {
 	os_ipicall_start_schtbl_synchron_param_t start_schtbl_synchron_param;
 	os_ipicall_sync_schtbl_param_t sync_schtbl_param;
 	os_ipicall_set_schtbl_aysnc_param_t set_schtbl_async_param;
+	os_ipicall_deviate_schtbl_param_t deviate_schtbl_param;
+	os_ipicall_set_schtbl_appid_param_t set_schtbl_appid_param;
+	os_ipicall_clear_schtbl_appid_param_t clear_schtbl_appid_param;
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1) */
 };
 
@@ -143,23 +161,12 @@ struct os_ipicall_data_s {
 	os_ipicall_return_t ret_element;
 };
 
-struct os_ipicall_send_ctrl_s {
-	/*! 指向下一个可用于发送的buffer位置*/
-	os_ipicall_index_t send_idx;
-	/*! 用于指向未处理返回结果的位置 */
-	os_ipicall_index_t result_idx;
-};
-
-struct os_ipicall_receive_ctrl_s {
-	os_ipicall_index_t receive_idx;
-};
-
 typedef Os_StatusType (*os_ipicall_service_t)(os_ipicall_data_t *param);
 
 /*! IPICALL Instance Description */
 struct os_ipicall_inst_s {
-	os_ipicall_send_ctrl_t send;
-	os_ipicall_receive_ctrl_t receive;
+	os_ipicall_index_t send_idx;
+	os_ipicall_index_t receive_idx;
 	os_ipicall_send_t send_buffer[QUEUE_DEPTH];
 	os_ipicall_return_t result_buffer[QUEUE_DEPTH];
 };
@@ -203,7 +210,7 @@ extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_start_schedule_table_rel(uint32 t
 extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_start_schedule_table_abs(uint32 target_core, ScheduleTableType schedtable_id, TickType start);
 extern FUNC(Os_StatusType, OS_CODE) os_ipicall_stop_schedule_table(uint32 target_core, ScheduleTableType schedtable_id);
 extern FUNC(Os_StatusType, OS_CODE) os_ipicall_get_schedule_table_status(uint32 target_core, ScheduleTableType schedtable_id,
-								      									ScheduleTableStatusType *SchedTableStatus);
+								      									ScheduleTableStatusType *schedtable_status);
 extern FUNC(Os_StatusType, OS_CODE) os_ipicall_next_schedule_table(uint32 target_core, ScheduleTableType curr_schedtable_id,
 								 									ScheduleTableType next_schedtable_id);
 extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_next_schedule_table_from_stop(uint32 target_core, ScheduleTableType curr_schedtable_id,
@@ -211,6 +218,15 @@ extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_next_schedule_table_from_stop(uin
 extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_start_schedule_table_synchron(uint32 target_core, ScheduleTableType schedtable_id);
 extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_sync_schedule_table(uint32 target_core, ScheduleTableType schedtable_id, TickType tick_value);
 extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_schedule_table_async(uint32 target_core, ScheduleTableType schedtable_id);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_deviate_schedule_table(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_schedule_table_app_id(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_clear_schedule_table_app_id(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_deviate_schedule_table(uint32 target_core, ScheduleTableType schedtable_id,
+                                                                     TickType deviate_value);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_schedule_table_app_id(uint32 target_core, ScheduleTableType schedtable_id,
+                                                                        ApplicationIDType app_id);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_clear_schedule_table_app_id(uint32 target_core, ScheduleTableType schedtable_id,
+                                                                          ApplicationIDType app_id);
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1) */
 extern FUNC(void, OS_CODE) os_ipicall_init(const os_ipicall_cfg_t *const os_ipicall_cfg_table[], OsObjIndexType count);
 extern FUNC(Os_StatusType, OS_CODE) os_ipicall_activate_task(uint32 target_core, TaskType task_id);
@@ -225,4 +241,4 @@ extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_event_asyn(uint32 target_core
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_IPICALL_INTERNAL_H */
+#endif /* RT_FRAMEWORK_INC_OS_IPICALL_INTERNAL_H */

@@ -1,0 +1,78 @@
+/*
+ * Copyright (c) 2025 Li Auto Inc. and its affiliates
+ * Licensed under the Apache License, Version 2.0(the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Description: task Configuration
+ * AutoGenerate Code, DO NOT EDIT!!!
+ * {{get_generation_time()}}
+ * {{get_project_name()}}
+ * {{get_vcos_version()}}
+ */
+
+/* Including File */
+#include <nuttx/config.h>
+#include "Os_Types.h"
+#include "os_thread_types.h"
+#include "os_hook.h"
+
+{%- set core_cfg = get_core_configs() %}
+{%- set os_hook_cfg, os_hook_cnt = get_os_hook_cfg() %}
+
+{%- if os_hook_cfg["os_errorhook"]["enabled"] %}
+extern void os_errorhook(StatusType Error);
+{%- endif %}
+{%- if os_hook_cfg["os_protectionhook"]["enabled"]  %}
+extern protection_return_t os_protectionhook(StatusType Error);
+{%- endif %}
+{%- if os_hook_cfg["os_shutdownhook"]["enabled"] %}
+extern void os_shutdownhook(StatusType Error);
+{%- endif %}
+{%- if os_hook_cfg["os_startuphook"]["enabled"] %}
+extern void os_startuphook(void);
+{%- endif %}
+
+{%- if os_hook_cnt > 0 %}
+#define OS_START_SEC_CONST
+#include "os_memmap.h"
+{%- for core_val in core_cfg.values() %}
+    {%- set core_id = core_val["core_id"][-1] %}
+    {%- for os_hook_name, os_hook_value in os_hook_cfg.items() %}
+        {%- if os_hook_cfg[os_hook_name]["enabled"] %}
+extern const os_hook_cfg_t HOOKCFGVAR(OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID);
+        {%- endif %}
+    {%- endfor %}
+{% endfor %}
+{%- for core_val in core_cfg.values() %}
+    {%- set core_id = core_val["core_id"][-1] %}
+extern CONSTP2CONST(os_hook_cfg_t, AUTOMATIC, OS_CONST) os_core{{core_id}}_hook_cfg_ref_table[];
+extern CONST(OsObjIndexType, OS_CONST) os_core{{core_id}}_hook_cfg_ref_table_size;
+{% endfor %}
+#define OS_STOP_SEC_CONST
+#include "os_memmap.h"
+{%- endif %}
+
+typedef enum
+{
+{%- for core_val in core_cfg.values() %}
+    {%- set core_id = core_val["core_id"][-1] %}
+    {%- for os_hook_name, os_hook_value in os_hook_cfg.items() %}
+        {%- if os_hook_cfg[os_hook_name]["enabled"] %}
+    OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID,
+        {%- endif %}
+    {%- endfor %}
+{%- endfor %}
+    OS_HOOK_CNT,
+} OS_HOOK_DEF;
+

@@ -28,6 +28,7 @@ extern "C" {
 /* Global Enumeration Definition */
 typedef enum {
 	OS_SYSCALLID_ACTIVATETASK,
+	OS_SYSCALLID_GETCOREID,
 	OS_SYSCALLID_ACTIVATETASKASYNC,
 	OS_SYSCALLID_SET_USER_TO_PRIVILEGE,
 	OS_SYSCALLID_SETEVENT,
@@ -46,11 +47,13 @@ typedef enum {
 	OS_SYSCALLID_STARTSCHEDULETABLEABS,
 	OS_SYSCALLID_STOPSCHEDULETABLE,
 	OS_SYSCALLID_SETSCHEDULETABLEAPPID,
+	OS_SYSCALLID_CLEARSCHEDULETABLEAPPID,
 	OS_SYSCALLID_GETSCHEDULETABLESTATUS,
 	OS_SYSCALLID_NEXTSCHEDULETABLE,
 	OS_SYSCALLID_NEXTSCHEDULETABLEFROMSTOP,
 	OS_SYSCALLID_STARTSCHEDULETABLESYNCHRON,
 	OS_SYSCALLID_SYNCSCHEDULETABLE,
+	OS_SYSCALLID_DEVIATECORE,
 	OS_SYSCALLID_SETSCHEDULETABLEASYNC,
 #endif
 #if defined(CONFIG_RT_FRAMEWORK_SPINLOCK) && (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
@@ -64,6 +67,15 @@ typedef enum {
 	OS_SYSCALLID_TRYTOGETSPINLOCKREAD,
 	OS_SYSCALLID_TRYTOGETSPINLOCKWRITE,
 #endif
+#if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
+	OS_SYSCALLID_GETRESOURCE,
+	OS_SYSCALLID_RELEASERESOURCE,
+#endif /* CONFIG_RT_FRAMEWORK_RESOURCE */
+#if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
+	OS_SYSCALLID_INCREMENTCOUNTER,
+	OS_SYSCALLID_GETCOUNTERVALUE,
+	OS_SYSCALLID_GETELAPSEDVALUE,
+#endif /* CONFIG_RT_FRAMEWORK_COUNTER */
 	OS_SYSCALLID_COUNT
 } os_syscall_t;
 
@@ -80,8 +92,10 @@ typedef enum {
 typedef union {
 	TaskType param_task_t;
 	TickType param_tick_t;
+	ApplicationIDType param_applicationid;
 	EventMaskType param_event_mask;
 	EventMaskRefType param_event_mask_ref;
+	TickRefType param_tick_ref_type;
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
 	ScheduleTableType param_scheduletable;
 	ScheduleTableStatusType param_scheduletable_status;
@@ -91,10 +105,17 @@ typedef union {
 	SpinlockIdType param_spinlock;
 	TryToGetSpinlockType *param_try_to_get_spinlock_ref;
 #endif
+#if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
+	ResourceType param_resource;
+#endif /* CONFIG_RT_FRAMEWORK_RESOURCE */
+#if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
+	CounterType param_counter_type;
+#endif /* CONFIG_RT_FRAMEWORK_COUNTER */
 	uint32 param_uint32_t;
 } os_syscall_param_t;
 
 typedef union {
+	CoreIdType    return_coreid_type;
 	Os_StatusType return_os_status;
 } os_syscall_return_t;
 

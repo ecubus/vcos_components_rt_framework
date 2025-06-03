@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_CPUSET_H_
-#define AUTOSAROS_INC_OS_CPUSET_H_
+#ifndef RT_FRAMEWORK_INC_OS_CPUSET_H_
+#define RT_FRAMEWORK_INC_OS_CPUSET_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,22 +23,8 @@ extern "C" {
 /* Including File */
 #include "os_cpuset_internal.h"
 
-/* Global Macro Definition */
-
-/* Global Enumeration Definition */
-
-/* Global Type & Structure Definition */
-
-/* Global Variable Definition */
-
-/* Global Function Declaration */
-
-/* Global Function Implementation */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_CPUSET_H_ */
-/*! @} */
-/*! @} */
+#endif /* RT_FRAMEWORK_INC_OS_CPUSET_H_ */

@@ -17,14 +17,14 @@ import os
 
 from func_module.health_monitor.logger import logger
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
-from rt_framework.config_plug_in.generator.utils import get_last_item, get_dict_path
+from .utils import get_last_item, get_dict_path
 
-import rt_framework.config_plug_in.generator.context as context
+from . import context
 
 CUR_FILE_PATH = os.path.dirname(__file__)
 DEFAULT_TEMPLATE_FILE_DIR = os.path.join(CUR_FILE_PATH, "template")
 
-def Os_CoreInfo_Get(ecuc_dict: dict):
+def get_os_core_info(ecuc_dict: dict):
     ret = {}
 
     for k, v in ecuc_dict["EcucHardware"].items():
@@ -47,40 +47,27 @@ def render_os_template(template, out_dir, file_name, config):
             out_stream.flush()
         logger.info("Finish generating %s file" % (file_name))
 
-def generate_memmap_modulue_header(template, out_dir, config):
-    memmap_modules = config['os_ui'].get('OsMemmoryMap', {})
-    for item_name, item in memmap_modules.items():
-        if not isinstance(item, dict):
-            continue
-        item_type = item.get('DefinitionRef', '')
-        if item_type.endswith('OsMemmapModule'):
-            mod_name = item_name.lower()
-            gen_file_name = f'{mod_name}_memmap.h'
-            module_config = {**config, 'module': mod_name}
-            render_os_template(template, out_dir, gen_file_name, module_config)
 
-def generate_memmap(env_ui, config):
-    memmap_output_dir = os.path.realpath(os.path.join(config['sys_cfg']['gendata_path'], "Memmap"))
-    if not os.path.exists(memmap_output_dir):
-        os.makedirs(memmap_output_dir)
-    template = env_ui.get_template("module_memmap.h.jinja2")
-    generate_memmap_modulue_header(template, memmap_output_dir, config)
+def prepare_os_base_config(sys_config:dict, config_dict:dict):
+    # get EcuC Configs
+    ecuc_dict = get_dict_path(config_dict, ['bsw', 'ecuc', 'ArPackages', 'ActiveEcuC', 'EcuC'])
+    # get core information and hw coreid information from UI input and add to os dict
+    core_dict = get_os_core_info(ecuc_dict)
 
-    template = env_ui.get_template("memmap.h.jinja2")
-    render_os_template(template, memmap_output_dir, "memmap.h", config)
+    # save the configuration of ui
+    input_ui_dict = get_dict_path(config_dict, ['bsw', 'os', 'ArPackages', 'ActiveEcuC', 'Os'])
 
-    template = env_ui.get_template("memmap_int.h.jinja2")
-    render_os_template(template, memmap_output_dir, "memmap_int.h", config)
+    config = {
+        "os_ui": input_ui_dict,
+        "sys_cfg": sys_config,
+        "os_core": core_dict,
+        "config_dict": config_dict
+    }
+    return config
 
 
 def generate_dynamic_code(sys_config: dict, config_dict: dict):
     context.Function.clear_caches()
-
-    # get EcuC Configs
-    ecuc_dict = get_dict_path(config_dict, ['bsw', 'ecuc', 'ArPackages', 'ActiveEcuC', 'EcuC'])
-
-    # get core information and hw coreid information from UI input and add to os dict
-    core_dict = Os_CoreInfo_Get(ecuc_dict)
 
     project_target = sys_config.get("target", "")
     if project_target in sys_config["sys_target_dict"]["validate"]["ignore_option"]:
@@ -89,23 +76,14 @@ def generate_dynamic_code(sys_config: dict, config_dict: dict):
 
     output_dir = os.path.realpath(
         os.path.join(sys_config["gendata_path"], "Os"))
-    # more hardware platform template on the way~
 
-    # save the configuration of ui
-    input_ui_dict = get_dict_path(config_dict, ['bsw', 'os', 'ArPackages', 'ActiveEcuC', 'Os'])
+    config = prepare_os_base_config(sys_config, config_dict)
 
     # Build our rendering environment.
-    env_ui = Environment(loader=FileSystemLoader(
-        os.path.abspath(os.path.join(DEFAULT_TEMPLATE_FILE_DIR, "ui"))),
+    env_ui = Environment(loader=FileSystemLoader(DEFAULT_TEMPLATE_FILE_DIR),
                          undefined=StrictUndefined)
     env_ui.filters.update(context.get_filters())
     env_ui.globals.update(context.get_functions())
-
-    config = {
-        "os_ui": input_ui_dict,
-        "sys_cfg": sys_config,
-        "os_core": core_dict
-    }
 
     # ################################################## #
     #    TASK                                            #
@@ -183,10 +161,13 @@ def generate_dynamic_code(sys_config: dict, config_dict: dict):
     render_os_template(template, output_dir, "schedtable_cfg.c", config)
 
     # ################################################## #
-    #    Compile                                         #
+    #    RESOURCE                                        #
     # ################################################## #
-    template = env_ui.get_template("os_compiler_cfg.h.jinja2")
-    render_os_template(template, output_dir, "os_compiler_cfg.h", config)
+    template = env_ui.get_template("resource_cfg.h.jinja2")
+    render_os_template(template, output_dir, "resource_cfg.h", config)
+
+    template = env_ui.get_template("resource_cfg.c.jinja2")
+    render_os_template(template, output_dir, "resource_cfg.c", config)
 
     # ################################################## #
     #    COUNTER                                         #
@@ -198,9 +179,27 @@ def generate_dynamic_code(sys_config: dict, config_dict: dict):
     render_os_template(template, output_dir, "counter_cfg.c", config)
 
     # ################################################## #
-    #    MemMap                                          #
+    #    MEMORY PROTECTION                               #
     # ################################################## #
-    generate_memmap(env_ui, config)
+    template = env_ui.get_template("memory_protection_cfg.h.jinja2")
+    render_os_template(template, output_dir, "memory_protection_cfg.h", config)
 
+    template = env_ui.get_template("memory_protection_cfg.c.jinja2")
+    render_os_template(template, output_dir, "memory_protection_cfg.c", config)
+
+    # ################################################## #
+    #    Hook                                            #
+    # ################################################## #
+    template = env_ui.get_template("hook_cfg.c.jinja2")
+    render_os_template(template, output_dir, "hook_cfg.c", config)
+
+    template = env_ui.get_template("hook_cfg.h.jinja2")
+    render_os_template(template, output_dir, "hook_cfg.h", config)
+
+    # ################################################## #
+    #    rt_framework.config                             #
+    # ################################################## #
+    template = env_ui.get_template("rt_framework.config.jinja2")
+    render_os_template(template, output_dir, "rt_framework.config", config)
 
     return True

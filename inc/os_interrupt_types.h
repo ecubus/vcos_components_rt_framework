@@ -24,12 +24,6 @@ extern "C" {
 #include "Os_Types.h"
 #include "Std_Types.h"
 
-/* Global Macro Definition */
-
-/* Global Enumeration Definition */
-
-/* Global Type & Structure Definition */
-
 typedef struct {
 	os_int_api_cnt_t in_disableall; /*!< Inside a DisableAllInterrupts() API sequence, max value is 1. */
 	os_int_api_cnt_t suspendall_cnt; /*! Nesting counter for SuspendAllInterrupts()/ResumeAllInterrupts(). */
@@ -66,11 +60,6 @@ struct os_int_api_state {
 /*! Management information for the interrupt API. */
 typedef struct os_int_api_state os_int_api_state_t;
 
-/* Global Variable Declaration */
-
-/* Global Function Declaration */
-
-/* Global Function Implementation */
 
 #ifdef __cplusplus
 }

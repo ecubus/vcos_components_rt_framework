@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_INTERRUPT_CBK_H
-#define AUTOSAROS_INC_OS_INTERRUPT_CBK_H
+#ifndef RT_FRAMEWORK_INC_OS_INTERRUPT_CBK_H
+#define RT_FRAMEWORK_INC_OS_INTERRUPT_CBK_H
 #include <nuttx/config.h>
 #include "os_interrupt_types.h"
 
@@ -59,4 +59,4 @@ static inline void os_interrupt_disableall_exit(os_int_api_state_t *const int_st
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_INTERRUPT_CBK_H */
+#endif /* RT_FRAMEWORK_INC_OS_INTERRUPT_CBK_H */

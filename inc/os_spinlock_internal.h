@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AUTOSAROS_INC_OS_SPINLOCK_INTERNAL_H
-#define AUTOSAROS_INC_OS_SPINLOCK_INTERNAL_H
+#ifndef RT_FRAMEWORK_INC_OS_SPINLOCK_INTERNAL_H
+#define RT_FRAMEWORK_INC_OS_SPINLOCK_INTERNAL_H
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -291,4 +291,4 @@ FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock_write(const os_spin_id_t spi
 #ifdef __cplusplus
 }
 #endif
-#endif /* AUTOSAROS_INC_OS_SPINLOCK_INTERNAL_H */
+#endif /* RT_FRAMEWORK_INC_OS_SPINLOCK_INTERNAL_H */

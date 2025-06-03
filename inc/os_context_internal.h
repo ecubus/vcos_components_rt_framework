@@ -20,13 +20,16 @@
 extern "C" {
 #endif
 #include <arch/irq.h>
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+#include <arch/chip/mpu.h>
+#endif
 #include "Compiler.h"
 #include "os_context_types.h"
 #include "os_interrupt_internal.h"
 #include "os_interrupt_cbk.h"
 #include "os_list.h"
 #include "Os_Types.h"
-#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
 #include "os_application_internal.h"
 #endif
 
@@ -53,17 +56,18 @@ extern "C" {
 
 #define OS_CONTEXT_GET_ISR_CFG_REF(ctx_ref) ((os_isr_cfg_t *)(ctx_ref))
 
-#define OS_CONTEXT_GET_HOOK_CFG_REF(ctx_ref) ((OsHookCfgType *)(ctx_ref))
+#define OS_CONTEXT_GET_HOOK_CFG_REF(ctx_ref) ((os_hook_cfg_t *)(ctx_ref))
 
 #define OS_CONTEXT_GET_TASK_INSTANCE_REF(ctx_ref) ((os_task_inst_t *)(OS_CONTEXT_GET_INSTANCE_REF(ctx_ref)))
 
 #define OS_CONTEXT_GET_ISR_INSTANCE_REF(ctx_ref) ((os_isr_inst_t *)(OS_CONTEXT_GET_INSTANCE_REF(ctx_ref)))
 
-#define OS_CONTEXT_GET_HOOK_INSTANCE_REF(ctx_ref) ((OsHookInstType *)(OS_CONTEXT_GET_INSTANCE_REF(ctx_ref)))
+#define OS_CONTEXT_GET_HOOK_INSTANCE_REF(ctx_ref) ((os_hook_inst_t *)(OS_CONTEXT_GET_INSTANCE_REF(ctx_ref)))
 
 #define OS_CONTEXT_GET_OWNER_APPID(ctx_ref) (OS_APPLICATION_GET_APPID((ctx_ref)->app_owner_cfg))
 
-#define OS_CONTEXT_GET_CURRENT_APPID(ctx_ref) (OS_APPLICATION_GET_APPID((ctx_ref)->ctx_instance->current_app_cfg))
+#define OS_CONTEXT_GET_CURRENT_APPID(ctx_ref)                                                                          \
+	(OS_APPLICATION_GET_APPID(((os_ctx_inst_t *)(ctx_ref->instance))->current_app_cfg))
 
 #define OS_CONTEXT_GET_OWNER_COREID(ctx_ref) (OS_CORE_GET_COREID((os_core_cfg_t *)((ctx_ref)->core)))
 
@@ -77,7 +81,7 @@ extern "C" {
 
 #define OS_CONTEXT_GET_OBJNAME(ctx_ref) ((ctx_ref)->instance_name)
 
-#define OS_CONTEXT_GET_CONTEXTINST_REF(ctx_ref) ((ctx_ref)->ctx_instance)
+#define OS_CONTEXT_GET_CONTEXTINST_REF(ctx_ref) ((os_ctx_inst_t *)(ctx_ref->instance))
 
 #define OS_CONTEXT_GET_CORE_REF(ctx_ref) ((os_core_cfg_t *)((ctx_ref)->core))
 
@@ -87,7 +91,7 @@ extern "C" {
 
 #define OS_CONTEXT_GET_APPONRWECFG_REF(ctx_ref) ((ctx_ref)->app_owner_cfg)
 
-#define OS_CONTEXT_GET_CURRENTAPPCFG_REF(ctx_ref) ((ctx_ref)->ctx_instance->current_app_cfg)
+#define OS_CONTEXT_GET_CURRENTAPPCFG_REF(ctx_ref) (((os_ctx_inst_t *)(ctx_ref->instance))->current_app_cfg)
 
 #define OS_CONTEXT_GET_ACCESSINGAPPLMASK(ctx_ref) ((ctx_ref)->access_app_mask)
 
@@ -165,32 +169,38 @@ struct os_arch_isr_cfg {
 }; /* os_arch_isr_cfg_t */
 
 struct os_context_inst {
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+	const struct mpu_access_right_s *current_mpu_access_right; /* Make sure this is the first variable */
+#endif
+
 	os_context_id_t current_ctx_id; /*! Current contextID. */
 
 	os_list_t lock_list; /*! task 获取到的 resource 和 spinlock, 用于对 Lock 的 LIFO 进行校验 */
 
-#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
 	const os_app_cfg_t *current_app_cfg;
 #endif /* CONFIG_RT_FRAMEWORK_MULTIAPP */
 
 	os_context_state_t ctx_state;
+
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION== 1)
+	uint8 isolate_critical_cnt;
+#endif
 }; /* os_ctx_inst_t */
 
 /*! context configuration by user */
 struct os_context_cfg {
-	void *instance; /* Os Object Instance Handler, like os_task_inst, os_isr_inst, OsHookInst, 使用时做指针强转 */
+	void *instance; /* Os instance*/
 
 	const char *const instance_name; /*! Object name, like task name, isr name, hook name */
-
-	os_ctx_inst_t *ctx_instance; /*! context Instance */
 
 	const void *core; /*! The core to which this process belongs. */
 
 	os_int_api_state_t *int_api_state; /*! Current state of the interrupt API. */
 
 	os_arch_ctx_cfg_t arch_ctx_cfg; /*! The context configuration info which is specified to HW. */
-#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-	os_app_cfg_t *app_owner_cfg; /*! Application that owns this task */
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
+	const os_app_cfg_t *app_owner_cfg; /*! Application that owns this task */
 	AccessApplMaskType access_app_mask; /*! Applications that may access when APPLICATION_ACCESSIBLE */
 #endif /* CONFIG_RT_FRAMEWORK_MULTIAPP */
 
@@ -200,6 +210,9 @@ struct os_context_cfg {
 	uint32 use_fpu; /*! Use FPU or not. */
 #endif /* CONFIG_RT_FRAMEWORK_FPU_CONTEXT */
 
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+	const struct mpu_access_right_s *mpu_access_right;
+#endif
 }; /* os_ctx_cfg_t */
 
 /* Global Variable Declaration */
@@ -219,27 +232,23 @@ static inline void os_context_init_context_instance(const os_ctx_cfg_t *const ct
 static inline void os_context_init_context_nest(os_ctx_nest_t *const ctx_next);
 
 /* ctx_next 增加 */
-static inline os_context_cnt_t os_context_nest_inc(os_ctx_nest_t *const ctx_next,
-						  const os_ctx_cfg_t *const ctx_ref);
+static inline os_context_cnt_t os_context_nest_inc(os_ctx_nest_t *const ctx_next, const os_ctx_cfg_t *const ctx_ref);
 
 /* ctx_next 减少 */
-static inline const os_ctx_cfg_t *os_context_nest_dec(os_ctx_nest_t *const ctx_next,
-							 const os_ctx_cfg_t *const ctx_ref);
+static inline const os_ctx_cfg_t *os_context_nest_dec(os_ctx_nest_t *const ctx_next, const os_ctx_cfg_t *const ctx_ref);
 
 /* 设置 os_ctx_inst_t 中的 current_ctx_id */
-static inline void os_context_set_curcontext_id(const os_ctx_cfg_t *const ctx_ref,
-					       os_context_id_t current_ctx_id);
+static inline void os_context_set_curcontext_id(const os_ctx_cfg_t *const ctx_ref, os_context_id_t current_ctx_id);
 /* 获取 os_ctx_inst_t 中的 current_ctx_id */
 static inline os_context_id_t os_context_get_curcontext_id(const os_ctx_cfg_t *const ctx_ref);
 /* 切换 current_ctx_id，写入新值，返回旧值 */
 static inline os_context_id_t os_context_switch_curcontext_id(const os_ctx_cfg_t *const ctx_ref,
-							       os_context_id_t current_ctx_id);
+							      os_context_id_t current_ctx_id);
 
 /* 检查 中断是否处于 Disabled 状态 */
 static inline boolean os_context_check_irq_disabled(const os_ctx_cfg_t *const ctx_ref);
 /* 检查当前上下文类型是否允许访问  TRUE: 允许访问, FALSE: 不允许访问 */
-static inline boolean os_context_check_curcontext_id(const os_ctx_cfg_t *const ctx_ref,
-						    os_context_id_t context_id);
+static inline boolean os_context_check_curcontext_id(const os_ctx_cfg_t *const ctx_ref, os_context_id_t context_id);
 
 /* 检查 lock_list 是否为空, TRUE: Empty； FALSE：Not Empty */
 static inline boolean os_context_check_locklist_empty(const os_ctx_cfg_t *const ctx_ref);
@@ -274,14 +283,21 @@ static inline void os_set_curcontext_id(os_context_id_t context_id)
 /* 主要是初始化 os_context_inst 部分 */
 static inline void os_context_init_context_instance(const os_ctx_cfg_t *const ctx_cfg)
 {
-	os_ctx_inst_t *ctx_instance = ctx_cfg->ctx_instance;
+	os_ctx_inst_t *ctx_instance = (os_ctx_inst_t *)(ctx_cfg->instance);
 
 	ctx_instance->current_ctx_id = ctx_cfg->initial_ctx_id;
 	ctx_instance->ctx_state = OS_CONTEXT_ALIVE;
-	OsListInitEmpty(&(ctx_instance->lock_list));
-#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
+	os_list_init_empty(&(ctx_instance->lock_list));
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
 	ctx_instance->current_app_cfg = ctx_cfg->app_owner_cfg;
 #endif /* CONFIG_RT_FRAMEWORK_MULTIAPP */
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+	ctx_instance->current_mpu_access_right = ctx_cfg->mpu_access_right;
+#endif
+
+#if defined(CONFIG_RT_FRAMEWORK_ISOLATE) && (CONFIG_RT_FRAMEWORK_ISOLATE== 1)
+	ctx_instance->isolate_critical_cnt = 0u;
+#endif
 }
 
 static inline void os_context_init_context_nest(os_ctx_nest_t *const ctx_next)
@@ -299,8 +315,7 @@ static inline void os_context_init_context_nest(os_ctx_nest_t *const ctx_next)
  * OS_CONTEXT_NESTING_MAX_DEPTH：超过最大嵌套深度
  * Others: 最新嵌套深度
  */
-static inline os_context_cnt_t os_context_nest_inc(os_ctx_nest_t *const ctx_next,
-						  const os_ctx_cfg_t *const ctx_ref)
+static inline os_context_cnt_t os_context_nest_inc(os_ctx_nest_t *const ctx_next, const os_ctx_cfg_t *const ctx_ref)
 {
 	os_context_cnt_t CurrCnt;
 
@@ -319,8 +334,7 @@ static inline os_context_cnt_t os_context_nest_inc(os_ctx_nest_t *const ctx_next
  * NULL_PTR：非法嵌套
  * Others: 嵌套深度 -1 时丢弃的上下文
  */
-static inline const os_ctx_cfg_t *os_context_nest_dec(os_ctx_nest_t *const ctx_next,
-							 							const os_ctx_cfg_t *const ctx_ref)
+static inline const os_ctx_cfg_t *os_context_nest_dec(os_ctx_nest_t *const ctx_next, const os_ctx_cfg_t *const ctx_ref)
 {
 	const os_ctx_cfg_t *PreContext;
 
@@ -337,8 +351,7 @@ static inline const os_ctx_cfg_t *os_context_nest_dec(os_ctx_nest_t *const ctx_n
 }
 
 /* 设置 os_ctx_inst_t 中的 current_ctx_id */
-static inline void os_context_set_curcontext_id(const os_ctx_cfg_t *const ctx_ref,
-												os_context_id_t current_ctx_id)
+static inline void os_context_set_curcontext_id(const os_ctx_cfg_t *const ctx_ref, os_context_id_t current_ctx_id)
 {
 	OS_CONTEXT_GET_CURRENT_CONTEXTID(ctx_ref) = current_ctx_id;
 }
@@ -351,7 +364,7 @@ static inline os_context_id_t os_context_get_curcontext_id(const os_ctx_cfg_t *c
 
 /* 切换 current_ctx_id，写入新值，返回旧值 */
 static inline os_context_id_t os_context_switch_curcontext_id(const os_ctx_cfg_t *const ctx_ref,
-																os_context_id_t current_ctx_id)
+							      os_context_id_t current_ctx_id)
 {
 	os_context_id_t PrvContextID = OS_CONTEXT_GET_CURRENT_CONTEXTID(ctx_ref);
 
@@ -369,8 +382,7 @@ static inline boolean os_context_check_irq_disabled(const os_ctx_cfg_t *const ct
  * TRUE: 允许访问
  * FALSE: 不允许访问
  */
-static inline boolean os_context_check_curcontext_id(const os_ctx_cfg_t *const ctx_ref,
-													os_context_id_t context_id)
+static inline boolean os_context_check_curcontext_id(const os_ctx_cfg_t *const ctx_ref, os_context_id_t context_id)
 {
 	return ((OS_CONTEXT_GET_CURRENT_CONTEXTID(ctx_ref) & context_id) == 0u) ? FALSE : TRUE;
 }

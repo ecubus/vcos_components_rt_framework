@@ -65,16 +65,10 @@ extern "C"
 # define OS_PRESTARTTASK_CONTEXT_ID      ((os_context_id_t)1 <<  9)
 /*! Call context ID for Timing Protection ISR. */
 # define OS_TPISR_CONTEXT_ID             ((os_context_id_t)1 << 10)
-/*! Call context ID for Callbacks. */
-# define OS_IOCCALLBACK_CONTEXT_ID       ((os_context_id_t)1 << 11)
-/*! Call context ID for Init Hooks. */
-# define OS_INITHOOK_CONTEXT_ID          ((os_context_id_t)1 << 12)
-/*! Call context ID for Fast Trusted Functions. */
-# define OS_FTF_CONTEXT_ID               ((os_context_id_t)1 << 13)
 /*! Call context ID for Category 1 ISRs. */
-# define OS_ISR1_CONTEXT_ID              ((os_context_id_t)1 << 14)
+# define OS_ISR1_CONTEXT_ID              ((os_context_id_t)1 << 11)
 /*! Call context ID for Category 0 ISRs. */
-# define OS_ISR0_CONTEXT_ID              ((os_context_id_t)1 << 15)
+# define OS_ISR0_CONTEXT_ID              ((os_context_id_t)1 << 12)
 
 /*! Any Category2 ISR (allows easy check whether the current context is a ISR function) */
 # define OS_CONTEXT_ISR               ((os_context_id_t)(OS_ISR2_CONTEXT_ID      | \
@@ -95,9 +89,7 @@ extern "C"
 								OS_STARTUPHOOK_CONTEXT_ID   |   \
 								OS_SHUTDOWNHOOK_CONTEXT_ID  |   \
 								OS_ALARMCALLBACK_CONTEXT_ID |   \
-								OS_PROTECTIONHOOK_CONTEXT_ID|   \
-								OS_IOCCALLBACK_CONTEXT_ID   |   \
-								OS_INITHOOK_CONTEXT_ID       ))
+								OS_PROTECTIONHOOK_CONTEXT_ID))
 
 /*! All contexts except the timing protection ISR and the InitHook. */
 # define OS_CONTEXT_TERMINATEABLE    ((os_context_id_t)( OS_TASK_CONTEXT_ID          |   \
@@ -107,7 +99,6 @@ extern "C"
 								OS_POSTTASKHOOK_CONTEXT_ID  |   \
 								OS_STARTUPHOOK_CONTEXT_ID   |   \
 								OS_SHUTDOWNHOOK_CONTEXT_ID  |   \
-								OS_IOCCALLBACK_CONTEXT_ID   |   \
 								OS_PRESTARTTASK_CONTEXT_ID  |   \
 								OS_ALARMCALLBACK_CONTEXT_ID  ))
 
@@ -377,7 +368,7 @@ extern "C"
 									OS_ISR2_CONTEXT_ID))
 
 /*! Calling Context: DeviateScheduleTable() */
-#define OS_CONTEXT_DeviateScheduleTable        ((os_context_id_t)(OS_TASK_CONTEXT_ID | \
+#define OS_CONTEXT_DEVIATESCHEDULETABLE        ((os_context_id_t)(OS_TASK_CONTEXT_ID | \
 									OS_ISR2_CONTEXT_ID))
 
 /*! Calling Context: GetScheduleTableStatus() */

@@ -33,10 +33,10 @@ extern "C" {
 #define GET_COUNTER_ADDR(id) (os_counter_cfg_ref_table[id]->obj_desc)
 #define GET_COUNTER_MAX_VALUE(id) (os_counter_cfg_ref_table[id]->max_allowed_value)
 
-#define DeclareCounter(section, counter_id, num)                                                                   \
-	OS_TABLE_DECLARE_BY_ARRAY_MEMBER(section, os_action_queue, os_action_queue_t, counter_id, num);                \
-	OS_LINK_ENTRY_DECLARE(section, os_counter_obj, os_counter_inst_t, counter_id);                                 \
-	OS_LINK_ENTRY_DECLARE(.rodata, os_counter, os_counter_cfg_t, counter_id)
+#define DeclareCounter(section_const, section_var, counter_id, num)                                          \
+	OS_TABLE_DECLARE_BY_ARRAY_MEMBER(section_var, os_action_queue, os_action_queue_t, counter_id, num);      \
+	OS_LINK_ENTRY_DECLARE(section_var, os_counter_obj, os_counter_inst_t, counter_id);                       \
+	OS_LINK_ENTRY_DECLARE(section_const, os_counter, const os_counter_cfg_t, counter_id)
 
 
 /* Global Variable Declaration */

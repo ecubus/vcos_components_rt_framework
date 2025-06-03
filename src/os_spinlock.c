@@ -306,7 +306,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_spinlock(const os_spin_id_t spin_id)
 		os_int_suspend_kernel(&int_state);
 		__spin_lock(&(lock_inst->spin));
 		lock_inst->owner_context = cur_context;
-		OsListAppend(OS_CONTEXT_GET_LOCKLIST_REF(cur_context), &(lock_inst->lock.lock_node));
+		os_list_append(OS_CONTEXT_GET_LOCKLIST_REF(cur_context), &(lock_inst->lock.lock_node));
 		os_int_resume_global(&int_state);
 	} else {
 		__spin_lock(&(lock_inst->spin));
@@ -367,7 +367,7 @@ FUNC(Os_StatusType, OS_CODE) os_release_spinlock(const os_spin_id_t spin_id)
 
 	if (UNLIKELY(SPINLOCKCHECK_ENABLED == spin_cfg->check)) {
 		os_int_suspend_kernel(&int_state);
-		OsListRemove(OS_CONTEXT_GET_LOCKLIST_REF(cur_context), &(lock_inst->lock.lock_node));
+		os_list_remove(OS_CONTEXT_GET_LOCKLIST_REF(cur_context), &(lock_inst->lock.lock_node));
 		lock_inst->owner_context = NULL_PTR;
 		__spin_unlock(&(lock_inst->spin));
 		os_int_resume_global(&int_state);
@@ -441,7 +441,7 @@ FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock(const os_spin_id_t spin_id, 
 		if (LIKELY(lock_succ == TRUE)) {
 			*success = TRYTOGETSPINLOCK_SUCCESS;
 			lock_inst->owner_context = cur_context;
-			OsListAppend(OS_CONTEXT_GET_LOCKLIST_REF(cur_context), &(lock_inst->lock.lock_node));
+			os_list_append(OS_CONTEXT_GET_LOCKLIST_REF(cur_context), &(lock_inst->lock.lock_node));
 		}
 		os_int_resume_global(&int_state);
 	} else {
@@ -555,7 +555,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_spinlock_write(const os_spin_id_t spin_id)
 
 		__spin_wr_lock((os_rw_spin_t *)(&(lock_inst->spin)));
 		lock_inst->owner_context = cur_context;
-		OsListAppend(OS_CONTEXT_GET_LOCKLIST_REF(cur_context), &(lock_inst->lock.lock_node));
+		os_list_append(OS_CONTEXT_GET_LOCKLIST_REF(cur_context), &(lock_inst->lock.lock_node));
 
 		os_int_resume_global(&int_state);
 	} else {
@@ -643,7 +643,7 @@ FUNC(Os_StatusType, OS_CODE) os_release_spinlock_write(const os_spin_id_t spin_i
 	if (UNLIKELY(SPINLOCKCHECK_ENABLED == spin_cfg->check)) {
 		os_int_suspend_kernel(&int_state);
 
-		OsListRemove(OS_CONTEXT_GET_LOCKLIST_REF(cur_context), &(lock_inst->lock.lock_node));
+		os_list_remove(OS_CONTEXT_GET_LOCKLIST_REF(cur_context), &(lock_inst->lock.lock_node));
 		lock_inst->owner_context = NULL_PTR;
 		__spin_wr_unlock((os_rw_spin_t *)(&(lock_inst->spin)));
 
@@ -776,7 +776,7 @@ FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock_write(const os_spin_id_t spi
 		if (LIKELY(lock_succ == TRUE)) {
 			*success = TRYTOGETSPINLOCK_SUCCESS;
 			lock_inst->owner_context = cur_context;
-			OsListAppend(OS_CONTEXT_GET_LOCKLIST_REF(cur_context), &(lock_inst->lock.lock_node));
+			os_list_append(OS_CONTEXT_GET_LOCKLIST_REF(cur_context), &(lock_inst->lock.lock_node));
 		}
 
 		os_int_resume_global(&int_state);

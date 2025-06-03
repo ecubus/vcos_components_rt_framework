@@ -1,0 +1,183 @@
+/*
+ * Copyright (c) 2025 Li Auto Inc. and its affiliates
+ * Licensed under the Apache License, Version 2.0(the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Description: SchedTable配置源文件
+ * AutoGenerate Code, DO NOT EDIT!!!
+ * {{get_generation_time()}}
+ * {{get_project_name()}}
+ * {{get_vcos_version()}}
+ */
+
+/* Including File */
+#include <nuttx/config.h>
+#include "Std_Types.h"
+#include "schedtable_cfg.h"
+#include "Os.h"
+#include "application_cfg.h"
+#include "os_task.h"
+#include "task_cfg.h"
+#include "event_cfg.h"
+#include "os_counter.h"
+#include "counter_cfg.h"
+#include "os_compiler_cfg.h"
+
+{%- set app_cfg = get_app_cfg() %}
+{%- set system_counter_list = get_system_counter_list() %}
+{%- set SchedTable_Cfg = get_schedtable_cfg() %}
+
+/* Schedule Table Instance Definitions */
+{%- for appname, appval in app_cfg.items() %}
+    {%- if appval is mapping and "AppScheduleTableList" in appval and appval["AppScheduleTableList"] %}
+        {%- for SchedTable_Name in appval["AppScheduleTableList"] %}
+            {%- if SchedTable_Name in SchedTable_Cfg %}
+/* {{SchedTable_Name}} instance */
+
+                {%- for expirypoint_name, expirypoint in SchedTable_Cfg[SchedTable_Name]["OsScheduleTableExpiryPoint"].items() %}
+                    {%- if expirypoint.get("OsScheduleTableActivateTaskRef", []) %}
+DeclareExpTaskList(OS_CONST_SECTION, SchedTable_{{expirypoint_name}}_{{SchedTable_Name}}_TaskList[]) =
+{
+                        {%- for task_id in expirypoint["OsScheduleTableActivateTaskRef"] %}
+    /* TaskType = */                {{task_id}},
+                        {%- endfor %}
+};
+                    {%- endif %}
+                    {%- if expirypoint.get("OsScheduleTableSetEventRef", []) %}
+DeclareExpEventList(OS_CONST_SECTION, SchedTable_{{expirypoint_name}}_{{SchedTable_Name}}_EventList[]) =
+{
+                        {%- for event_set in expirypoint["OsScheduleTableSetEventRef"] %}
+    {
+        /* .task = */               {{event_set[1] if event_set[1] else "0"}},
+        /* .mask = */               {{event_set[0] if event_set[0] else "0"}},
+    },
+                        {%- endfor %}
+};
+                    {%- endif %}
+                {%- endfor %}
+
+DeclareExpiryPoint(OS_CONST_SECTION, SchedTable_{{SchedTable_Name}}_ExpiryPointList[]) =
+{
+                {%- for expirypoint_name, expirypoint in SchedTable_Cfg[SchedTable_Name]["OsScheduleTableExpiryPoint"].items() %}
+    {
+                    {%- if expirypoint.get("OsScheduleTableActivateTaskRef", []) %}
+        /* .task_list_cnt = */      NELEMENTS(EXPIREPOINTCFGVAR(SchedTable_{{expirypoint_name}}_{{SchedTable_Name}}_TaskList)),
+                    {%- else %}
+        /* .task_list_cnt = */      0,
+                    {%- endif %}
+                    {%- if expirypoint.get("OsScheduleTableSetEventRef", []) %}
+        /* .event_list_cnt = */     NELEMENTS(EXPIREPOINTCFGVAR(SchedTable_{{expirypoint_name}}_{{SchedTable_Name}}_EventList)),
+                    {%- else %}
+        /* .event_list_cnt = */     0,
+                    {%- endif %}
+        /* .offset = */             {{expirypoint["OsScheduleTblExpPointOffset"]}},
+                    {%- if expirypoint.get("OsScheduleTableActivateTaskRef", []) %}
+        /* .task_list = */          EXPIREPOINTCFGVAR(SchedTable_{{expirypoint_name}}_{{SchedTable_Name}}_TaskList),
+                    {%- else %}
+        /* .task_list = */          NULL_PTR,
+                    {%- endif %}
+                    {%- if expirypoint.get("OsScheduleTableSetEventRef", []) %}
+        /* .event_list = */         EXPIREPOINTCFGVAR(SchedTable_{{expirypoint_name}}_{{SchedTable_Name}}_EventList),
+                    {%- else %}
+        /* .event_list = */         NULL_PTR,
+                    {%- endif %}
+        {
+                    {%- if "OsScheduleTblAdjustableExpPoint" in expirypoint and expirypoint["OsScheduleTblAdjustableExpPoint"] %}
+                        {%- if "OsScheduleTableMaxLengthen" in expirypoint["OsScheduleTblAdjustableExpPoint"] %}
+            /* .max_shorten = */    -{{expirypoint["OsScheduleTblAdjustableExpPoint"]["OsScheduleTableMaxLengthen"]}},
+                        {%- else %}
+            /* .max_shorten = */    0,
+                        {%- endif %}
+                        {%- if "OsScheduleTableMaxShorten" in expirypoint["OsScheduleTblAdjustableExpPoint"] %}
+            /* .max_lengthen = */   {{expirypoint["OsScheduleTblAdjustableExpPoint"]["OsScheduleTableMaxShorten"]}},
+                        {%- else %}
+            /* .max_lengthen = */   0,
+                        {%- endif %}
+                    {%- else %}
+            /* .max_shorten = */    0,
+            /* .max_lengthen = */   0,
+                    {%- endif %}
+        }
+    },
+                {%- endfor %}
+};
+{%- set bsw_appname = app_cfg[appname]["BswAppName"] %}
+DeclareSchedTable(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, SCHEDTABLE_{{SchedTable_Name.upper()}}_CFG) = {
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
+    /* .app_owner_id = */          {{appval["AppId"]}},
+#endif /* #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1) */
+    /* .schedtable_id = */         OS_SCHEDTABLE_{{SchedTable_Name.upper()}}_ID,
+    /* .instance = */              &SCHEDTABLEOBJVAR(SCHEDTABLE_{{SchedTable_Name.upper()}}_CFG),
+    /* .schedtable_name = */       "SchedTable_{{SchedTable_Name}}",
+    /* .action_config = */         {
+        /* .hrtimer = */               &SCHEDTABLEOBJVAR(SCHEDTABLE_{{SchedTable_Name.upper()}}_CFG).hrtimer,
+        /* .Counter = */               (os_counter_cfg_t*)&COUNTERCFGVAR({% if "OsScheduleTableCounterRef" in SchedTable_Cfg[SchedTable_Name] %}{{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableCounterRef"]}}{% else %}{{system_counter_list[appval["CoreNumber"]|int]}}{% endif %}_cfg),
+        /* .ActionCallback = */        &schedule_table_action_callback,
+                                    },
+    /* .repeating = */             {% if "OsScheduleTableRepeating" in SchedTable_Cfg[SchedTable_Name] and SchedTable_Cfg[SchedTable_Name]["OsScheduleTableRepeating"] %}SCHTBL_REPEATING{% else %}SCHTBL_SINGLE_SHOT{% endif %},
+    /* .duration = */              {{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableDuration"]}},
+    /* .expire_point_list = */     EXPIREPOINTCFGVAR(SchedTable_{{SchedTable_Name}}_ExpiryPointList),
+    /* .expiry_point_cnt = */      NELEMENTS(EXPIREPOINTCFGVAR(SchedTable_{{SchedTable_Name}}_ExpiryPointList)),
+    /* .sync_strategy = */         {% if "OsScheduleTableSync" in SchedTable_Cfg[SchedTable_Name] and "OsScheduleTblSyncStrategy" in SchedTable_Cfg[SchedTable_Name]["OsScheduleTableSync"] %}{{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableSync"]["OsScheduleTblSyncStrategy"]}}{% else %}NONE{% endif %},
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
+    {%- set access_app = SchedTable_Cfg[SchedTable_Name]["OsSchTblAccessingApplication"] + [appname] %}
+    {%- set access_str = get_access_app_mask(access_app, index_size=31) %}
+    /* .access_app_mask = */       ({{access_str}}),
+#endif /* #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1) */
+    /* .autostart = */             {
+        /* .app_mode = */              {{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableAutostart"]["OsScheduleTableAppModeRef"]}},
+        /* .type = */                  {{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableAutostart"]["OsScheduleTableAutostartType"]}},
+        /* .Offset = */                {{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableAutostart"]["OsScheduleTableStartValue"]}},
+                                    },
+    /* .precision = */             0
+};
+            {%- endif %}
+        {%- endfor %}
+    {%- endif %}
+{%- endfor %}
+
+#define OS_START_SEC_CONST
+#include "os_memmap.h"
+
+/* Schedule Table Reference Tables */
+{%- for appname, appval in app_cfg.items() %}
+    {%- if appval is mapping and "AppScheduleTableList" in appval and appval["AppScheduleTableList"] %}
+
+CONSTP2CONST(os_schedtable_cfg_t, AUTOMATIC, OS_CONST) {{appval["AppSchedTblTable"]}}[] =
+{
+        {%- for SchedTable_Name in appval["AppScheduleTableList"] %}
+            {%- if SchedTable_Name in SchedTable_Cfg %}
+    &SCHEDTABLECFGVAR(SCHEDTABLE_{{SchedTable_Name.upper()}}_CFG),
+            {%- endif %}
+        {%- endfor %}
+};
+CONST(OsObjIndexType, OS_CONST) {{appval["AppSchedTblTable"]}}_size = NELEMENTS({{appval["AppSchedTblTable"]}});
+
+    {%- endif %}
+{%- endfor %}
+
+#define OS_STOP_SEC_CONST
+#include "os_memmap.h"
+
+DeclareOsRefTable(OS_CONST_SECTION, schedtable, OS_SCHED_TABLE_CNT) = {
+{%- for appname, appval in app_cfg.items() %}
+    {%- if appval is mapping and "AppScheduleTableList" in appval and appval["AppScheduleTableList"] %}
+        {%- for SchedTable_Name in appval["AppScheduleTableList"] %}
+            {%- if SchedTable_Name in SchedTable_Cfg %}
+    &SCHEDTABLECFGVAR(SCHEDTABLE_{{SchedTable_Name.upper()}}_CFG),
+            {%- endif %}
+        {%- endfor %}
+    {%- endif %}
+{%- endfor %}
+};

@@ -63,9 +63,9 @@ from multiprocessing import Pool
 from ui_adaptor.ui_interaction.ui_logger import logger
 
 # Local application imports
-from rt_framework.config_plug_in.auto_config.scheduler import Scheduler, Task
-from rt_framework.config_plug_in.auto_config.trace_data_parse import (
-    parse_ftrace_log,
+from components.rt_framework.config_plug_in.auto_config.scheduler import Scheduler, Task
+from components.rt_framework.config_plug_in.auto_config.trace_data_parse import (
+    parse_ftrace_log,parse_binary_data,
     organize_tasks_by_core as organize_ftrace_tasks
 )
 
@@ -99,6 +99,7 @@ class DataSourceType(Enum):
     """Data source type enumeration"""
     GLIWA_HTML = 1
     FTRACE_LOG = 2
+    BINARY_LOG = 3
 
 # Global variable to control data source type
 CURRENT_DATA_SOURCE = DataSourceType.FTRACE_LOG
@@ -1346,6 +1347,14 @@ def get_input_file(config_base_path: str, data_source_type: DataSourceType) -> s
             logger.ui_info("Please add ftrace log file (*.log) to:")
             logger.ui_info(import_dir)
             raise FileNotFoundError("Ftrace log file not found")
+    if data_source_type == DataSourceType.BINARY_LOG:
+        # DataSourceType.BINARY_LOG
+        input_file = find_latest_file(import_dir, '.bin')
+        if not input_file:
+            logger.ui_info("No log files found in Import directory")
+            logger.ui_info("Please add binary log file (*.bin) to:")
+            logger.ui_info(import_dir)
+            raise FileNotFoundError("Binary log file not found")
 
     return input_file
 
@@ -1375,6 +1384,16 @@ def jitter_auto_optimization(config_base_path, all_sch_tbl_cfg, task_dict, os_co
                 ftrace_file = get_input_file(config_base_path, DataSourceType.FTRACE_LOG)
                 logger.ui_info(f"Using Ftrace log file: {ftrace_file}")
                 task_params = parse_ftrace_log(ftrace_file)
+                organize_tasks = organize_ftrace_tasks
+            except FileNotFoundError as e:
+                logger.error(str(e))
+                return DEFAULT_CONFIG
+        elif CURRENT_DATA_SOURCE == DataSourceType.BINARY_LOG:
+            ftrace_parse_start_time = time.time()
+            try:
+                binary_file = get_input_file(config_base_path, DataSourceType.BINARY_LOG)
+                logger.ui_info(f"Using binary log file: {binary_file}")
+                task_params = parse_binary_data(binary_file)
                 organize_tasks = organize_ftrace_tasks
             except FileNotFoundError as e:
                 logger.error(str(e))

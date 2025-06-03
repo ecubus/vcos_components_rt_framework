@@ -19,18 +19,25 @@
 #include "os_task.h"
 #include "os_event.h"
 #include "os_interrupt.h"
+#include "os_core.h"
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
 #include "os_schedtable.h"
 #endif
 #if defined(CONFIG_RT_FRAMEWORK_SPINLOCK) && (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
 #include "os_spinlock.h"
 #endif
+#if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
+#include "os_resource.h"
+#endif
+#if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
+#include "os_counter.h"
+#endif
 
 /* global Function Implementation */
 #define OS_START_SEC_CODE
 #include "os_memmap.h"
 
-FUNC(void, OS_CODE) syscall_handler(void *syscall_args, uint32_t *regs)
+FUNC(void, OS_CODE) rtfw_syscall_handler(void *syscall_args, uint32_t *regs)
 {
 	syscall_data_t *syscall;
 
@@ -47,7 +54,7 @@ FUNC(void, OS_CODE) syscall_handler(void *syscall_args, uint32_t *regs)
 				os_activate_task_asyn(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_task_t);
 			break;
 		case OS_SYSCALLID_SET_USER_TO_PRIVILEGE:
-			up_set_user_to_privilege(regs);
+			up_set_prev_privilege_mode_from_syscall(regs, true);
 			break;
 		case OS_SYSCALLID_SETEVENT:
 			syscall->syscall_return_value.return_os_status =
@@ -74,27 +81,31 @@ FUNC(void, OS_CODE) syscall_handler(void *syscall_args, uint32_t *regs)
 			break;
 		case OS_SYSCALLID_DISABLEALLINTERRUPTS:
 			os_disable_all_interrupts();
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_ENABLEALLINTERRUPTS:
 			os_enable_all_interrupts();
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_SUSPENDALLINTERRUPTS:
 			os_suspend_all_interrupts();
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_RESUMEALLINTERRUPTS:
 			os_resume_all_interrupts();
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_SUSPENDOSINTERRUPTS:
 			os_suspend_osinterrupts();
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_RESUMEOSINTERRUPTS:
 			os_resume_osinterrupts();
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
+			break;
+		case OS_SYSCALLID_GETCOREID:
+			syscall->syscall_return_value.return_coreid_type =
+			os_get_core_id();
 			break;
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
 		case OS_SYSCALLID_STARTSCHEDULETABLEREL:
@@ -110,6 +121,16 @@ FUNC(void, OS_CODE) syscall_handler(void *syscall_args, uint32_t *regs)
 		case OS_SYSCALLID_STOPSCHEDULETABLE:
 			syscall->syscall_return_value.return_os_status = os_stop_schedule_table(
 				syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_scheduletable);
+			break;
+		case OS_SYSCALLID_SETSCHEDULETABLEAPPID:
+			syscall->syscall_return_value.return_os_status = os_set_schedule_table_app_id(
+				syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_scheduletable,
+				syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_applicationid);
+			break;
+		case OS_SYSCALLID_CLEARSCHEDULETABLEAPPID:
+			syscall->syscall_return_value.return_os_status = os_clear_schedule_table_app_id(
+				syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_scheduletable,
+				syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_applicationid);
 			break;
 		case OS_SYSCALLID_GETSCHEDULETABLESTATUS:
 			syscall->syscall_return_value.return_os_status = os_get_schedule_table_status(
@@ -135,6 +156,11 @@ FUNC(void, OS_CODE) syscall_handler(void *syscall_args, uint32_t *regs)
 				syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_scheduletable,
 				syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_tick_t);
 			break;
+		case OS_SYSCALLID_DEVIATECORE:
+			syscall->syscall_return_value.return_os_status = os_deviate_schedule_table(
+				syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_scheduletable,
+				syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_tick_t);
+			break;
 		case OS_SYSCALLID_SETSCHEDULETABLEASYNC:
 			syscall->syscall_return_value.return_os_status = os_set_schedule_table_async(
 				syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_scheduletable);
@@ -144,52 +170,81 @@ FUNC(void, OS_CODE) syscall_handler(void *syscall_args, uint32_t *regs)
 		case OS_SYSCALLID_GETSPINLOCK:
 			syscall->syscall_return_value.return_os_status =
 				os_get_spinlock(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock);
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_RELEASESPINLOCK:
 			syscall->syscall_return_value.return_os_status =
 				os_release_spinlock(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock);
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_TRYTOGETSPINLOCK:
 			syscall->syscall_return_value.return_os_status = os_try_to_get_spinlock(
 				syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock,
 				syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_try_to_get_spinlock_ref);
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_GETSPINLOCKREAD:
 			syscall->syscall_return_value.return_os_status =
 				os_get_spinlock_read(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock);
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_GETSPINLOCKWRITE:
-			syscall->syscall_return_value.return_os_status = os_get_spinlock_write(
-				syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock);
-			up_set_int_from_syscall(regs);
+			syscall->syscall_return_value.return_os_status =
+				os_get_spinlock_write(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_RELEASESPINLOCKREAD:
-			syscall->syscall_return_value.return_os_status = os_release_spinlock_read(
-				syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock);
-			up_set_int_from_syscall(regs);
+			syscall->syscall_return_value.return_os_status =
+				os_release_spinlock_read(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_RELEASESPINLOCKWRITE:
 			syscall->syscall_return_value.return_os_status = os_release_spinlock_write(
 				syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock);
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_TRYTOGETSPINLOCKREAD:
 			syscall->syscall_return_value.return_os_status = os_try_to_get_spinlock_read(
 				syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock,
 				syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_try_to_get_spinlock_ref);
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 		case OS_SYSCALLID_TRYTOGETSPINLOCKWRITE:
 			syscall->syscall_return_value.return_os_status = os_try_to_get_spinlock_write(
 				syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock,
 				syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_try_to_get_spinlock_ref);
-			up_set_int_from_syscall(regs);
+			up_set_prev_intstate_from_syscall(regs);
 			break;
 #endif /* CONFIG_RT_FRAMEWORK_SPINLOCK */
+#if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
+		case OS_SYSCALLID_GETRESOURCE:
+			syscall->syscall_return_value.return_os_status =
+				os_get_resource(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_resource);
+			up_set_prev_intstate_from_syscall(regs);
+			break;
+		case OS_SYSCALLID_RELEASERESOURCE:
+			syscall->syscall_return_value.return_os_status =
+				os_release_resource(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_resource);
+			up_set_prev_intstate_from_syscall(regs);
+			break;
+#endif /* CONFIG_RT_FRAMEWORK_RESOURCE */
+#if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
+		case OS_SYSCALLID_GETCOUNTERVALUE:
+			syscall->syscall_return_value.return_os_status =
+				os_counter_get_value(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_counter_type,
+				syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_tick_ref_type);
+			break;
+		case OS_SYSCALLID_GETELAPSEDVALUE:
+			syscall->syscall_return_value.return_os_status =
+			os_counter_get_elapsed_value(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_counter_type,
+				syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_tick_ref_type,
+				syscall->syscall_param[OS_SYSCALLPARAMINDEX_3].param_tick_ref_type);
+			break;
+		case OS_SYSCALLID_INCREMENTCOUNTER:
+			syscall->syscall_return_value.return_os_status =
+				os_counter_increment(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_counter_type);
+			break;
+#endif /* CONFIG_RT_FRAMEWORK_COUNTER */
 		default:
 			/* do nothing */
 			break;

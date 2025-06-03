@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_SCHED_TABLE_INTERNAL_H
-#define AUTOSAROS_INC_OS_SCHED_TABLE_INTERNAL_H
+#ifndef RT_FRAMEWORK_INC_OS_SCHED_TABLE_INTERNAL_H
+#define RT_FRAMEWORK_INC_OS_SCHED_TABLE_INTERNAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,107 +34,93 @@ extern "C" {
 /* Global Enumeration Definition */
 
 typedef uint8 os_schedtable_sync_strategy;
-#define NONE ((os_schedtable_sync_strategy)0x00U) /*! Schedule table without synchronization */
-#define EXPLICIT ((os_schedtable_sync_strategy)0x01U) /*! Schedule table with explicit synchronization */
-#define IMPLICIT ((os_schedtable_sync_strategy)0x02U) /*! Schedule table with implicit synchronization */
+#define NONE ((os_schedtable_sync_strategy)0x00U)      /*! Schedule table without synchronization */
+#define EXPLICIT ((os_schedtable_sync_strategy)0x01U)  /*! Schedule table with explicit synchronization */
+#define IMPLICIT ((os_schedtable_sync_strategy)0x02U)  /*! Schedule table with implicit synchronization */
 
 typedef uint8 os_schedtable_autostart_type;
 #define SCHTBL_AUTOSTART_ABSOLUTE                                                                                      \
-	((os_schedtable_autostart_type)0x00U) /*! Automatic absolute start, calls StartScheduleTableAbs() */
+	((os_schedtable_autostart_type)0x00U)              /*! Automatic absolute start, calls StartScheduleTableAbs() */
 #define SCHTBL_AUTOSTART_RELATIVE                                                                                      \
-	((os_schedtable_autostart_type)0x01U) /*! Automatic relative start, calls StartScheduleTableRel() */
+	((os_schedtable_autostart_type)0x01U)              /*! Automatic relative start, calls StartScheduleTableRel() */
 #define SCHTBL_AUTOSTART_SYNCHRONE                                                                                     \
-	((os_schedtable_autostart_type)0x02U) /*! Automatic synchronous start, calls StartScheduleTableSyncon() */
+	((os_schedtable_autostart_type)0x02U)              /*! Automatic synchronous start, calls StartScheduleTableSyncon() */
 
 typedef uint8 os_schedtable_repeating_type;
-#define SCHTBL_SINGLE_SHOT ((os_schedtable_repeating_type)0x00U) /*! Single execution */
-#define SCHTBL_REPEATING ((os_schedtable_repeating_type)0x01U) /*! Periodic execution */
+#define SCHTBL_SINGLE_SHOT ((os_schedtable_repeating_type)0x00U)  /*! Single execution */
+#define SCHTBL_REPEATING ((os_schedtable_repeating_type)0x01U)    /*! Periodic execution */
 
 typedef uint8 os_schedtable_sync_status;
-#define SCHTBL_SYNCSTATUS_NOT_PROVIDED ((os_schedtable_sync_status)0x00U) /*! No synchronization counter value provided */
+#define SCHTBL_SYNCSTATUS_NOT_PROVIDED ((os_schedtable_sync_status)0x00U)  /*! No synchronization counter value provided */
 #define SCHTBL_SYNCSTATUS_PROVIDED                                                                                     \
-	((os_schedtable_sync_status)0x01U) /*! Synchronization counter value provided, counter starts working */
+	((os_schedtable_sync_status)0x01U)                 /*! Synchronization counter value provided, counter starts working */
 
 /* Global Type & Structure Definition */
 struct os_schedtable_adjust_expiry_point {
-	TickType max_shorten; /*! Maximum advancement for single adjustment */
-	TickType max_lengthen; /*! Maximum delay for single adjustment */
+	TickType max_shorten;                              /*! Maximum advancement for single adjustment */
+	TickType max_lengthen;                             /*! Maximum delay for single adjustment */
 };
 
 struct os_schedtable_expiry_point {
-	uint8_t task_list_cnt; /*! Number of tasks activated at expiry point */
-	uint8_t event_list_cnt; /*! Number of events activated at expiry point */
-	TickType offset; /*! offset value of expiry point */
-	const TaskType *task_list; /*! List of tasks activated at expiry point */
-	const os_schedtable_set_event_t *event_list; /*! List of events activated at expiry point */
+	uint8_t task_list_cnt;                             /*! Number of tasks activated at expiry point */
+	uint8_t event_list_cnt;                            /*! Number of events activated at expiry point */
+	TickType offset;                                   /*! offset value of expiry point */
+	const TaskType *task_list;                         /*! List of tasks activated at expiry point */
+	const os_schedtable_set_event_t *event_list;       /*! List of events activated at expiry point */
 	os_schedtable_adjust_expiry_point_t adjust_expiry_point; /*! Maximum single adjustment value for schedule table */
 };
 
 struct os_schedtable_sync {
-	TickType sync_time_stamp; /*! Synchronization counter */
-	TickType counter_time_stamp; /*! Driving counter */
-	TickType deviation; /*! Overall synchronization deviation, note that the highest bit is the sign bit */
-	TickType one_step_adjust; /*! Single synchronization adjustment bias, note that the highest bit is the sign bit */
-	os_schedtable_sync_status sync_state; /*! Whether synchronization counter is provided */
+	TickType sync_time_stamp;                          /*! Synchronization counter */
+	TickType counter_time_stamp;                       /*! Driving counter */
+	TickType deviation;                                /*! Overall synchronization deviation, note that the highest bit is the sign bit */
+	TickType one_step_adjust;                          /*! Single synchronization adjustment bias, note that the highest bit is the sign bit */
+	os_schedtable_sync_status sync_state;              /*! Whether synchronization counter is provided */
 };
 
 struct os_schedtable_autostart {
-	AppModeType app_mode; /*! Software mode */
-	os_schedtable_autostart_type type; /*! Auto-start mode */
-	TickType offset; /*! Start offset value */
+	AppModeType app_mode;                              /*! Software mode */
+	os_schedtable_autostart_type type;                 /*! Auto-start mode */
+	TickType offset;                                   /*! Start offset value */
 };
 
 struct os_schedtable_inst {
-	ScheduleTableType schedtable_id; /*! Schedule table ID value */
-	uint32 current_expiry_index; /*! Current expiry point index value for schedule table */
-	struct hrtimer_s hrtimer; /*! Next expiry point for schedule table */
-	enum ScheduleTableStatus  state; /*! Schedule table status */
-	os_schedtable_inst_t *next; /*! next schedule table to start after current schedule table ends, NULL if none, see NextScheduleTable */
-	os_schedtable_inst_t *list_schedtable_node; /*! Used during initialization to form a singly linked list of all schedule tables on the same Counter */
-	os_schedtable_sync_t sync; /*! Schedule table synchronization information */
-	uint32 app_status; /*! Used to determine if app restart occurred, each bit identifies an App */
-	uint32 app_status_mask; /*! Used to determine whether to clear the flag at the end of schedule table cycle */
+	ScheduleTableType schedtable_id;                   /*! Schedule table ID value */
+	uint32 current_expiry_index;                       /*! Current expiry point index value for schedule table */
+	struct hrtimer_s hrtimer;                          /*! Next expiry point for schedule table */
+	enum ScheduleTableStatus  state;                   /*! Schedule table status */
+	os_schedtable_inst_t *next;                        /*! next schedule table to start after current schedule table ends, NULL if none, see NextScheduleTable */
+	os_schedtable_inst_t *list_schedtable_node;        /*! Used during initialization to form a singly linked list of all schedule tables on the same Counter */
+	os_schedtable_sync_t sync;                         /*! Schedule table synchronization information */
+	uint32 app_status;                                 /*! Used to determine if app restart occurred, each bit identifies an App */
+	uint32 app_status_mask;                            /*! Used to determine whether to clear the flag at the end of schedule table cycle */
 };
 
 struct os_schedtable_cfg {
-#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-	/* Application ID that the schedule table belongs to, range is configured Application IDs */
-	ApplicationIDType app_owner_id;
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
+	ApplicationIDType app_owner_id;                    /* Application ID that the schedule table belongs to, range is configured Application IDs */
 #endif
-	/*! Schedule table identifier */
-	ScheduleTableType schedtable_id;
-	/*! Application object instance description, users don't need to care about internal implementation, just ensure the parameter name is the same as DeclareSchTbl */
-	os_schedtable_inst_t *instance;
-	/*! Schedule table name, describes schedule table functionality */
-	const char *schedtable_name;
-	/*! action Config, Use for action Priority queue*/
-	os_action_cfg_t action_config;
-	/* Schedule table operating mode */
-	os_schedtable_repeating_type repeating;
-	/* Schedule table duration */
-	TickType duration;
-	/* Schedule table expiry point attributes */
-	os_schedtable_expiry_point_t *expire_point_list;
-	uint32 expiry_point_cnt;
-	/* Schedule table synchronization properties */
-	os_schedtable_sync_strategy sync_strategy;
+	ScheduleTableType schedtable_id;                   /*! Schedule table identifier */
+	os_schedtable_inst_t *instance;                    /*! Application object instance description, users don't need to care about internal implementation */
+	const char *schedtable_name;                       /*! Schedule table name, describes schedule table functionality */
+	os_action_cfg_t action_config;                     /*! action Config, Use for action Priority queue*/
+	os_schedtable_repeating_type repeating;            /* Schedule table operating mode */
+	TickType duration;                                 /* Schedule table duration */
+	const os_schedtable_expiry_point_t *expire_point_list;   /* Schedule table expiry point attributes */
+	uint32 expiry_point_cnt;                           /* Schedule table expiry point attributes */
+	os_schedtable_sync_strategy sync_strategy;         /* Schedule table synchronization properties */
 
-#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-	/* Application access permissions, APPLICATION_ACCESSIBLE indicates it can be accessed */
-	uint32 access_app_mask;
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
+	uint32 access_app_mask;                            /* Application access permissions, APPLICATION_ACCESSIBLE indicates it can be accessed */
 #endif
-	/* Schedule table auto-start properties */
-	const os_schedtable_autostart_t autostart;
+	const os_schedtable_autostart_t autostart;         /* Schedule table auto-start properties */
 
-	/* Precision for explicit synchronization */
-	TickType precision;
+	TickType precision;                                /* Precision for explicit synchronization */
 };
 
 struct os_schedtable_set_event {
-	/*! The task, who's event has to be set. */
-	TaskType task;
-	/*! The events, to be set. */
-	os_event_mask_t mask;
+	TaskType task;                                     /*! The task, who's event has to be set. */
+	os_event_mask_t mask;                              /*! The events, to be set. */
 };
 
 /* Global Macro Definition */
@@ -153,6 +139,4 @@ extern FUNC(void, OS_CODE) os_schedule_table_kill(const os_schedtable_cfg_t *con
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_SCHED_TABLE_INTERNAL_H */
-/*! @} */
-/*! @} */
+#endif /* RT_FRAMEWORK_INC_OS_SCHED_TABLE_INTERNAL_H */

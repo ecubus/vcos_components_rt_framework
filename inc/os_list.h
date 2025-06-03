@@ -55,7 +55,7 @@ typedef struct {
 /*
  * Initialize list
  */
-static inline void OsListInitEmpty(os_list_t *plist)
+static inline void os_list_init_empty(os_list_t *plist)
 {
 	plist->last = NULL;
 }
@@ -63,7 +63,7 @@ static inline void OsListInitEmpty(os_list_t *plist)
 /*
  * Insert a os list node into os list and put the pnode after after_node specified
  */
-static inline void OsListInsert(os_list_node_t *after_node, os_list_node_t *pnode)
+static inline void os_list_insert(os_list_node_t *after_node, os_list_node_t *pnode)
 {
 	os_list_node_t *before_node;
 
@@ -77,7 +77,7 @@ static inline void OsListInsert(os_list_node_t *after_node, os_list_node_t *pnod
 /*
  * Append a os list node into the tail of the os list
  */
-static inline void OsListAppend(os_list_t *plist, os_list_node_t *pnode)
+static inline void os_list_append(os_list_t *plist, os_list_node_t *pnode)
 {
 	os_list_node_t *old_last_node;
 
@@ -93,7 +93,7 @@ static inline void OsListAppend(os_list_t *plist, os_list_node_t *pnode)
 /*
  * Remove a os list node from the os list
  */
-static inline void OsListRemove(os_list_t *plist, const os_list_node_t *pnode)
+static inline void os_list_remove(os_list_t *plist, const os_list_node_t *pnode)
 {
 	os_list_node_t *next;
 	os_list_node_t *previous;

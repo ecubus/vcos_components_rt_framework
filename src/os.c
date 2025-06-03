@@ -29,14 +29,26 @@
 #if defined(CONFIG_RT_FRAMEWORK_SPINLOCK) && (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
 #include "os_spinlock.h"
 #endif
+#if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
+#include "os_resource.h"
+#endif
+#if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
+#include "os_hook.h"
+#endif
 
 #define OS_START_SEC_CODE
 #include "os_memmap.h"
 
 FUNC(void, OS_CODE) StartOS(void)
 {
+	os_context_set_contexthdl(NULL);
 	CoreIdType core_id = os_get_core_id();
 	const os_core_cfg_t *core = os_core_cfg_ref_table[core_id];
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+	if (0U != up_mpu_core_init(os_core_access_right_ref_table[core_id])) {
+		//todo
+	}
+#endif
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
 	if ((core->app_refs != NULL_PTR) && (core->app_count != NULL_PTR)) {
 		os_app_init(core->app_refs, *(core->app_count));
@@ -60,6 +72,18 @@ FUNC(void, OS_CODE) StartOS(void)
 #if defined(CONFIG_RT_FRAMEWORK_SPINLOCK) && (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
 	if (os_get_core_id() == 0) {
 		os_spinlock_init();
+	}
+#endif /* CONFIG_RT_FRAMEWORK_SPINLOCK */
+
+#if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
+	if ((core->resource_refs != NULL_PTR) && (core->resource_count != NULL_PTR)) {
+		os_resource_init(core->resource_refs, *(core->resource_count));
+	}
+#endif /* CONFIG_RT_FRAMEWORK_RESOURCE */
+
+#if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
+	if ((core->hook_refs != NULL_PTR) && (core->hook_count != NULL_PTR)) {
+		os_hook_init(core->hook_refs, *(core->hook_count));
 	}
 #endif
 	os_core_sync_phase_one();

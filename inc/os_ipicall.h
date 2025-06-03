@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_IPICALL_H
-#define AUTOSAROS_INC_OS_IPICALL_H
+#ifndef RT_FRAMEWORK_INC_OS_IPICALL_H
+#define RT_FRAMEWORK_INC_OS_IPICALL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,18 +24,12 @@ extern "C" {
 #include "os_ipicall_internal.h"
 
 /* Global Macro Definition */
-#define DeclareIpicall(section, ipicall_id)                                                                             \
-	OS_LINK_ENTRY_DECLARE(section, os_obj, os_ipicall_inst_t, ipicall_id);                                             \
-	OS_LINK_ENTRY_DECLARE(.rodata, os_ipicall, os_ipicall_cfg_t, ipicall_id)
+#define DeclareIpicall(section_const, section_var, ipicall_id)                                   \
+	OS_LINK_ENTRY_DECLARE(section_var, os_obj, os_ipicall_inst_t, ipicall_id);                   \
+	OS_LINK_ENTRY_DECLARE(section_const, os_ipicall, const os_ipicall_cfg_t, ipicall_id)
 
 #define OSIPICALLCFGVAR(ipicall_id) OS_LINK_ENTRY_NAME(os_ipicall, ipicall_id)
 #define IPICALLOBJVAR(ipicall_id) OS_LINK_ENTRY_NAME(os_obj, ipicall_id)
-
-/* Global Enumeration Definition */
-
-/* Global Type & Structure Definition */
-
-/* Global Function Declaration */
 
 /* Global Function Declaration */
 #define OS_START_SEC_CODE
@@ -45,10 +39,9 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_send_sync(uint32 target_core_id, os_ipic
 FUNC(Os_StatusType, OS_CODE) os_ipicall_broad_cast(uint32 target_core_mask, os_ipicall_data_t *data);
 #define OS_STOP_SEC_CODE
 #include "os_memmap.h"
-/* Global Function Implementation */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_IPICALL_H */
+#endif /* RT_FRAMEWORK_INC_OS_IPICALL_H */

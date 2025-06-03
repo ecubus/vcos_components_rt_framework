@@ -27,16 +27,38 @@ static FUNC(int, OS_CODE) os_isr_run(int irq, void *cxt, void *arg)
 	UNUSED(cxt);
 	const os_isr_cfg_t *isr_cfg = (os_isr_cfg_t *)arg;
 	os_core_cfg_t *core = NULL_PTR;
+	const os_ctx_cfg_t *pre_context = NULL_PTR;
+	const os_ctx_cfg_t *this_context = NULL_PTR;
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+	const struct mpu_access_right_s *pre_access_right = NULL_PTR;
+	const struct mpu_access_right_s *this_access_right = NULL_PTR;
+#endif
 
 	core = (os_core_cfg_t *)OS_ISR_GET_CORE_REF(isr_cfg);
+	pre_context = os_context_get_contexthdl();
+	this_context = OS_ISR_GET_CONTEXT_REF(isr_cfg);
 
-	/*  Autosar context 嵌套层数 + 1 */
-	(void)os_context_nest_inc(OS_CORE_GET_CONTEXTNEST_REF(core), os_context_get_contexthdl());
-	os_context_set_contexthdl(OS_ISR_GET_CONTEXT_REF(isr_cfg));
+	(void)os_context_nest_inc(OS_CORE_GET_CONTEXTNEST_REF(core), pre_context);
+	os_context_set_contexthdl(this_context);
+
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+	this_access_right = OS_CONTEXT_GET_CONTEXTINST_REF(this_context)->current_mpu_access_right;
+
+	if (NULL == pre_context) {
+		up_mpu_switch(&none_rt_framework_task_access_right, this_access_right);
+	} else {
+		pre_access_right = OS_CONTEXT_GET_CONTEXTINST_REF(pre_context)->current_mpu_access_right;
+		up_mpu_switch(pre_access_right, this_access_right);
+	}
+	up_mpu_enable_set(this_access_right->set_num);
+#endif
 
 	isr_cfg->context.arch_ctx_cfg.entry_addr(NULL_PTR);
 
-	/*  Autosar context 嵌套层数 - 1 */
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+	up_mpu_enable_set(0U);
+#endif
+
 	(void)os_context_nest_dec(OS_CORE_GET_CONTEXTNEST_REF(core), NULL_PTR);
 
 	return 0;

@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_SCHED_TABLE_H
-#define AUTOSAROS_INC_OS_SCHED_TABLE_H
+#ifndef RT_FRAMEWORK_INC_OS_SCHED_TABLE_H
+#define RT_FRAMEWORK_INC_OS_SCHED_TABLE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,24 +27,23 @@ extern "C" {
 #include "os_counter_types.h"
 #include "os_core_types.h"
 
-/* Global Macro Definition */
-
 /*! SchedTable declare*/
-#define DeclareExpTaskList(exp_task_list) OS_LINK_ENTRY_DECLARE(.rodata, os_schdtbl_exp_point, TaskType, exp_task_list)
-#define DeclareExpEventList(exp_event_list)                                                                              \
-	OS_LINK_ENTRY_DECLARE(.rodata, os_schdtbl_exp_point, os_schedtable_set_event_t, exp_event_list)
-#define DeclareExpiryPoint(expire_point_list)                                                                            \
-	OS_LINK_ENTRY_DECLARE(.rodata, os_schdtbl_exp_point, os_schedtable_expiry_point_t, expire_point_list)
-#define DeclareSchedTable(section, schedtable_id)                                                                       \
-	OS_LINK_ENTRY_DECLARE(section, os_obj, os_schedtable_inst_t, schedtable_id);                                         \
-	OS_LINK_ENTRY_DECLARE(.rodata, os_schdtbl, os_schedtable_cfg_t, schedtable_id)
+#define DeclareExpTaskList(section, exp_task_list)    \
+	OS_LINK_ENTRY_DECLARE(section, os_schdtbl_exp_point, const TaskType, exp_task_list)
+#define DeclareExpEventList(section, exp_event_list)    \
+	OS_LINK_ENTRY_DECLARE(section, os_schdtbl_exp_point, const os_schedtable_set_event_t, exp_event_list)
+#define DeclareExpiryPoint(section, expire_point_list)    \
+	OS_LINK_ENTRY_DECLARE(section, os_schdtbl_exp_point, const os_schedtable_expiry_point_t, expire_point_list)
+#define DeclareSchedTable(section_const, section_var, schedtable_id)    \
+	OS_LINK_ENTRY_DECLARE(section_var, os_obj, os_schedtable_inst_t, schedtable_id);    \
+	OS_LINK_ENTRY_DECLARE(section_const, os_schdtbl, const os_schedtable_cfg_t, schedtable_id)
 
 #define SCHEDTABLECFGVAR(schedtable_id) OS_LINK_ENTRY_NAME(os_schdtbl, schedtable_id)
 #define SCHEDTABLEOBJVAR(schedtable_id) OS_LINK_ENTRY_NAME(os_obj, schedtable_id)
 
 #define EXPIREPOINTCFGVAR(ExpirePointName) OS_LINK_ENTRY_NAME(os_schdtbl_exp_point, ExpirePointName)
 #define EXPIRE_POINT_GET(cfg_ptr, index) (&(cfg_ptr)->expire_point_list[(index)])
-#define OS_GET_SCHEDTABLE_CFG_BY_ACTION_ADDR(action)                                                                   \
+#define OS_GET_SCHEDTABLE_CFG_BY_ACTION_ADDR(action)    \
 	((os_schedtable_cfg_t *)((char *)(action) - offsetof(os_schedtable_cfg_t, action_config)))
 
 #define OS_START_SEC_CODE
@@ -119,8 +118,8 @@ FUNC(Os_StatusType, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable
 /*! \brief          Set the bit corresponding to AppId in the app_status internal variable of the schedule table
  *  \details        None
  *
- *  \param[in]      schedtable_id      Index value of the schedule table to be set
- *  \param[in]      AppId                Index value of the restarted APP to be recorded
+ *  \param[in]      schedtable_id        Index value of the schedule table to be set
+ *  \param[in]      app_id               Index value of the restarted APP to be recorded
  *
  *  \return         E_OK                 No error
  *                  E_OS_CALLEVEL        Call level error
@@ -135,13 +134,13 @@ FUNC(Os_StatusType, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable
  *  \synchronous    TRUE
  */
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-FUNC(Os_StatusType, OS_CODE) Os_SetScheduleTableAppId(ScheduleTableType schedtable_id, ApplicationIDType AppId);
+FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_app_id(ScheduleTableType schedtable_id, ApplicationIDType app_id);
 
 /*! \brief          Set the bit corresponding to AppId in the app_status_mask internal variable of the schedule table
  *  \details        None
  *
- *  \param[in]      schedtable_id      Index value of the schedule table to be set
- *  \param[in]      AppId                Index value of the restored APP to be recorded
+ *  \param[in]      schedtable_id        Index value of the schedule table to be set
+ *  \param[in]      app_id               Index value of the restored APP to be recorded
  *
  *  \return         E_OK                 No error
  *                  E_OS_CALLEVEL        Call level error
@@ -155,7 +154,7 @@ FUNC(Os_StatusType, OS_CODE) Os_SetScheduleTableAppId(ScheduleTableType schedtab
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) Os_ClearScheduleTableAppId(ScheduleTableType schedtable_id, ApplicationIDType AppId);
+FUNC(Os_StatusType, OS_CODE) os_clear_schedule_table_app_id(ScheduleTableType schedtable_id, ApplicationIDType app_id);
 #endif
 
 /*! \brief          Gets the running state of a schedule table.
@@ -254,6 +253,26 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType 
  */
 FUNC(Os_StatusType, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable_id, TickType sync_time_now);
 
+/*! \brief          Set time offset to schedule table
+ *  \details        None
+ *
+ *  \param[in]      schedtable_id             Target schedule table ID
+ *  \param[in]      deviate_value             Synchronization correction value
+ *
+ *  \return         E_OK                      Execution successful
+ *                  E_OS_DISABLEDINT          Error, interrupts are disabled or suspended
+ *                  E_OS_ID                   Error, invalid schedule table ID
+ *                  E_OS_VALUE                Error, synchronization correction value exceeds schedule table cycle
+ *                  E_OS_STATE                Error, next schedule table status incorrect
+ *
+ *  \context        TASK|ISR2
+ *
+ *  \reentrant      TRUE
+ *
+ *  \synchronous    TRUE
+ */
+FUNC(Os_StatusType, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedtable_id, TickType deviate_value);
+
 /*! \brief          Set schedule table to running state
  *  \details        None
  *
@@ -311,4 +330,4 @@ FUNC(Os_StatusType, OS_CODE) get_sched_table_core_id(ScheduleTableType schedtabl
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_SCHED_TABLE_H */
+#endif /* RT_FRAMEWORK_INC_OS_SCHED_TABLE_H */

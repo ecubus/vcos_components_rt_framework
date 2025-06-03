@@ -25,27 +25,18 @@ extern "C" {
 #include "Os_Types.h"
 #include "os_core_internal.h"
 
-/* Global Macro Definition */
-
 /* Get Core Configuration Information Handler according ID */
 #define OS_CORE_CFG_GET(_id) (os_core_cfg_ref_table[_id])
 
-/* Global Enumeration Definition */
-
-/* Global Type & Structure Definition */
-
-/*! Core Instance Description */
 /*! Core declare*/
-#define DeclareCore(section, core_id)                                                                                   \
-	OS_LINK_ENTRY_DECLARE(section, os_obj, os_core_inst_t, core_id);                                                 \
-	OS_LINK_ENTRY_DECLARE(.rodata, os_core, os_core_cfg_t, core_id)
+#define DeclareCore(section_const, section_var, core_id)                         \
+	OS_LINK_ENTRY_DECLARE(section_var, os_obj, os_core_inst_t, core_id);         \
+	OS_LINK_ENTRY_DECLARE(section_const, os_core, const os_core_cfg_t, core_id)
 
 #define OSCORECFGVAR(core_id) OS_LINK_ENTRY_NAME(os_core, core_id)
 
-/* coverity[misra_c_2012_rule_20_9_violation:SUPPRESS] */
 #define OSCOREOBJVAR(core_id) OS_LINK_ENTRY_NAME(os_obj, core_id)
 
-/* Global Function Declaration */
 #define OS_START_SEC_CODE
 #include "os_memmap.h"
 
@@ -135,12 +126,8 @@ FUNC(void, OS_CODE) Os_ShutdownCore(StatusType Error);
 #define OS_STOP_SEC_CODE
 #include "os_memmap.h"
 
-/* Global Function Implementation */
-
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* AUTOSAROS_INC_CORE_H */
-/*! @} */
-/*! @} */

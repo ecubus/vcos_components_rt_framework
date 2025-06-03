@@ -14,6 +14,7 @@
 ############################################################################
 
 import functools
+from collections import defaultdict
 
 def get_last_item(x):
     """string.split('/') ,return the last part; if string=<empty>,return '' """
@@ -32,6 +33,40 @@ def get_dict_path(in_dict, path_list):
         if not res:
             break
     return res
+
+def recursive_group(data, keys):
+    if not keys:
+        return data
+
+    key = keys[0]
+    grouped = defaultdict(list)
+
+    for d in data:
+        grouped[d[key]].append(d)
+
+    for k, v in grouped.items():
+        grouped[k] = recursive_group(v, keys[1:])
+
+    return grouped
+
+def resolve_ref_list(ref_type, cfg_dict):
+    ref_list = list()
+    # When only one reference is configurated,
+    # the ValueRef is an instance of str instead of list.
+    if isinstance(cfg_dict[ref_type]["ValueRef"], str):
+        ref_list.append(get_last_item(
+            cfg_dict[ref_type]["ValueRef"]))
+    elif isinstance(cfg_dict[ref_type]["ValueRef"], list):
+        for item_dir in cfg_dict[ref_type]["ValueRef"]:
+            ref_list.append(get_last_item(item_dir))
+    return sorted(list(set(ref_list)), key=lambda x: (len(x), x.lower()))
+
+def get_module_list(context, module_path):
+    mod_list = {}
+    for name, value in context.items():
+        if "DefinitionRef" in value and module_path in value["DefinitionRef"]:
+            mod_list[name] = value
+    return mod_list
 
 def cache_once(cache_registry):
 

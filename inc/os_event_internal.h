@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_EVENT_INTERNAL_H
-#define AUTOSAROS_INC_OS_EVENT_INTERNAL_H
+#ifndef RT_FRAMEWORK_INC_OS_EVENT_INTERNAL_H
+#define RT_FRAMEWORK_INC_OS_EVENT_INTERNAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,10 +22,6 @@ extern "C" {
 
 /* Including File */
 #include "Os_Types.h"
-
-/* Global Variable Definition */
-
-/* Global Function Declaration */
 
 #define OS_START_SEC_CODE
 #include "os_memmap.h"
@@ -45,4 +41,4 @@ extern FUNC(Os_StatusType, OS_CODE) os_get_event(TaskType task_id, os_event_mask
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_EVENT_INTERNAL_H */
+#endif /* RT_FRAMEWORK_INC_OS_EVENT_INTERNAL_H */

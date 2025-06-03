@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_CPUSET_INTERNAL_H
-#define AUTOSAROS_INC_OS_CPUSET_INTERNAL_H
+#ifndef RT_FRAMEWORK_INC_OS_CPUSET_INTERNAL_H
+#define RT_FRAMEWORK_INC_OS_CPUSET_INTERNAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,18 +38,8 @@ extern "C" {
 #define OS_IS_CPU_ENABLED(index) (CPUSET_ISSET(OS_CPU_ENABLE_GET(), (index)))
 #define OS_IS_CPU_STARTED(index) (CPUSET_ISSET(OS_CPU_START_GET(), (index)))
 
-/* Global Enumeration Definition */
-
-/* Global Type & Structure Definition */
-
-/* Global Variable Definition */
-
-/* Global Function Declaration */
-
-/* Global Function Implementation */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_CPUSET_INTERNAL_H */
+#endif /* RT_FRAMEWORK_INC_OS_CPUSET_INTERNAL_H */

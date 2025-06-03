@@ -13,33 +13,23 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_TASK_TYPES_H
-#define AUTOSAROS_INC_OS_TASK_TYPES_H
+#ifndef RT_FRAMEWORK_INC_OS_TASK_TYPES_H
+#define RT_FRAMEWORK_INC_OS_TASK_TYPES_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Including File */
-/* Global Macro Definition */
 
-/* Global Enumeration Definition */
-
-/* Global Type & Structure Definition */
-struct os_task_inst;
-typedef struct os_task_inst os_task_inst_t;
+struct os_task_inst_s;
+typedef struct os_task_inst_s os_task_inst_t;
 
 struct os_task_cfg_s;
 typedef struct os_task_cfg_s os_task_cfg_t;
-
-/* Global Variable Definition */
-
-/* Global Function Declaration */
-
-/* Global Function Implementation */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_TASK_TYPES_H */
+#endif /* RT_FRAMEWORK_INC_OS_TASK_TYPES_H */

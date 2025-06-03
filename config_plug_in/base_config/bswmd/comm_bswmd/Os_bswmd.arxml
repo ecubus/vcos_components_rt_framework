@@ -62,7 +62,7 @@
                 <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:3fe22410-f7c0-4ae4-a89a-e6d8c2861115">
                   <SHORT-NAME>OsApplication</SHORT-NAME>
                   <DESC>
-                    <L-2 L="EN">An AUTOSAR OS must be capable of supporting a collection of OS objects (tasks, interrupts, alarms, hooks etc.) that form a cohesive functional unit. This collection of objects is termed an OS-Application.</L-2>
+                    <L-2 L="EN">An AUTOSAR OS must be capable of supporting a collection of OS objects (tasks, interrupts, hooks etc.) that form a cohesive functional unit. This collection of objects is termed an OS-Application.</L-2>
                     <L-2 L="ZH">概述：OsApplication配置项用于定义操作系统应用程序的属性，它是AUTOSAR OS模块中的一个基本构建块，用于实现应用程序的隔离和保护。</L-2>
                     <L-2 L="ZH">注意：在配置OsApplication时，需要确保其属性与系统的内存保护和隔离需求相符合；每个OsApplication应有唯一的标识符，并且应正确配置其访问权限和资源；在多核系统中，还需注意OsApplication与特定核心的绑定关系。</L-2>
                   </DESC>
@@ -85,6 +85,36 @@
                   <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
                   <UPPER-MULTIPLICITY>32</UPPER-MULTIPLICITY>
                   <PARAMETERS>
+                    <ECUC-INTEGER-PARAM-DEF UUID="ECUC:a9498b30-c614-44d6-bda3-3075e560bc1e">
+                      <SHORT-NAME>OsAppMemoryProtectionIdentifier</SHORT-NAME>
+                      <DESC>
+                        <L-2 L="EN">This optional parameter can be used to specify a memory protection identifier for the OS-Application.</L-2>
+                        <L-2 L="ZH">概述：OsAppMemoryProtectionIdentifier用于标识操作系统应用程序的内存保护单元，确保应用程序之间的内存访问隔离，提高系统的安全性。</L-2>
+                        <L-2 L="ZH">注意：在使能内存保护单元后，需确保每个应用程序都配置了OsAppMemoryProtectionIdentifier。</L-2>
+                      </DESC>
+                      <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                      <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                      <SCOPE>LOCAL</SCOPE>
+                      <MULTIPLICITY-CONFIG-CLASSES>
+                        <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                        </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                      </MULTIPLICITY-CONFIG-CLASSES>
+                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                      <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                      <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                      <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                      <VALUE-CONFIG-CLASSES>
+                        <ECUC-VALUE-CONFIGURATION-CLASS>
+                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                        </ECUC-VALUE-CONFIGURATION-CLASS>
+                      </VALUE-CONFIG-CLASSES>
+                      <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                      <MAX>10</MAX>
+                      <MIN>0</MIN>
+                    </ECUC-INTEGER-PARAM-DEF>
                     <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:97ddd259-bb90-4c42-af70-aa8b24630faf">
                       <SHORT-NAME>OsIsPrivileged</SHORT-NAME>
                       <DESC>
@@ -224,7 +254,7 @@
                       <SHORT-NAME>OsAppScheduleTableRef</SHORT-NAME>
                       <DESC>
                         <L-2 L="EN">References the OsScheduleTables that belong to the OsApplication.</L-2>
-                        <L-2 L="ZH">概述：OsAppScheduleTableRef配置项用于指定操作系统应用程序与调度表之间的关联，确保应用程序能够根据预定的时间表执行。</L-2>
+                        <L-2 L="ZH">概述：OsAppScheduleTableRef配置项用于指定OsApplication与调度表之间的映射关系。</L-2>
                         <L-2 L="ZH">注意：在配置时需确保调度表已定义且与应用程序的需求相匹配；此配置项对于实现时间分区和确保应用程序按时执行至关重要；在多应用系统中，正确配置每个应用的OsAppScheduleTableRef是实现时间隔离的关键。</L-2>
                       </DESC>
                       <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00230</RELATED-TRACE-ITEM-REF>
@@ -437,7 +467,7 @@
                     <ECUC-INTEGER-PARAM-DEF UUID="ECUC:4a0415c2-c296-49d6-b76a-3ce3e75112f3">
                       <SHORT-NAME>OsCounterMinCycle</SHORT-NAME>
                       <DESC>
-                        <L-2 L="EN">The MINCYCLE attribute specifies the minimum allowed number of counter ticks for a cyclic alarm linked to the counter.</L-2>
+                        <L-2 L="EN">The MINCYCLE attribute specifies the minimum allowed number of counter ticks for a cyclic scheduletable linked to the counter.</L-2>
                         <L-2 L="ZH">概述：OsCounterMinCycle 定义了操作系统计数器的最小周期时间，用于设定计数器的最小递增间隔。</L-2>
                         <L-2 L="ZH">注意：该值必须小于或等于OsCounterMaxAllowedValue，以确保计数器的正确循环；设置过小可能导致系统过度负载；在AUTOSAR CP 4.4中，应确保此配置与系统时钟和任务调度需求相匹配。</L-2>
                       </DESC>
@@ -795,6 +825,135 @@
                     </ECUC-STRING-PARAM-DEF>
                   </PARAMETERS>
                 </ECUC-PARAM-CONF-CONTAINER-DEF>
+                <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:8a186c09-bd3e-413f-869f-40b71e71b89e">
+                  <SHORT-NAME>OsResource</SHORT-NAME>
+                  <DESC>
+                    <L-2 L="EN">An OsResource object is used to co-ordinate the concurrent access by tasks and ISRs to a shared resource, e.g. the scheduler, any program sequence, memory or any hardware area.</L-2>
+                    <L-2 L="ZH">概述：OsResource 是 AUTOSAR OS模块中定义的资源，用于实现互斥保护，避免系统中的任务或中断服务程序在访问共享资源时出现竞态条件,避免出现优先级反转或死锁等问题。</L-2>
+                    <L-2 L="ZH">注意：在配置OsResource时，必须确保资源的使用不会导致死锁；资源应当只在必要时被锁定，并在最短可能时间内释放；确保资源的分配遵循AUTOSAR OS的优先级继承或优先级上限协议。</L-2>
+                  </DESC>
+                  <ADMIN-DATA>
+                    <SDGS>
+                      <SDG GID="VCOS:StringLength">
+                        <SD GID="VCOS:MinLength">1</SD>
+                        <SD GID="VCOS:MaxLength">63</SD>
+                      </SDG>
+                    </SDGS>
+                  </ADMIN-DATA>
+                  <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00252</RELATED-TRACE-ITEM-REF>
+                  <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                  <UPPER-MULTIPLICITY>65535</UPPER-MULTIPLICITY>
+                  <PARAMETERS>
+                    <ECUC-ENUMERATION-PARAM-DEF UUID="ECUC:00ff7313-1773-4a7c-a3f0-236baeb9dab5">
+                      <SHORT-NAME>OsResourceProperty</SHORT-NAME>
+                      <DESC>
+                        <L-2 L="EN">This specifies the type of the resource.</L-2>
+                        <L-2 L="ZH">概述：OsResourceProperty配置项用于定义操作系统资源的属性，这些属性包括资源的访问权、优先级和资源的链接方式等，以确保系统中的任务和中断能够正确地管理和使用资源。</L-2>
+                        <L-2 L="ZH">注意：在AUTOSAR CP 4.4标准中，资源管理应遵循优先级上限协议（Priority Ceiling Protocol）以避免优先级反转问题；资源属性配置必须与系统设计和任务调度策略相匹配；配置时需确保资源的唯一性和正确的优先级分配，以防止资源冲突和死锁。</L-2>
+                      </DESC>
+                      <ADMIN-DATA>
+                        <SDGS>
+                          <SDG GID="VCOS:CfgUnrealized">
+                            <SD GID="VCOS:CfgLock">true</SD>
+                          </SDG>
+                        </SDGS>
+                      </ADMIN-DATA>
+                      <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00050</RELATED-TRACE-ITEM-REF>
+                      <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                      <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                      <SCOPE>LOCAL</SCOPE>
+                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                      <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                      <VALUE-CONFIG-CLASSES>
+                        <ECUC-VALUE-CONFIGURATION-CLASS>
+                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                        </ECUC-VALUE-CONFIGURATION-CLASS>
+                      </VALUE-CONFIG-CLASSES>
+                      <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                      <DEFAULT-VALUE>STANDARD</DEFAULT-VALUE>
+                      <LITERALS>
+                        <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:5698c562-a95f-8ed7-0be5-0da7c8f7df4f">
+                          <SHORT-NAME>INTERNAL</SHORT-NAME>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                        </ECUC-ENUMERATION-LITERAL-DEF>
+                        <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:36e03569-0663-83dc-127c-89f7f01b051e">
+                          <SHORT-NAME>LINKED</SHORT-NAME>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                        </ECUC-ENUMERATION-LITERAL-DEF>
+                        <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:fe0404bf-255a-8150-0b6e-dc8382946386">
+                          <SHORT-NAME>STANDARD</SHORT-NAME>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                        </ECUC-ENUMERATION-LITERAL-DEF>
+                      </LITERALS>
+                    </ECUC-ENUMERATION-PARAM-DEF>
+                  </PARAMETERS>
+                  <REFERENCES>
+                    <ECUC-REFERENCE-DEF UUID="ECUC:feec2b3b-2a1e-4939-a9bf-f1debcd01166">
+                      <SHORT-NAME>OsResourceAccessingApplication</SHORT-NAME>
+                      <DESC>
+                        <L-2 L="EN">Reference to applications which have an access to this object.</L-2>
+                        <L-2 L="ZH">概述：OsResourceAccessingApplication 配置项用于指定哪些AUTOSAR应用程序可以访问操作系统资源，确保资源的合理分配和访问控制。</L-2>
+                        <L-2 L="ZH">注意：在配置时需确保应用程序对资源的访问权限符合系统安全和隔离要求；资源访问权限应与应用程序的信任级别和功能需求相匹配；在多应用程序环境中，避免不同应用程序间的资源访问冲突。</L-2>
+                      </DESC>
+                      <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00051</RELATED-TRACE-ITEM-REF>
+                      <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                      <UPPER-MULTIPLICITY>31</UPPER-MULTIPLICITY>
+                      <SCOPE>LOCAL</SCOPE>
+                      <MULTIPLICITY-CONFIG-CLASSES>
+                        <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                        </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                      </MULTIPLICITY-CONFIG-CLASSES>
+                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                      <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                      <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                      <VALUE-CONFIG-CLASSES>
+                        <ECUC-VALUE-CONFIGURATION-CLASS>
+                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                        </ECUC-VALUE-CONFIGURATION-CLASS>
+                      </VALUE-CONFIG-CLASSES>
+                      <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsApplication</DESTINATION-REF>
+                    </ECUC-REFERENCE-DEF>
+                    <ECUC-REFERENCE-DEF UUID="ECUC:9ce7daad-5838-4fdb-aedd-031c7f5691cd">
+                      <SHORT-NAME>OsResourceLinkedResourceRef</SHORT-NAME>
+                      <DESC>
+                        <L-2 L="EN">The link to the resource. Must be valid if OsResourceProperty is LINKED. If OsResourceProperty is not LINKED the value is ignored.</L-2>
+                        <L-2 L="ZH">概述：OsResourceLinkedResourceRef 配置项用于指定操作系统资源（OsResource）与其他资源的链接关系，这样可以确保在资源管理中维护正确的优先级继承和避免优先级反转问题。</L-2>
+                        <L-2 L="ZH">注意：在配置OsResourceLinkedResourceRef时，需要确保引用的资源存在且配置正确；此外，应遵循AUTOSAR OS模块的资源管理策略，避免产生死锁；AUTOSAR CP 4.4标准中对资源链接有明确的规则和限制，需要确保配置符合这些规则。</L-2>
+                      </DESC>
+                      <ADMIN-DATA>
+                        <SDGS>
+                          <SDG GID="VCOS:CfgUnrealized">
+                            <SD GID="VCOS:CfgLock">true</SD>
+                          </SDG>
+                        </SDGS>
+                      </ADMIN-DATA>
+                      <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00052</RELATED-TRACE-ITEM-REF>
+                      <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                      <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                      <SCOPE>LOCAL</SCOPE>
+                      <MULTIPLICITY-CONFIG-CLASSES>
+                        <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                        </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                      </MULTIPLICITY-CONFIG-CLASSES>
+                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                      <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                      <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                      <VALUE-CONFIG-CLASSES>
+                        <ECUC-VALUE-CONFIGURATION-CLASS>
+                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                        </ECUC-VALUE-CONFIGURATION-CLASS>
+                      </VALUE-CONFIG-CLASSES>
+                      <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsResource</DESTINATION-REF>
+                    </ECUC-REFERENCE-DEF>
+                  </REFERENCES>
+                </ECUC-PARAM-CONF-CONTAINER-DEF>
                 <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:523c4517-6584-40ca-957a-8327c5c01843">
                   <SHORT-NAME>OsScheduleTable</SHORT-NAME>
                   <DESC>
@@ -1119,7 +1278,7 @@
                           <SHORT-NAME>OsScheduleTableTaskActivation</SHORT-NAME>
                           <DESC>
                             <L-2 L="EN">Task that is triggered by that schedule table.</L-2>
-                            <L-2 L="ZH">概述：OsScheduleTableSetEventTaskRef 配置项用于将操作系统调度表与任务相关联，并指定当调度表到达特定点时，应该设置的事件。</L-2>
+                            <L-2 L="ZH">OsScheduleTableTaskActivation 配置项用于将操作系统调度表与任务相关联，并指定当调度表到达特定点时，应该激活任务。</L-2>
                             <L-2 L="ZH">注意：在配置时需确保引用的任务和事件已经定义；调度表中的每个事件只能与一个任务相关联；在配置调度表时，应考虑系统的实时性和任务优先级。</L-2>
                           </DESC>
                           <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00066</RELATED-TRACE-ITEM-REF>
@@ -1130,7 +1289,7 @@
                               <SHORT-NAME>OsScheduleTableActivateTaskRef</SHORT-NAME>
                               <DESC>
                                 <L-2 L="EN">Reference to task that will be activated by action</L-2>
-                                <L-2 L="ZH">概述：OsScheduleTableTaskActivation 配置项用于定义操作系统调度表中的任务激活行为，它指定了在调度表的特定时间点应当激活哪些任务。</L-2>
+                                <L-2 L="ZH">概述：OsScheduleTableActivateTaskRef 配置项用于定义操作系统调度表中的任务激活行为，它指定了在调度表的特定时间点应当激活哪些任务。</L-2>
                                 <L-2 L="ZH">注意：在配置时需要确保任务的激活时间点不会导致任务间的资源冲突或违反实时性约束；调度表中的任务激活应与任务的周期性和实时性要求相匹配；在多核系统中，还需考虑任务在不同核心间的分配和同步问题。</L-2>
                               </DESC>
                               <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00067</RELATED-TRACE-ITEM-REF>
@@ -1153,8 +1312,8 @@
                           <SHORT-NAME>OsScheduleTblAdjustableExpPoint</SHORT-NAME>
                           <DESC>
                             <L-2 L="EN">Adjustable expiry point</L-2>
-                            <L-2 L="ZH">概述：OsScheduleTableActivateTaskRef 配置项用于指定操作系统调度表中激活任务的引用，它定义了调度表中的特定时间点上应当被激活的任务。</L-2>
-                            <L-2 L="ZH">注意：在配置OsScheduleTableActivateTaskRef时，需要关注任务的到期点偏移和到期点的执行动作。</L-2>
+                            <L-2 L="ZH">概述：OsScheduleTblAdjustableExpPoint 配置项用于指定操作系统调度表中激活任务的引用，它定义了调度表中的特定时间点上应当被激活的任务。</L-2>
+                            <L-2 L="ZH">注意：在配置OsScheduleTblAdjustableExpPoint时，需要关注任务的到期点偏移和到期点的执行动作。</L-2>
                           </DESC>
                           <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00068</RELATED-TRACE-ITEM-REF>
                           <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
@@ -1163,9 +1322,9 @@
                             <ECUC-INTEGER-PARAM-DEF UUID="ECUC:6dfec9f1-1edd-4155-9aee-bcc5a7eff09d">
                               <SHORT-NAME>OsScheduleTableMaxLengthen</SHORT-NAME>
                               <DESC>
-                                <L-2 L="EN">The maximum positive adjustment that can be made to the expiry point offset (in ticks).</L-2>
-                                <L-2 L="ZH">概述：OsScheduleTblAdjustableExpPoint配置项用于定义可调度表中的可调整过期点，允许系统在运行时调整任务的执行时间点，以适应动态变化的调度需求。</L-2>
-                                <L-2 L="ZH">注意：该配置项仅适用于支持可调度表的操作系统；必须确保系统时间同步机制的准确性，以避免调整过程中的时间误差；调整策略应考虑系统的实时性要求，避免因调整导致任务错过关键执行时刻。</L-2>
+                                <L-2 L="EN">OsScheduleTableMaxLengthen defines the maximum number of ticks that can be added to the expiry point’s offset.</L-2>
+                                <L-2 L="ZH">概述：OsScheduleTableMaxLengthen 定义了可以添加到到期点偏移量的最大时钟节拍数（tick数），以延长从前一个到期点到当前到期点的延迟。</L-2>
+                                <L-2 L="ZH">注意：调度表的周期通常是固定的，但是这个配置项允许系统设计者为调度表预留一些额外的时间，以便在必要时可以进行微调。需要确保相邻两个到期点之间的最大延迟必须小于调度表周期（duration）。此外，过大的MaxLengthen值可能会影响系统的实时性能，因此需要仔细评估和测试。</L-2>
                               </DESC>
                               <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00069</RELATED-TRACE-ITEM-REF>
                               <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
@@ -1186,10 +1345,9 @@
                             <ECUC-INTEGER-PARAM-DEF UUID="ECUC:24814103-54dd-4a15-86ac-e315b1791fd0">
                               <SHORT-NAME>OsScheduleTableMaxShorten</SHORT-NAME>
                               <DESC>
-                                <L-2 L="EN">The maximum negative adjustment that can be made to the expiry point offset (in ticks).</L-2>
-                                <L-2 L="ZH">概述：OsScheduleTableMaxLengthen 配置项用于指定操作系统调度表的最大长度延长值，这是一个用于优化调度表时间精度的参数。</L-2>
-                                <L-2 L="ZH">注意：在AUTOSAR CP 4.4标准中，调度表的长度通常是固定的，但是这个配置项允许系统设计者为调度表预留一些额外的时间，以便在必要时可以进行微调。需要确保这个延长值不会导致调度表超出系统的时间分辨率限制。此外，过大的MaxLengthen值可能会影响系统的实时性能，因此需要仔细评估和测试。</L-2>
-                              </DESC>
+                                <L-2 L="EN">OsScheduleTableMaxShorten defines the maximum number of ticks that can be subtracted from the expiry point’s offset.</L-2>
+                                <L-2 L="ZH">概述：OsScheduleTableMaxShorten 定义了可以从到期点偏移量中减去的最大时钟节拍数（tick数），以缩短从前一个到期点到当前到期点的延迟。</L-2>
+                                <L-2 L="ZH">注意：该配置项仅适用于支持调度表的操作系统；必须确保系统时间同步机制的准确性，以避免调整过程中的时间误差；调整必须确保相邻到期点之间的最小延迟必须大于MINCYCLE。</L-2></DESC>
                               <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00070</RELATED-TRACE-ITEM-REF>
                               <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
                               <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
@@ -1214,8 +1372,8 @@
                       <SHORT-NAME>OsScheduleTableSync</SHORT-NAME>
                       <DESC>
                         <L-2 L="EN">This container specifies the synchronization parameters of the schedule table.</L-2>
-                        <L-2 L="ZH">概述：OsScheduleTableMaxShorten 配置项用于指定操作系统调度表（Schedule Table）可以被缩短的最大时间，这是为了提供调度表的灵活性，允许它在运行时适应系统的变化。</L-2>
-                        <L-2 L="ZH">注意：该值必须小于或等于调度表周期的一半；过大的缩短值可能会导致调度表的不稳定或错过重要的执行点；在配置此参数时，应确保系统的实时性要求得到满足。</L-2>
+                        <L-2 L="ZH">概述：OsScheduleTableSync 配置项用于配置调度表同步类型及同步精度。</L-2>
+                        <L-2 L="ZH">注意：精度的基准单位是时钟节拍（tick），只对显式同步有效。</L-2>
                       </DESC>
                       <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00063</RELATED-TRACE-ITEM-REF>
                       <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
@@ -1225,7 +1383,7 @@
                           <SHORT-NAME>OsScheduleTblSyncStrategy</SHORT-NAME>
                           <DESC>
                             <L-2 L="EN">AUTOSAR OS provides support for synchronization in two ways: explicit and implicit.</L-2>
-                            <L-2 L="ZH">概述：OsScheduleTableSync配置项用于定义操作系统调度表的同步策略，确保调度表可以与外部时间源同步，以提高系统的时间精度和可靠性。</L-2>
+                            <L-2 L="ZH">概述：OsScheduleTblSyncStrategy 配置项用于定义操作系统调度表的同步策略，确保调度表可以与外部时间源同步，以提高系统的时间精度和可靠性。</L-2>
                             <L-2 L="ZH">注意：同步策略的选择应考虑系统的实时性要求和外部时间源的特性；不恰当的同步设置可能导致系统时间偏差增大，影响任务的准时执行；AUTOSAR CP 4.4标准支持多种同步策略，包括无同步、隐式同步和显式同步，需根据具体应用场景选择合适的同步方式。</L-2>
                           </DESC>
                           <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00065</RELATED-TRACE-ITEM-REF>
@@ -1706,6 +1864,34 @@
                       </VALUE-CONFIG-CLASSES>
                       <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsEvent</DESTINATION-REF>
                     </ECUC-REFERENCE-DEF>
+                    <ECUC-REFERENCE-DEF UUID="ECUC:62e61405-1641-428b-8bb0-16f229d5e20e">
+                      <SHORT-NAME>OsTaskResourceRef</SHORT-NAME>
+                      <DESC>
+                        <L-2 L="EN">This reference defines a list of resources accessed by this task.</L-2>
+                        <L-2 L="ZH">概述：OsTaskResourceRef用于指定操作系统任务（OsTask）与其所需资源（OsResource）之间的关联，确保任务在执行时能够正确地访问和控制其所需的资源。</L-2>
+                        <L-2 L="ZH">注意：在配置OsTaskResourceRef时，必须确保引用的资源已经定义且与任务兼容；资源的使用应遵循优先级倒置协议，以避免优先级反转问题；AUTOSAR CP 4.4标准要求资源的分配和释放操作必须严格遵循LIFO（后进先出）原则。</L-2>
+                      </DESC>
+                      <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00079</RELATED-TRACE-ITEM-REF>
+                      <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                      <UPPER-MULTIPLICITY>65535</UPPER-MULTIPLICITY>
+                      <SCOPE>LOCAL</SCOPE>
+                      <MULTIPLICITY-CONFIG-CLASSES>
+                        <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                        </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                      </MULTIPLICITY-CONFIG-CLASSES>
+                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                      <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                      <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                      <VALUE-CONFIG-CLASSES>
+                        <ECUC-VALUE-CONFIGURATION-CLASS>
+                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                        </ECUC-VALUE-CONFIGURATION-CLASS>
+                      </VALUE-CONFIG-CLASSES>
+                      <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsResource</DESTINATION-REF>
+                    </ECUC-REFERENCE-DEF>
                   </REFERENCES>
                   <SUB-CONTAINERS>
                     <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:e9cb3483-f89a-4318-bbc9-ad010cc385b3">
@@ -1998,85 +2184,245 @@
                             </ECUC-FLOAT-PARAM-DEF>
                           </PARAMETERS>
                         </ECUC-PARAM-CONF-CONTAINER-DEF>
+                        <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:f0a82f84-2640-47e9-8c97-5aacbe5e0a90">
+                          <SHORT-NAME>OsMemoryRegionSpecifics</SHORT-NAME>
+                          <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <MULTIPLICITY-CONFIG-CLASSES>
+                            <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          </MULTIPLICITY-CONFIG-CLASSES>
+                          <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                          <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                          <SUB-CONTAINERS>
+                            <ECUC-PARAM-CONF-CONTAINER-DEF UUID="cb5be6c7-1854-4801-ab95-f7e7de565bc1">
+                              <SHORT-NAME>OsMemoryRegionAccess</SHORT-NAME>
+                              <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY-INFINITE>true</UPPER-MULTIPLICITY-INFINITE>
+                              <MULTIPLICITY-CONFIG-CLASSES>
+                                <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              </MULTIPLICITY-CONFIG-CLASSES>
+                              <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                              <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                              <PARAMETERS>
+                                <ECUC-ENUMERATION-PARAM-DEF UUID="ECUC:ab69a342-93ef-4895-aaae-ffac44bc0d94">
+                                  <SHORT-NAME>OsMemoryRegionAccessRights</SHORT-NAME>
+                                  <DESC>
+                                    <L-2 L="EN">Defines the access rights for a memory protection region.NONE: No access rights.R: Read access rights.W: Write access rights.X: Execution access rights</L-2>
+                                    <L-2 L="ZH">概述：OsMemoryRegionAccess配置项用于定义操作系统内存区域的访问权限，确保特定的软件组件或模块能够访问指定的内存区域，同时保护内存区域不被未授权访问。</L-2>
+                                    <L-2 L="ZH">注意：在配置OsMemoryRegionAccess时，需要确保正确匹配内存区域与访问权限，避免潜在的安全风险；AUTOSAR CP 4.4标准中对内存保护和访问控制有详细规定，需要遵守这些规定以确保系统的安全性；配置不当可能导致系统运行异常或安全漏洞。</L-2>
+                                  </DESC>
+                                  <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                                  <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                                  <SCOPE>LOCAL</SCOPE>
+                                  <MULTIPLICITY-CONFIG-CLASSES>
+                                    <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                      <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                      <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                    </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  </MULTIPLICITY-CONFIG-CLASSES>
+                                  <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                  <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                                  <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                                  <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                                  <VALUE-CONFIG-CLASSES>
+                                    <ECUC-VALUE-CONFIGURATION-CLASS>
+                                      <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                      <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                    </ECUC-VALUE-CONFIGURATION-CLASS>
+                                  </VALUE-CONFIG-CLASSES>
+                                  <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                                  <DEFAULT-VALUE>NONE</DEFAULT-VALUE>
+                                  <LITERALS>
+                                    <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:815925a4-bbbe-4c98-96a7-302f0f66054e">
+                                      <SHORT-NAME>USER_NON_SUPERVISOR_R</SHORT-NAME>
+                                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                    </ECUC-ENUMERATION-LITERAL-DEF>
+                                    <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:eb1be813-aac1-40e5-942d-046861920286">
+                                      <SHORT-NAME>USER_NON_SUPERVISOR_RW</SHORT-NAME>
+                                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                    </ECUC-ENUMERATION-LITERAL-DEF>
+                                    <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:1343a1a2-15c6-4e8f-b6c5-67b6fa2b3f05">
+                                      <SHORT-NAME>USER_NON_SUPERVISOR_RX</SHORT-NAME>
+                                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                    </ECUC-ENUMERATION-LITERAL-DEF>
+                                    <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:4b143ca1-064b-4991-8097-3871cca4d0f1">
+                                      <SHORT-NAME>USER_R_SUPERVISOR_R</SHORT-NAME>
+                                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                    </ECUC-ENUMERATION-LITERAL-DEF>
+                                    <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:8729ad67-8648-4389-899e-4112c0f7549a">
+                                      <SHORT-NAME>USER_RW_SUPERVISOR_RW</SHORT-NAME>
+                                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                    </ECUC-ENUMERATION-LITERAL-DEF>
+                                    <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:08cdcb98-f9c3-4d01-851f-59b589273fb5">
+                                      <SHORT-NAME>USER_RX_SUPERVISOR_RX</SHORT-NAME>
+                                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                    </ECUC-ENUMERATION-LITERAL-DEF>
+                                    <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:fb521aed-4b6e-4404-a9a4-b54998edb388">
+                                      <SHORT-NAME>USER_X_SUPERVISOR_X</SHORT-NAME>
+                                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                    </ECUC-ENUMERATION-LITERAL-DEF>
+                                  </LITERALS>
+                                </ECUC-ENUMERATION-PARAM-DEF>
+                              </PARAMETERS>
+                            </ECUC-PARAM-CONF-CONTAINER-DEF>
+                            <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:fca88b80-e881-4cfd-836b-ffec2e820069">
+                              <SHORT-NAME>OsMemoryRegionFlags</SHORT-NAME>
+                              <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY-INFINITE>true</UPPER-MULTIPLICITY-INFINITE>
+                              <MULTIPLICITY-CONFIG-CLASSES>
+                                <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              </MULTIPLICITY-CONFIG-CLASSES>
+                              <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                              <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                              <PARAMETERS>
+                                <ECUC-ENUMERATION-PARAM-DEF UUID="ECUC:a8df1e40-c94c-4dcb-a73c-70152eb0567b">
+                                  <SHORT-NAME>OsMemoryRegionMemoryAttributes</SHORT-NAME>
+                                  <DESC>
+                                    <L-2 L="EN">Defines the memory attributes for a memory protection region.</L-2>
+                                    <L-2 L="ZH">概述：OsMemoryRegionMemoryAttributes配置项用于定义操作系统内存区域的内存属性，确保特定的区域有特定的属性。</L-2>
+                                    <L-2 L="ZH">注意：在配置OsMemoryRegionMemoryAttributes时，需要确保正确匹配内存区域与内存属性，避免潜在的安全风险。</L-2>
+                                  </DESC>
+                                  <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                                  <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                                  <SCOPE>LOCAL</SCOPE>
+                                  <MULTIPLICITY-CONFIG-CLASSES>
+                                    <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                      <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                      <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                    </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  </MULTIPLICITY-CONFIG-CLASSES>
+                                  <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                  <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                                  <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                                  <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                                  <VALUE-CONFIG-CLASSES>
+                                    <ECUC-VALUE-CONFIGURATION-CLASS>
+                                      <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                      <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                    </ECUC-VALUE-CONFIGURATION-CLASS>
+                                  </VALUE-CONFIG-CLASSES>
+                                  <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                                  <DEFAULT-VALUE>NONE</DEFAULT-VALUE>
+                                  <LITERALS>
+                                    <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:bbfbf87d-2d53-4f8f-951c-f77d85674a4e">
+                                      <SHORT-NAME>MEMATTR_TYPE_00_WRITE_BACK_WRTIE_ALLOCATE_CACHEABLE</SHORT-NAME>
+                                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                    </ECUC-ENUMERATION-LITERAL-DEF>
+                                    <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:4f5689f9-ecc3-4fc0-97e5-1563a950ddf9">
+                                      <SHORT-NAME>MEMATTR_TYPE_01_WRITE_THROUGH_CACHEABLE</SHORT-NAME>
+                                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                    </ECUC-ENUMERATION-LITERAL-DEF>
+                                    <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:7edbf3b1-4f01-4d4f-9495-36aeb5d527ad">
+                                      <SHORT-NAME>MEMATTR_TYPE_02_NO_CACHEABLE</SHORT-NAME>
+                                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                    </ECUC-ENUMERATION-LITERAL-DEF>
+                                    <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:5d0ec78c-9ce0-48d6-bb29-4c649da29e75">
+                                      <SHORT-NAME>MEMATTR_TYPE_03_DEVICE_NGNRNE</SHORT-NAME>
+                                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                    </ECUC-ENUMERATION-LITERAL-DEF>
+                                    <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:3d7ff0f0-1ebd-458f-aa1f-f0ba39c4998f">
+                                      <SHORT-NAME>MEMATTR_TYPE_04_DEVICE_NGNRE</SHORT-NAME>
+                                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                    </ECUC-ENUMERATION-LITERAL-DEF>
+                                  </LITERALS>
+                                </ECUC-ENUMERATION-PARAM-DEF>
+                              </PARAMETERS>
+                            </ECUC-PARAM-CONF-CONTAINER-DEF>
+                          </SUB-CONTAINERS>
+                        </ECUC-PARAM-CONF-CONTAINER-DEF>
                       </SUB-CONTAINERS>
                     </ECUC-PARAM-CONF-CONTAINER-DEF>
                   </SUB-CONTAINERS>
                 </ECUC-PARAM-CONF-CONTAINER-DEF>
-                <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:9f4e818c-de8e-4354-b52d-7d53967f5e64">
-                  <SHORT-NAME>OsMemmoryMap</SHORT-NAME>
+                <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:037fee7c-9826-4ab9-9067-69b24b57fe12">
+                  <SHORT-NAME>OsOS</SHORT-NAME>
                   <DESC>
-                    <L-2 L="EN">OsMemmoryMap is used for additional memmap parameters and information.</L-2>
-                    <L-2 L="ZH">概述：OsMemmoryMap配置项定义了操作系统模块生成内存映射代码需要的信息。</L-2>
-                    <L-2 L="ZH">注意：完成OsMemmmoryMap配置后，还需要结合内存映射方法对变量使用内存映射属性进行指定和修改内存映射脚本，来实现完整的内存映射流程。</L-2>
+                    <L-2 L="EN">OS is the object used to define ISO 17356-3 properties for an ISO 17356 application.</L-2>
+                    <L-2 L="ZH">概述：OsOS 是 AUTOSAR OS模块的主配置容器，包含操作系统的全局属性，如安全级别等。</L-2>
+                    <L-2 L="ZH">注意：在配置OsOS时，必须确保所有参数符合AUTOSAR CP 4.4标准的要求；配置应考虑系统的实时性和资源限制；正确配置OsOS对系统稳定性和性能至关重要。</L-2>
                   </DESC>
-                  <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                  <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00044</RELATED-TRACE-ITEM-REF>
+                  <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
                   <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
-                  <SUB-CONTAINERS>
-                    <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:74409147-3761-4400-8cce-ea2a6ee1426c">
-                      <SHORT-NAME>OsMemmapLayer</SHORT-NAME>
+                  <PARAMETERS>
+                    <ECUC-ENUMERATION-PARAM-DEF UUID="ECUC:a4c62701-41c5-417c-8b66-16c90d6d111f">
+                      <SHORT-NAME>OsScalabilityClass</SHORT-NAME>
                       <DESC>
-                        <L-2 L="EN">Defines the name of the memmap layer provided.</L-2>
-                        <L-2 L="ZH">概述：OsMemmapLayer 配置项用于指定内存映射中的软件层级，允许多个内存映射软件层级。</L-2>
-                        <L-2 L="ZH">注意：用户必须配置至少一个内存映射软件层级，并存在唯一一个内部软件层级，作为内部底层的软件层级。</L-2>
+                        <L-2 L="EN">A scalability class for each System Object "OS" has to be selected. In order to customize the operating system to the needs of the user and to take full advantage of the processor features the operating system can be scaled according to the scalability classes.</L-2>
+                        <L-2 L="ZH">概述：OsScalabilityClass 定义了操作系统的安全级别，这影响了操作系统的功能和性能特性。</L-2>
+                        <L-2 L="ZH">注意：选择合适的OsScalabilityClass对于系统资源的优化和性能提升至关重要，但也同样关系着系统的安全级别。</L-2>
                       </DESC>
-                      <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
-                      <UPPER-MULTIPLICITY>16</UPPER-MULTIPLICITY>
-                      <PARAMETERS>
-                        <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:7ff2a6ce-97eb-44f7-b200-667b4bc7f005">
-                          <SHORT-NAME>OsInternalLayer</SHORT-NAME>
-                          <DESC>
-                            <L-2 L="EN">true: the layer is defined as the internal memmap layer.</L-2>
-                            <L-2 L="ZH">概述：OsInternalLayer说明该层级作为内部底层的内存映射软件层级。</L-2>
-                            <L-2 L="ZH">注意：必须存在唯一一个OsInternalLayer。</L-2>
-                          </DESC>
-                          <INTRODUCTION>
-                            <P>
-                              <L-1 L="EN">false: the layer is not used as an internal memmap layer.</L-1>
-                            </P>
-                          </INTRODUCTION>
-                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00102</RELATED-TRACE-ITEM-REF>
-                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
-                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
-                          <SCOPE>ECU</SCOPE>
-                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
-                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
-                          <VALUE-CONFIG-CLASSES>
-                            <ECUC-VALUE-CONFIGURATION-CLASS>
-                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
-                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
-                            </ECUC-VALUE-CONFIGURATION-CLASS>
-                          </VALUE-CONFIG-CLASSES>
-                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                          <DEFAULT-VALUE>false</DEFAULT-VALUE>
-                        </ECUC-BOOLEAN-PARAM-DEF>
-                      </PARAMETERS>
-                    </ECUC-PARAM-CONF-CONTAINER-DEF>
-                    <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:92e77fbe-0c49-47e7-a877-73f546e85ea8">
-                      <SHORT-NAME>OsMemmapModule</SHORT-NAME>
+                      <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00259</RELATED-TRACE-ITEM-REF>
                       <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
-                      <UPPER-MULTIPLICITY>65535</UPPER-MULTIPLICITY>
+                      <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                      <SCOPE>ECU</SCOPE>
+                      <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                      <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                      <VALUE-CONFIG-CLASSES>
+                        <ECUC-VALUE-CONFIGURATION-CLASS>
+                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                        </ECUC-VALUE-CONFIGURATION-CLASS>
+                      </VALUE-CONFIG-CLASSES>
+                      <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                      <LITERALS>
+                        <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:ce27c590-e408-98ea-42a2-bc1746a0c2cb">
+                          <SHORT-NAME>SC1</SHORT-NAME>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                        </ECUC-ENUMERATION-LITERAL-DEF>
+                        <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:070246b2-500e-8def-4157-ade4cbb0c048">
+                          <SHORT-NAME>SC2</SHORT-NAME>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                        </ECUC-ENUMERATION-LITERAL-DEF>
+                        <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:38bafefe-a5d1-9974-2581-505f9bc27e21">
+                          <SHORT-NAME>SC3</SHORT-NAME>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                        </ECUC-ENUMERATION-LITERAL-DEF>
+                        <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:09b92f6c-de62-970b-3305-226efbeff18e">
+                          <SHORT-NAME>SC4</SHORT-NAME>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                        </ECUC-ENUMERATION-LITERAL-DEF>
+                      </LITERALS>
+                    </ECUC-ENUMERATION-PARAM-DEF>
+                  </PARAMETERS>
+                  <SUB-CONTAINERS>
+                    <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:e03dab8e-c227-44c9-bf9b-38f0564bd4df">
+                      <SHORT-NAME>OsHooks</SHORT-NAME>
                       <DESC>
-                        <L-2 L="EN">Defines the name of a memmap module.</L-2>
-                        <L-2 L="ZH">概述：OsMemmapModule 配置项用于指定内存映射中的用户自定义模块的模块名称。</L-2>
-                        <L-2 L="ZH">注意：用户可自定义多个内存映射模块，操作系统会为每一个模块生成对应的模块头文件供用户使用。</L-2>
+                        <L-2 L="EN">Container to structure all hooks belonging to the OS</L-2>
+                        <L-2 L="ZH">概述：OsHooks 配置项用于定义操作系统钩子函数，这些钩子函数在操作系统的特定点被调用，以实现自定义的行为，例如在任务切换或系统错误时执行特定操作。</L-2>
+                        <L-2 L="ZH">注意：在AUTOSAR CP 4.4标准中，需要确保钩子函数的使用不会违反操作系统的实时性和可预测性；钩子函数应当简短且执行时间可控，以避免对系统调度造成不必要的影响；正确配置钩子函数的启用和禁用，以满足系统安全和性能要求。</L-2>
                       </DESC>
+                      <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00035</RELATED-TRACE-ITEM-REF>
+                      <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                      <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
                       <PARAMETERS>
-                        <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:97ddd259-bb90-4c42-af70-aa8b24630faf">
-                          <SHORT-NAME>OsMemmapUseCalibration</SHORT-NAME>
+                        <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:825a1254-49f2-4f16-aa94-d9eedd045480">
+                          <SHORT-NAME>OsErrorHook</SHORT-NAME>
                           <DESC>
-                            <L-2 L="EN">true: generate calibration mapping for the module.</L-2>
-                            <L-2 L="ZH">概述：OsMemmapUseCalibration说明该模块需要生成calibration段。</L-2>
-                            <L-2 L="ZH">注意：如果在不需要calibration段的情况下，打开了这个选项，会造成冗余代码。</L-2>
+                            <L-2 L="EN">Error hook as defined by ISO 17356</L-2>
+                            <L-2 L="ZH">概述：OsErrorHook配置项用于定义操作系统是否启用错误钩子（Error Hook），这是一个操作系统服务，当操作系统检测到错误时会调用该钩子函数。</L-2>
+                            <L-2 L="ZH">注意：在AUTOSAR CP 4.4标准中，启用OsErrorHook可能会影响系统的性能，因为每次操作系统错误时都会调用该钩子；此外，需要确保Error Hook的实现不会引入新的错误，避免错误处理过程中的递归调用；最后，应当仔细考虑Error Hook对系统内存和时间行为的影响。</L-2>
                           </DESC>
                           <INTRODUCTION>
                             <P>
-                              <L-1 L="EN">false: the module doesn't require calibration mapping.</L-1>
+                              <L-1 L="EN">true: Hook is called
+                                                false: Hook is not called</L-1>
                             </P>
                           </INTRODUCTION>
-                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00101</RELATED-TRACE-ITEM-REF>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00036</RELATED-TRACE-ITEM-REF>
                           <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
                           <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
-                          <SCOPE>ECU</SCOPE>
+                          <SCOPE>LOCAL</SCOPE>
                           <ORIGIN>AUTOSAR_ECUC</ORIGIN>
                           <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
                           <VALUE-CONFIG-CLASSES>
@@ -2086,20 +2432,48 @@
                             </ECUC-VALUE-CONFIGURATION-CLASS>
                           </VALUE-CONFIG-CLASSES>
                           <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                          <DEFAULT-VALUE>false</DEFAULT-VALUE>
+                          <DEFAULT-VALUE>true</DEFAULT-VALUE>
                         </ECUC-BOOLEAN-PARAM-DEF>
-                      </PARAMETERS>
-                      <REFERENCES>
-                        <ECUC-REFERENCE-DEF UUID="ECUC:da99cb2f-680c-44a3-914e-9e087de671bd">
-                          <SHORT-NAME>OsMemmapApplicationRef</SHORT-NAME>
+                        <ECUC-INTEGER-PARAM-DEF UUID="ECUC:2c8a2ea4-a437-4c3b-98d9-f76dacf7cb43">
+                          <SHORT-NAME>OsErrorHookStackSize</SHORT-NAME>
                           <DESC>
-                            <L-2 L="EN">Defines the name of the applications the module is related to.</L-2>
-                            <L-2 L="ZH">概述：OsMemmapApplicationRef 配置项用于指定模块相关的applications。</L-2>
-                            <L-2 L="ZH">注意：用户可以配置关联多个application，根据无关联，单关联或多关联，会产生不一样的内存映射宏供用户使用。</L-2>
+                            <L-2 L="EN">The size of a ErrorHook stack is defined by the value of this attribute.</L-2>
+                            <L-2 L="ZH">概述：OsErrorHookStackSize配置项定义了操作系统错误钩子（Error Hook）函数使用的堆栈大小，确保有足够的堆栈空间来处理操作系统级别的错误。</L-2>
+                            <L-2 L="ZH">注意：堆栈大小需根据错误处理代码的复杂度合理配置，避免栈溢出；在多任务系统中，应考虑各任务对堆栈的共享和影响；AUTOSAR CP 4.4标准中未明确指定默认堆栈大小，需根据实际应用需求和硬件资源配置。</L-2>
                           </DESC>
-                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00100</RELATED-TRACE-ITEM-REF>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00090</RELATED-TRACE-ITEM-REF>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                          <DEFAULT-VALUE>1024</DEFAULT-VALUE>
+                          <MAX>65535</MAX>
+                          <MIN>128</MIN>
+                        </ECUC-INTEGER-PARAM-DEF>
+                        <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:bafbef31-9d83-4b29-b534-300490f20f1f">
+                          <SHORT-NAME>OsProtectionHook</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">Switch to enable/disable the call to the (user supplied) protection hook.</L-2>
+                            <L-2 L="ZH">概述：OsProtectionHook配置项用于定义操作系统保护钩子函数，该函数在操作系统检测到严重错误（如内存访问违规、时间违规等）时被调用，用于执行错误处理或系统恢复。</L-2>
+                            <L-2 L="ZH">注意：在AUTOSAR CP 4.4标准中，确保OsProtectionHook仅用于处理不可恢复的错误；配置时需注意其对系统响应时间的影响；保护钩子的实现必须遵循AUTOSAR的错误处理规范。</L-2>
+                          </DESC>
+                          <INTRODUCTION>
+                            <P>
+                              <L-1 L="EN">true: Protection hook is called on protection error
+                                                false: Protection hook is not called</L-1>
+                            </P>
+                          </INTRODUCTION>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00214</RELATED-TRACE-ITEM-REF>
                           <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
-                          <UPPER-MULTIPLICITY>512</UPPER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
                           <SCOPE>ECU</SCOPE>
                           <MULTIPLICITY-CONFIG-CLASSES>
                             <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
@@ -2116,16 +2490,182 @@
                               <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
                             </ECUC-VALUE-CONFIGURATION-CLASS>
                           </VALUE-CONFIG-CLASSES>
-                          <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsApplication</DESTINATION-REF>
-                        </ECUC-REFERENCE-DEF>
-                        <ECUC-REFERENCE-DEF UUID="ECUC:2d1f6968-9799-4d1e-a3eb-dde8dc38482f">
-                          <SHORT-NAME>OsMemmapUseLayer</SHORT-NAME>
+                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                          <DEFAULT-VALUE>true</DEFAULT-VALUE>
+                        </ECUC-BOOLEAN-PARAM-DEF>
+                        <ECUC-INTEGER-PARAM-DEF UUID="ECUC:f746ae3b-90ec-470e-88a3-058f25ef1790">
+                          <SHORT-NAME>OsProtectionHookStackSize</SHORT-NAME>
                           <DESC>
-                            <L-2 L="EN">Defines the name of the memmap layer the module is related to.</L-2>
-                            <L-2 L="ZH">概述：OsMemmapUseLayer 配置项用于指定模块关联的内存映射软件层级。</L-2>
-                            <L-2 L="ZH">注意：用户必须将配置的内存映射模块定义到一个内存映射软件层级上。</L-2>
+                            <L-2 L="EN">The size of a ProtectionHook stack is defined by the value of this attribute.</L-2>
+                            <L-2 L="ZH">概述：OsProtectionHookStackSize 配置项用于定义操作系统保护钩子（Protection Hook）的堆栈大小，这是一个用于错误处理和系统监控的回调函数，当操作系统检测到严重错误时会调用。</L-2>
+                            <L-2 L="ZH">注意：堆栈大小必须足够以支持保护钩子函数内的所有操作，包括局部变量、函数调用和可能的上下文切换；过小的堆栈可能导致堆栈溢出，而过大的堆栈则会浪费宝贵的系统资源；在配置堆栈大小时，应考虑目标硬件的内存限制和操作系统的具体实现。</L-2>
                           </DESC>
-                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00394</RELATED-TRACE-ITEM-REF>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00092</RELATED-TRACE-ITEM-REF>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                          <DEFAULT-VALUE>1024</DEFAULT-VALUE>
+                          <MAX>65535</MAX>
+                          <MIN>128</MIN>
+                        </ECUC-INTEGER-PARAM-DEF>
+                        <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:69032d37-2751-420e-9b13-75625e8f3e9f">
+                          <SHORT-NAME>OsShutdownHook</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">Shutdown hook as defined by ISO 17356</L-2>
+                            <L-2 L="ZH">概述：OsShutdownHook是一个操作系统配置参数，用于指定系统关闭时是否调用ShutdownHook回调函数，以执行特定的关闭操作。</L-2>
+                            <L-2 L="ZH">注意：在AUTOSAR CP 4.4标准中，需要确保如果启用OsShutdownHook，相应的回调函数应当被正确实现；此外，应当注意ShutdownHook的执行时间不应过长，以避免延迟系统关闭过程；最后，需要考虑ShutdownHook的调用可能与系统的安全需求相关联，因此应当遵循相关的安全设计原则。</L-2>
+                          </DESC>
+                          <INTRODUCTION>
+                            <P>
+                              <L-1 L="EN">true: Hook is called
+                                                false: Hook is not called</L-1>
+                            </P>
+                          </INTRODUCTION>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00039</RELATED-TRACE-ITEM-REF>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                          <DEFAULT-VALUE>true</DEFAULT-VALUE>
+                        </ECUC-BOOLEAN-PARAM-DEF>
+                        <ECUC-INTEGER-PARAM-DEF UUID="ECUC:f8a27a59-714a-46f0-a166-4787af4870aa">
+                          <SHORT-NAME>OsShutdownHookStackSize</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">The size of a ShutdownHook stack is defined by the value of this attribute.</L-2>
+                          </DESC>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00093</RELATED-TRACE-ITEM-REF>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                          <DEFAULT-VALUE>1024</DEFAULT-VALUE>
+                          <MAX>65535</MAX>
+                          <MIN>128</MIN>
+                        </ECUC-INTEGER-PARAM-DEF>
+                        <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:591b0fc5-9552-4b15-99d8-74b85ac249bd">
+                          <SHORT-NAME>OsStartupHook</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">Startup hook as defined by ISO 17356</L-2>
+                            <L-2 L="ZH">概述：OsStartupHook配置项用于定义操作系统启动时是否调用Startup Hook函数，这是一个在操作系统启动完成后，任何任务或中断服务例程被调度之前执行的钩子函数。</L-2>
+                            <L-2 L="ZH">注意：在使用OsStartupHook时，需要确保操作系统配置支持钩子函数的使用；此外，过多的逻辑处理在Startup Hook中可能会影响系统启动性能；AUTOSAR标准要求此配置项应谨慎使用，以避免影响系统的实时性和可预测性。</L-2>
+                          </DESC>
+                          <INTRODUCTION>
+                            <P>
+                              <L-1 L="EN">true: Hook is called
+                                                false: Hook is not called</L-1>
+                            </P>
+                          </INTRODUCTION>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00040</RELATED-TRACE-ITEM-REF>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                          <DEFAULT-VALUE>true</DEFAULT-VALUE>
+                        </ECUC-BOOLEAN-PARAM-DEF>
+                        <ECUC-INTEGER-PARAM-DEF UUID="ECUC:97afce32-3d8a-40cd-b3df-ddf8b4e60f42">
+                          <SHORT-NAME>OsStartupHookStackSize</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">The size of a StartupHook stack is defined by the value of this attribute.</L-2>
+                            <L-2 L="ZH">概述：OsStartupHookStackSize配置项用于定义操作系统启动钩子（Startup Hook）的堆栈大小，确保有足够的堆栈空间执行启动时的初始化任务。</L-2>
+                            <L-2 L="ZH">注意：堆栈大小需根据启动钩子中的代码复杂度合理设置，避免栈溢出；AUTOSAR CP 4.4标准中未明确指定默认堆栈大小，需根据具体实现和硬件条件确定；过大的堆栈大小可能会浪费系统资源。</L-2>
+                          </DESC>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00094</RELATED-TRACE-ITEM-REF>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                          <DEFAULT-VALUE>1024</DEFAULT-VALUE>
+                          <MAX>65535</MAX>
+                          <MIN>128</MIN>
+                        </ECUC-INTEGER-PARAM-DEF>
+                      </PARAMETERS>
+                    </ECUC-PARAM-CONF-CONTAINER-DEF>
+                  </SUB-CONTAINERS>
+                </ECUC-PARAM-CONF-CONTAINER-DEF>
+                <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:3d20f88a-4502-4ed1-9062-037ed116b946">
+                  <SHORT-NAME>OsMemoryProtection</SHORT-NAME>
+                  <DESC>
+                    <L-2 L="EN">Container to structure all memory protection relevant configuration parameters.Memory protection is only allowed if OS scalability class is set to SC3 or SC4.</L-2>
+                    <L-2 L="ZH">概述：OsMemoryProtection配置项用于定义操作系统的内存保护设置，确保系统内存区域的隔离和保护，防止未授权的访问和潜在的错误影响系统的稳定性。</L-2>
+                    <L-2 L="ZH">注意：在配置OsMemoryProtection时，需要确保与硬件支持的内存保护机制相匹配；应考虑不同运行实体间的内存隔离需求；在多核系统中，还需注意核间的内存保护策略一致性。</L-2>
+                  </DESC>
+                  <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                  <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                  <MULTIPLICITY-CONFIG-CLASSES>
+                    <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                      <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                      <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                    </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                  </MULTIPLICITY-CONFIG-CLASSES>
+                  <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                  <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                  <SUB-CONTAINERS>
+                    <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:3bfba0e2-7863-4d61-b550-6b4cbe759eb5">
+                      <SHORT-NAME>OsMemoryRegion</SHORT-NAME>
+                      <DESC>
+                        <L-2 L="EN">Container to structure the configuration parameters of one memory protection region.</L-2>
+                        <L-2 L="ZH">概述：OsMemoryRegion配置项用于定义操作系统内存保护区域的属性，如地址界限、访问权限和内存属性等，确保内存区域的访问符合系统安全和性能要求。</L-2>
+                        <L-2 L="ZH">注意：在配置OsMemoryRegion时，需要确保所选标志与处理器架构和操作系统的内存保护机制兼容。</L-2>
+                      </DESC>
+                      <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                      <UPPER-MULTIPLICITY-INFINITE>true</UPPER-MULTIPLICITY-INFINITE>
+                      <MULTIPLICITY-CONFIG-CLASSES>
+                        <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                          <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                        </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                      </MULTIPLICITY-CONFIG-CLASSES>
+                      <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                      <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                      <PARAMETERS>
+                        <ECUC-STRING-PARAM-DEF UUID="ECUC:2210c2f7-18ae-461a-82e5-7a6ba7dd6595">
+                          <SHORT-NAME>OsMemoryRegionStartAddress</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">Start address of a memory protection region. The address can be specified either as a valid decimal (1024) or hexadecimal (0x4000) value, or as a valid linker symbol.StartAddress &lt;= Memory to be accessed</L-2>
+                            <L-2 L="ZH">概述：OsMemoryRegionStartAddress 配置项用于定义操作系统内存区域的起始地址，这是为了确保操作系统组件能够访问正确的内存区域。</L-2>
+                            <L-2 L="ZH">注意：在配置时必须确保地址与实际的硬件内存映射一致；避免与其他内存区域的地址重叠，以防止数据冲突和系统不稳定；在多核或多分区系统中，还需考虑内存隔离和保护机制。</L-2>
+                          </DESC>
                           <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
                           <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
                           <SCOPE>LOCAL</SCOPE>
@@ -2138,13 +2678,192 @@
                           <ORIGIN>AUTOSAR_ECUC</ORIGIN>
                           <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
                           <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <REQUIRES-INDEX>false</REQUIRES-INDEX>
                           <VALUE-CONFIG-CLASSES>
                             <ECUC-VALUE-CONFIGURATION-CLASS>
                               <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
                               <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
                             </ECUC-VALUE-CONFIGURATION-CLASS>
                           </VALUE-CONFIG-CLASSES>
-                          <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsMemmoryMap/OsMemmapLayer</DESTINATION-REF>
+                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                        </ECUC-STRING-PARAM-DEF>
+                        <ECUC-STRING-PARAM-DEF UUID="ECUC:75de1556-476e-44b0-aa9f-caae48da2baa">
+                          <SHORT-NAME>OsMemoryRegionEndAddress</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">End address of a memory protection region. The address can be specified either as a valid decimal (1024) or hexadecimal (0x4000) value, or as a valid linker symbol.Depending on the underlying hardware:Memory to be accessed &lt;= EndAddress or Memory to be accessed &lt; EndAddress</L-2>
+                            <L-2 L="ZH">概述：OsMemoryRegionEndAddress 配置项指定了操作系统内存区域的结束地址，用于定义内存分区的边界，确保内存访问的安全性和合法性。</L-2>
+                            <L-2 L="ZH">注意：在配置OsMemoryRegionEndAddress时，需要确保地址对齐并且不超出实际物理内存范围；此外，结束地址应该大于等于对应内存区域的起始地址；在AUTOSAR CP 4.4标准中，内存保护和分区管理是关键特性，因此正确配置内存区域地址是系统稳定性和安全性的重要因素。</L-2>
+                          </DESC>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <MULTIPLICITY-CONFIG-CLASSES>
+                            <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          </MULTIPLICITY-CONFIG-CLASSES>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                        </ECUC-STRING-PARAM-DEF>
+                        <ECUC-INTEGER-PARAM-DEF UUID="ECUC:dd29c315-7d29-4a2d-8e66-6c1c413f630c">
+                          <SHORT-NAME>OsMemoryRegionIndex</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">Defines the optional hardware specific memory protection region index.The interpretation of this parameter is hardware specific.</L-2>
+                            <L-2 L="ZH">概述：OsMemoryRegionIndex配置项用于定义操作系统级别的内存保护区域的顺序。</L-2>
+                            <L-2 L="ZH">注意：OsMemoryRegionIndex与硬件架构相关。</L-2>
+                          </DESC>
+                          <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <MULTIPLICITY-CONFIG-CLASSES>
+                            <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          </MULTIPLICITY-CONFIG-CLASSES>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                          <MAX>32</MAX>
+                          <MIN>0</MIN>
+                        </ECUC-INTEGER-PARAM-DEF>
+                      </PARAMETERS>
+                      <REFERENCES>
+                        <ECUC-CHOICE-REFERENCE-DEF UUID="ECUC:175a7e84-7c27-4291-9094-315a4987fff3">
+                          <SHORT-NAME>OsMemoryRegionOwner</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">Specifies whether a memory protection region is OS-Application, Task or ISR specific or Global.</L-2>
+                            <L-2 L="ZH">概述：OsMemoryRegionOwner配置项用于定义内存保护设置所保护的范围，可以是Core级别的，也可以是App、Task或者ISR级别的。</L-2>
+                            <L-2 L="ZH">注意：当没有设置OsMemoryRegionOwner时，默认为Core级别的内存保护设置。</L-2>
+                          </DESC>
+                          <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <MULTIPLICITY-CONFIG-CLASSES>
+                            <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          </MULTIPLICITY-CONFIG-CLASSES>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <DESTINATION-REFS>
+                            <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsApplication</DESTINATION-REF>
+                            <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsIsr</DESTINATION-REF>
+                            <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsTask</DESTINATION-REF>
+                          </DESTINATION-REFS>
+                        </ECUC-CHOICE-REFERENCE-DEF>
+                        <ECUC-CHOICE-REFERENCE-DEF UUID="ECUC:cfd72eb9-4240-4cdd-b1c0-fd5be7973fc1">
+                          <SHORT-NAME>OsMemoryRegionProtectionUnit</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">References on which memory protection unit (core or system) the memory protection region shall be used.</L-2>
+                            <L-2 L="ZH">概述：OsMemoryRegionProtectionUnit配置项用于定义内存保护设置所属核。</L-2>
+                            <L-2 L="ZH">注意：OsMemoryRegionProtectionUnit需与硬件架构相适配。</L-2>
+                          </DESC>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <MULTIPLICITY-CONFIG-CLASSES>
+                            <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          </MULTIPLICITY-CONFIG-CLASSES>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <DESTINATION-REFS>
+                            <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsPublishedInformation/OsDerivativeInformation/OsPhysicalCore</DESTINATION-REF>
+                          </DESTINATION-REFS>
+                        </ECUC-CHOICE-REFERENCE-DEF>
+                        <ECUC-REFERENCE-DEF UUID="ECUC:b23266fb-26bc-4747-a6e9-d7535d438072">
+                          <SHORT-NAME>OsMemoryRegionAccessRights</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">This reference is used to set access rights for the memory protection region.</L-2>
+                            <L-2 L="ZH">概述：OsMemoryRegionAccessRights配置项用于定义内存保护区域的访问属性。</L-2>
+                            <L-2 L="ZH">注意：OAUTOSAR CP 4.4标准中对内存保护有严格的规范，需要确保配置符合标准的内存分区和访问权限要求；在多核系统中，还需考虑跨核访问的内存保护策略；配置错误可能导致系统启动失败或运行时异常。</L-2>
+                          </DESC>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <MULTIPLICITY-CONFIG-CLASSES>
+                            <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          </MULTIPLICITY-CONFIG-CLASSES>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsPublishedInformation/OsDerivativeInformation/OsMemoryRegionSpecifics/OsMemoryRegionAccess</DESTINATION-REF>
+                        </ECUC-REFERENCE-DEF>
+                        <ECUC-REFERENCE-DEF UUID="ECUC:4ff5b723-748a-44aa-afc8-8d2fb9c5b595">
+                          <SHORT-NAME>OsMemoryRegionFlags</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">Specific memory protection region flag. e.g. Cachable, Device, ...</L-2>
+                            <L-2 L="ZH">概述：OsMemoryRegionAccessRights配置项用于定义内存保护区域的访问属性。</L-2>
+                            <L-2 L="ZH">注意：OsMemoryRegionAccessRights配置时需参考硬件特性。</L-2>
+                          </DESC>
+                          <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <MULTIPLICITY-CONFIG-CLASSES>
+                            <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          </MULTIPLICITY-CONFIG-CLASSES>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <REQUIRES-INDEX>false</REQUIRES-INDEX>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsPublishedInformation/OsDerivativeInformation/OsMemoryRegionSpecifics/OsMemoryRegionFlags</DESTINATION-REF>
                         </ECUC-REFERENCE-DEF>
                       </REFERENCES>
                     </ECUC-PARAM-CONF-CONTAINER-DEF>

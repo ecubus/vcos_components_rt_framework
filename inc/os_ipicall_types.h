@@ -13,18 +13,14 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_IPICALL_TYPES_H
-#define AUTOSAROS_INC_OS_IPICALL_TYPES_H
+#ifndef RT_FRAMEWORK_INC_OS_IPICALL_TYPES_H
+#define RT_FRAMEWORK_INC_OS_IPICALL_TYPES_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Including File */
-
-/* Global Macro Definition */
-
-/* Global Enumeration Definition */
 
 /* Global Type & Structure Definition */
 struct os_ipicall_activate_task_param;
@@ -69,6 +65,15 @@ typedef struct os_ipicall_sync_schtbl_param os_ipicall_sync_schtbl_param_t;
 struct os_ipicall_set_schtbl_async_param;
 typedef struct os_ipicall_set_schtbl_async_param os_ipicall_set_schtbl_aysnc_param_t;
 
+struct os_ipicall_deviate_schtbl_param;
+typedef struct os_ipicall_deviate_schtbl_param os_ipicall_deviate_schtbl_param_t;
+
+struct os_ipicall_set_schtbl_appid_param;
+typedef struct os_ipicall_set_schtbl_appid_param os_ipicall_set_schtbl_appid_param_t;
+
+struct os_ipicall_clear_schtbl_appid_param;
+typedef struct os_ipicall_clear_schtbl_appid_param os_ipicall_clear_schtbl_appid_param_t;
+
 #endif
 
 struct Os_IpiCall_Test_Parameter;
@@ -86,12 +91,6 @@ typedef struct os_ipicall_return_s os_ipicall_return_t;
 struct os_ipicall_data_s;
 typedef struct os_ipicall_data_s os_ipicall_data_t;
 
-struct os_ipicall_send_ctrl_s;
-typedef struct os_ipicall_send_ctrl_s os_ipicall_send_ctrl_t;
-
-struct os_ipicall_receive_ctrl_s;
-typedef struct os_ipicall_receive_ctrl_s os_ipicall_receive_ctrl_t;
-
 struct os_ipicall_inst_s;
 typedef struct os_ipicall_inst_s os_ipicall_inst_t;
 
@@ -102,14 +101,8 @@ typedef uint8 os_ipicall_index_t;
 typedef uint8 os_ipicall_buf_state_t;
 typedef uint8 os_ipicall_service_id_t;
 
-/* Global Variable Definition */
-
-/* Global Function Declaration */
-
-/* Global Function Implementation */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_IPICALL_TYPES_H */
+#endif /* RT_FRAMEWORK_INC_OS_IPICALL_TYPES_H */

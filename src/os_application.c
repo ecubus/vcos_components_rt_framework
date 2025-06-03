@@ -82,7 +82,7 @@ FUNC(ApplicationType, OS_CODE) os_get_current_app_id(void)
 
 	current_ctx_ref = os_context_get_contexthdl();
 
-	return current_ctx_ref->ctx_instance->current_app_cfg->app_id;
+	return ((os_ctx_inst_t *)(current_ctx_ref->instance))->current_app_cfg->app_id;
 }
 
 static FUNC(ApplicationStateType, OS_CODE) os_app_get_state(const os_app_cfg_t *app_ref)
@@ -96,20 +96,20 @@ FUNC(Os_StatusType, OS_CODE) os_allow_access(void)
 	const os_app_cfg_t *current_app_ref;
 
 	current_ctx_ref = os_context_get_contexthdl();
-	current_app_ref = current_ctx_ref->ctx_instance->current_app_cfg;
+	current_app_ref = ((os_ctx_inst_t *)(current_ctx_ref->instance))->current_app_cfg;
 
 	if (!os_context_check_curcontext_id(current_ctx_ref, OS_CONTEXT_ALLOWACCESS)) {
         return OS_STATUS_CALLEVEL;
     }
-    
+
     if (os_context_check_irq_disabled(current_ctx_ref)) {
         return OS_STATUS_DISABLEDINT;
     }
-    
+
     if (os_app_get_state(current_app_ref) != APPLICATION_RESTARTING) {
         return OS_STATUS_STATE_NO_RESTART;
     }
-    
+
     current_app_ref->instance->state = APPLICATION_ACCESSIBLE;
     return OS_STATUS_OK;
 }

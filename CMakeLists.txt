@@ -17,6 +17,7 @@
 if(CONFIG_RT_FRAMEWORK)
   set(CSRCS src/os.c
             src/os_task.c
+            src/os_thread.c
             src/os_isr.c
             src/os_interrupt.c
             src/os_event.c
@@ -47,25 +48,36 @@ if(CONFIG_RT_FRAMEWORK)
     list(APPEND CSRCS src/os_schedtable.c)
   endif()
 
+  if (CONFIG_RT_FRAMEWORK_RESOURCE)
+    list(APPEND CSRCS src/os_resource.c)
+  endif()
+  if (CONFIG_RT_FRAMEWORK_MEMPOOL)
+    list(APPEND CSRCS src/os_mempool.c)
+  endif ()
+
+  if (CONFIG_RT_FRAMEWORK_HOOK)
+    list(APPEND CSRCS src/os_hook.c)
+  endif()
+
+  if (CONFIG_RT_FRAMEWORK_ISOLATE)
+    list(APPEND CSRCS src/os_isolate.c)
+    list(APPEND CSRCS ${GENDATA_DIR}/Isolate/isolate_ppc_cfg.c)
+  endif()
+
   set(INCLUDE_DIRS ${NUTTX_DIR}/sched
                    ${CMAKE_CURRENT_LIST_DIR}/src
                    ${CMAKE_CURRENT_LIST_DIR}/inc
                    ${NUTTX_APPS_DIR}/components/include/autosar)
 
   list(APPEND INCLUDE_DIRS ${NUTTX_APPS_DIR}/${APPS_DIR}/apps)
-  if(DEFINED BOARD_NAME)
-  if(${BOARD_NAME} MATCHES "A2G_TC397_5V_TFT")
-      set(GENDATA_DIR "${NUTTX_APPS_DIR}/${APPS_DIR}/platform_cfg/tc397_cfg/gen_data")
-  endif()
-  if(${BOARD_NAME} MATCHES "E3650_DEV_KIT")
-      set(GENDATA_DIR "${NUTTX_APPS_DIR}/${APPS_DIR}/platform_cfg/e3650_cfg/gen_data")
-  endif()
-else()
-  set(GENDATA_DIR "${NUTTX_APPS_DIR}/${APPS_DIR}/cfg_prj/gen_data")
-endif()
 
 list(APPEND INCLUDE_DIRS ${GENDATA_DIR}/Os
-                         ${GENDATA_DIR}/Memmap)
+                         ${GENDATA_DIR}/Memmap
+                         ${GENDATA_DIR}/Isolate)
+
+if (CONFIG_RT_FRAMEWORK_MEMPOOL)
+  list(APPEND INCLUDE_DIRS ${GENDATA_DIR}/MemPool)
+endif ()
 
   if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 	  add_compile_options(-Werror -Wextra -pedantic -Wstrict-prototypes)

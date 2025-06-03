@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_SPINLOCK_H
-#define AUTOSAROS_INC_OS_SPINLOCK_H
+#ifndef RT_FRAMEWORK_INC_OS_SPINLOCK_H
+#define RT_FRAMEWORK_INC_OS_SPINLOCK_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,28 +23,16 @@ extern "C" {
 /* Including File */
 #include "os_spinlock_internal.h"
 
-/* Global Enumeration Definition */
-
-/* Global Type & Structure Definition */
-
-/* Global Variable Declaration */
-
-/* Global Macro Definition */
-
 /*! Spinlock declare*/
-#define DeclareSpinlock(section, spin_id)                                                                              \
-	OS_LINK_ENTRY_DECLARE(section, os_obj, os_spin_inst_t, spin_id);                                                \
-	OS_LINK_ENTRY_DECLARE(.rodata, os_spinlock, os_spinlock_cfg_t, spin_id)
+#define DeclareSpinlock(section_const, section_var, spin_id)    \
+	OS_LINK_ENTRY_DECLARE(section_var, os_obj, os_spin_inst_t, spin_id);    \
+	OS_LINK_ENTRY_DECLARE(section_const, os_spinlock, const os_spinlock_cfg_t, spin_id)
 
 #define SPINLOCKCFGVAR(spin_id) OS_LINK_ENTRY_NAME(os_spinlock, spin_id)
 #define SPINLOCKOBJVAR(spin_id) OS_LINK_ENTRY_NAME(os_obj, spin_id)
-
-/* Global Function Declaration */
-
-/* Global Function Implementation */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /*  AUTOSAROS_INC_OS_SPINLOCK_H */
+#endif /*  RT_FRAMEWORK_INC_OS_SPINLOCK_H */

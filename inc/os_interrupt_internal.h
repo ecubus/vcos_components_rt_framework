@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_INTERRUPT_INTERNAL_H
-#define AUTOSAROS_INC_OS_INTERRUPT_INTERNAL_H
+#ifndef RT_FRAMEWORK_INC_OS_INTERRUPT_INTERNAL_H
+#define RT_FRAMEWORK_INC_OS_INTERRUPT_INTERNAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,22 +26,6 @@ extern "C" {
 
 /* Global Macro Definition */
 #define GET_APP_CFG_BY_ISR_ID(isr_id) os_isr_cfg_ref_table[isr_id]->context.app_owner_cfg
-
-/* Global Enumeration Definition */
-
-/* Global Type & Structure Definition */
-
-/*! Type to count nested calls of interrupt APIs. */
-
-/*! Tells whether the user is inside of an interrupt API sequence. */
-
-/*! Type to abstract from the HAL interrupt state type */
-
-/*! Management information for the interrupt API. */
-
-/* Global Variable Definition */
-
-/* Global Function Declaration */
 
 #define OS_START_SEC_CODE
 #include "os_memmap.h"
@@ -179,4 +163,4 @@ FUNC(void, OS_CODE) os_int_enable_global(void);
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_INTERRUPT_INTERNAL_H */
+#endif /* RT_FRAMEWORK_INC_OS_INTERRUPT_INTERNAL_H */

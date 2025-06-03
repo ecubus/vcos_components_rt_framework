@@ -20,7 +20,7 @@
 #include "os_core.h"
 #include "os_task.h"
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-#include "Os_Hook.h"
+#include "os_hook.h"
 #endif
 
 #include "os_ipicall.h"
@@ -46,7 +46,10 @@
 #define OS_IPICALL_START_SCHEDULE_TABLE_SYN ((os_ipicall_service_id_t)12)
 #define OS_IPICALL_SYNC_SCHEDULE_TABLE ((os_ipicall_service_id_t)13)
 #define OS_IPICALL_SET_SCHEDULE_TABLE_ASYNC ((os_ipicall_service_id_t)14)
-#define OS_IPICALL_SERVICE_MAX ((os_ipicall_service_id_t)15)
+#define OS_IPICALL_DEVIATE_SCHEDULE_TABLE ((os_ipicall_service_id_t)15)
+#define OS_IPICALL_SET_SCHEDULE_TABLE_APP_ID ((os_ipicall_service_id_t)16)
+#define OS_IPICALL_CLEAR_SCHEDULE_TABLE_APP_ID ((os_ipicall_service_id_t)17)
+#define OS_IPICALL_SERVICE_MAX ((os_ipicall_service_id_t)18)
 
 #define OS_START_SEC_CONST
 #include "os_memmap.h"
@@ -68,20 +71,23 @@ os_ipicall_service_table[OS_IPICALL_SERVICE_MAX] = {
 	[OS_IPICALL_NEXT_SCHEDULE_TABLE_FROM_STOP] = &os_ipicall_recv_next_scheduletable_from_stop,
 	[OS_IPICALL_START_SCHEDULE_TABLE_SYN] = &os_ipicall_recv_start_scheduletable_synchron,
 	[OS_IPICALL_SYNC_SCHEDULE_TABLE] = &os_ipicall_recv_sync_scheduletable,
-	[OS_IPICALL_SET_SCHEDULE_TABLE_ASYNC] = &os_ipicall_recv_set_scheduletable_async
+	[OS_IPICALL_SET_SCHEDULE_TABLE_ASYNC] = &os_ipicall_recv_set_scheduletable_async,
+	[OS_IPICALL_DEVIATE_SCHEDULE_TABLE] = &os_ipicall_recv_deviate_schedule_table,
+	[OS_IPICALL_SET_SCHEDULE_TABLE_APP_ID] = &os_ipicall_recv_set_schedule_table_app_id,
+	[OS_IPICALL_CLEAR_SCHEDULE_TABLE_APP_ID] = &os_ipicall_recv_clear_schedule_table_app_id
 #endif
 };
 
 #define OS_STOP_SEC_CONST
 #include "os_memmap.h"
 
-static inline void increment_one(os_ipicall_index_t *idx)
+static inline os_ipicall_index_t next_buffer_index(os_ipicall_index_t current_index)
 {
-	if (*idx >= (os_ipicall_index_t)(QUEUE_DEPTH - 1)) {
-		*idx = 0;
-	} else {
-		*idx = *idx + 1;
+	os_ipicall_index_t next_index = current_index + 1U;
+	if (next_index >= (os_ipicall_index_t)QUEUE_DEPTH) {
+		next_index = 0U;
 	}
+	return next_index;
 }
 
 #define OS_START_SEC_CODE
@@ -96,14 +102,14 @@ static FUNC(void, OS_CODE) os_ipicall_isr_handler(void);
 /* 核间调用发送接口 */
 static inline Os_StatusType os_ipicall_send(uint32 target_core, os_ipicall_data_t *data)
 {
-	Os_StatusType IpiCallSendStatus;
-#if defined(VCOS_CONFIG_IPICALL_SYNC) && (VCOS_CONFIG_IPICALL_SYNC == 1)
-	IpiCallSendStatus = os_ipicall_send_sync(target_core, data);
-#else /* VCOS_CONFIG_IPICALL_ASYNC */
-	IpiCallSendStatus = os_ipicall_send_async(target_core, data);
-#endif /* VCOS_CONFIG_IPICALL_SYNC */
+	Os_StatusType ipicall_send_status;
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL_SYNC) && (CONFIG_RT_FRAMEWORK_IPICALL_SYNC == 1)
+	ipicall_send_status = os_ipicall_send_sync(target_core, data);
+#else
+	ipicall_send_status = os_ipicall_send_async(target_core, data);
+#endif /* CONFIG_RT_FRAMEWORK_IPICALL_SYNC */
 
-	return IpiCallSendStatus;
+	return ipicall_send_status;
 }
 
 static inline Os_StatusType os_ipicall_get_send_cfg(uint32 target_core, const os_ipicall_cfg_t **ipicall_cfg)
@@ -128,18 +134,18 @@ static inline Os_StatusType os_ipicall_get_send_buffer(const volatile os_ipicall
 						       os_ipicall_data_t *data)
 {
 	Os_StatusType status = OS_STATUS_IPICALL_NOT_OK;
-	os_ipicall_index_t next_send_idx;
+	os_ipicall_index_t current_index;
+	os_ipicall_index_t next_index;
 
-	next_send_idx = ipicall_cfg->instance->send.send_idx;
-	increment_one(&next_send_idx);
-	while (next_send_idx != ipicall_cfg->instance->send.result_idx) {
-		if (ipicall_cfg->instance->send_buffer[next_send_idx].ack == OS_IPICALL_ACK) {
-			data->index = ipicall_cfg->instance->send.send_idx;
+	current_index = ipicall_cfg->instance->send_idx;
+	while ((next_index = next_buffer_index(current_index)) != ipicall_cfg->instance->receive_idx) {
+		if (ipicall_cfg->instance->send_buffer[current_index].ack == OS_IPICALL_ACK) {
+			ipicall_cfg->instance->send_idx = next_index;
+			data->index = current_index;
 			status = OS_STATUS_OK;
 			break;
 		}
-		ipicall_cfg->instance->send.send_idx = next_send_idx;
-		increment_one(&next_send_idx);
+		current_index = next_index;
 	}
 
 	return status;
@@ -147,43 +153,28 @@ static inline Os_StatusType os_ipicall_get_send_buffer(const volatile os_ipicall
 
 static inline boolean os_ipicall_new_request_available(const volatile os_ipicall_cfg_t *ipicall_cfg)
 {
-	return (ipicall_cfg->instance->receive.receive_idx != ipicall_cfg->instance->send.send_idx);
+	return (ipicall_cfg->instance->receive_idx != ipicall_cfg->instance->send_idx);
 }
 
 static inline boolean os_ipicall_request_handled(const volatile os_ipicall_cfg_t *ipicall_cfg,
 						 const os_ipicall_data_t *data)
 {
-	os_ipicall_inst_t *ipicall_inst = ipicall_cfg->instance;
-	os_ipicall_index_t index = data->index;
-
-	if (ipicall_inst->send_buffer[index].ack == OS_IPICALL_SYNC_PENDING) {
-		return TRUE;
-	}
-
-	if (ipicall_inst->receive.receive_idx == ipicall_inst->send.result_idx) {
-		return FALSE;
-	}
-
-	if (ipicall_inst->receive.receive_idx > ipicall_inst->send.result_idx) {
-		return ((index >= ipicall_inst->send.result_idx) && (index < ipicall_inst->receive.receive_idx));
-	} else {
-		return ((index >= ipicall_inst->send.result_idx) || (index < ipicall_inst->receive.receive_idx));
-	}
+	return (ipicall_cfg->instance->send_buffer[data->index].ack == OS_IPICALL_SYNC_PENDING);
 }
 
 /* global Function Declaration */
-FUNC(void, OS_CODE) os_ipicall_init(const os_ipicall_cfg_t *const OsIpiCallCfgTbl[], OsObjIndexType count)
+FUNC(void, OS_CODE) os_ipicall_init(const os_ipicall_cfg_t *const os_ipicall_cfg_table[], OsObjIndexType count)
 {
-	if ((OsIpiCallCfgTbl == NULL_PTR) || (count == (OsObjIndexType)0U)) {
+	if ((os_ipicall_cfg_table == NULL_PTR) || (count == (OsObjIndexType)0U)) {
 		return;
 	}
 	const os_ipicall_cfg_t *ipicall_cfg;
 	os_ipicall_inst_t *ipicall_inst;
-	OsObjIndexType index, Index1;
+	OsObjIndexType cfg_idx, buffer_idx;
 	CoreIdType core_id = os_get_core_id();
 
-	for (index = 0; index < count; index++) {
-		ipicall_cfg = OsIpiCallCfgTbl[index];
+	for (cfg_idx = 0; cfg_idx < count; cfg_idx++) {
+		ipicall_cfg = os_ipicall_cfg_table[cfg_idx];
 		if (ipicall_cfg == NULL_PTR) {
 			continue;
 		} else {
@@ -192,14 +183,13 @@ FUNC(void, OS_CODE) os_ipicall_init(const os_ipicall_cfg_t *const OsIpiCallCfgTb
 				continue;
 			} else {
 				if (ipicall_cfg->src_core_id == core_id) {
-					ipicall_inst->send.send_idx = 0U;
-					ipicall_inst->send.result_idx = 0U;
-					for (Index1 = 0; Index1 < QUEUE_DEPTH; Index1++) {
-						ipicall_inst->send_buffer[Index1].ack = OS_IPICALL_ACK;
+					ipicall_inst->send_idx = 0U;
+					for (buffer_idx = 0; buffer_idx < QUEUE_DEPTH; buffer_idx++) {
+						ipicall_inst->send_buffer[buffer_idx].ack = OS_IPICALL_ACK;
 					}
 				}
 				if (ipicall_cfg->target_core_id == core_id) {
-					ipicall_inst->receive.receive_idx = 0U;
+					ipicall_inst->receive_idx = 0U;
 				}
 			}
 		}
@@ -209,31 +199,14 @@ FUNC(void, OS_CODE) os_ipicall_init(const os_ipicall_cfg_t *const OsIpiCallCfgTb
 }
 
 /* Internal implementation of inter-core call sending interface */
-static FUNC(Os_StatusType, OS_CODE) Os_IpiCallSendInternal(const volatile os_ipicall_cfg_t *ipicall_cfg,
-							   os_ipicall_data_t *data, os_ipicall_cast_mode broad_cast)
+static FUNC(Os_StatusType, OS_CODE) os_ipicall_send_internal(const volatile os_ipicall_cfg_t *ipicall_cfg,
+							     os_ipicall_data_t *data, os_ipicall_cast_mode broad_cast)
 {
 	Os_StatusType status = OS_STATUS_IPICALL_NOT_OK;
 	os_int_state_t int_state;
 
 	os_int_suspend_kernel(&int_state);
 	{
-		/* handle the result index */
-		while (ipicall_cfg->instance->send.result_idx != ipicall_cfg->instance->receive.receive_idx) {
-			/* There is a need to increment the result_idx in the channel. */
-			if (ipicall_cfg->instance->send_buffer[ipicall_cfg->instance->send.result_idx].ack ==
-			    OS_IPICALL_ASYNC_NACK) {
-				ipicall_cfg->instance->send_buffer[ipicall_cfg->instance->send.result_idx].ack =
-					OS_IPICALL_ACK;
-			} else if (ipicall_cfg->instance->send_buffer[ipicall_cfg->instance->send.result_idx].ack ==
-				   OS_IPICALL_SYNC_NACK) {
-				ipicall_cfg->instance->send_buffer[ipicall_cfg->instance->send.result_idx].ack =
-					OS_IPICALL_SYNC_PENDING;
-			} else {
-				/* do nothing */
-			}
-			/* Increment result_idx */
-			increment_one(&(ipicall_cfg->instance->send.result_idx));
-		}
 		/* Obtain an available buffer slot. */
 		status = os_ipicall_get_send_buffer(ipicall_cfg, data);
 		if (status != OS_STATUS_OK) {
@@ -243,8 +216,6 @@ static FUNC(Os_StatusType, OS_CODE) Os_IpiCallSendInternal(const volatile os_ipi
 			ipicall_cfg->instance->send_buffer[data->index].in_param = data->send_element.in_param;
 			ipicall_cfg->instance->send_buffer[data->index].send_app_id = data->send_element.send_app_id;
 			ipicall_cfg->instance->send_buffer[data->index].ack = data->send_element.ack;
-			/* increment sendidx */
-			increment_one(&(ipicall_cfg->instance->send.send_idx));
 			/* trigger target core interrupt */
 			if (broad_cast == OS_IPICALL_UNICAST) {
 				status = (Os_StatusType)up_trigger_ipicall((CoreIdType)(ipicall_cfg->target_core_id));
@@ -280,7 +251,7 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_send_sync(uint32 target_core, os_ipicall
 					status = OS_STATUS_IPICALL_UNAVAILABLE;
 				} else {
 					/* send(copy) the info to the target core */
-					status = Os_IpiCallSendInternal(send_cfg, data, OS_IPICALL_UNICAST);
+					status = os_ipicall_send_internal(send_cfg, data, OS_IPICALL_UNICAST);
 					if (status == OS_STATUS_OK) {
 						/* Polling the results */
 						while (os_ipicall_request_handled(send_cfg, data) != TRUE) {
@@ -331,8 +302,8 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_broad_cast(uint32 target_core_mask, os_i
 							ipicall_status = OS_STATUS_IPICALL_UNAVAILABLE;
 						} else {
 							/* send(copy) the info to the target core */
-							ipicall_status = Os_IpiCallSendInternal(send_cfg, data,
-												OS_IPICALL_BROADCAST);
+							ipicall_status = os_ipicall_send_internal(send_cfg, data,
+												  OS_IPICALL_BROADCAST);
 						}
 						if (ipicall_status != OS_STATUS_OK)
 							break;
@@ -370,7 +341,7 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_send_async(uint32 target_core, os_ipical
 					status = OS_STATUS_IPICALL_UNAVAILABLE;
 				} else {
 					/* send(copy) the info to the target core */
-					status = Os_IpiCallSendInternal(send_cfg, data, OS_IPICALL_UNICAST);
+					status = os_ipicall_send_internal(send_cfg, data, OS_IPICALL_UNICAST);
 				}
 			}
 		}
@@ -407,14 +378,14 @@ static FUNC(void, OS_CODE) os_ipicall_isr_handler(void)
 		}
 		if (os_ipicall_new_request_available(ipicall_cfg) == TRUE) {
 			do {
-				recv_idx = ipicall_inst->receive.receive_idx;
+				recv_idx = ipicall_inst->receive_idx;
 				ipicall_send_ptr = &(ipicall_inst->send_buffer[recv_idx]);
-				if (ipicall_send_ptr->ack != OS_IPICALL_ACK) {
+				if ((ipicall_send_ptr->ack == OS_IPICALL_ASYNC_NACK) ||
+				    (ipicall_send_ptr->ack == OS_IPICALL_SYNC_NACK)) {
 					com_data.send_element.service = ipicall_send_ptr->service;
 					com_data.send_element.in_param = ipicall_send_ptr->in_param;
 					com_data.send_element.send_app_id = ipicall_send_ptr->send_app_id;
 					ipicall_service = ipicall_cfg->service_ref[com_data.send_element.service];
-					ipicall_ret_ptr = &(ipicall_inst->result_buffer[recv_idx]);
 
 					if ((com_data.send_element.service < OS_IPICALL_SERVICE_MAX) &&
 					    (ipicall_service != NULL_PTR)) {
@@ -422,11 +393,20 @@ static FUNC(void, OS_CODE) os_ipicall_isr_handler(void)
 					} else {
 						ipicall_status = OS_STATUS_IPICALL_UNAVAILABLE;
 					}
-					ipicall_ret_ptr->service = com_data.send_element.service;
-					ipicall_ret_ptr->out_param = com_data.ret_element.out_param;
-					ipicall_ret_ptr->return_status = ipicall_status;
+
+					if (ipicall_send_ptr->ack == OS_IPICALL_ASYNC_NACK) {
+						ipicall_send_ptr->ack = OS_IPICALL_ACK;
+					}
+
+					if (ipicall_send_ptr->ack == OS_IPICALL_SYNC_NACK) {
+						ipicall_ret_ptr = &(ipicall_inst->result_buffer[recv_idx]);
+						ipicall_ret_ptr->service = com_data.send_element.service;
+						ipicall_ret_ptr->out_param = com_data.ret_element.out_param;
+						ipicall_ret_ptr->return_status = ipicall_status;
+						ipicall_send_ptr->ack = OS_IPICALL_SYNC_PENDING;
+					}
 				}
-				increment_one(&(ipicall_inst->receive.receive_idx));
+				ipicall_inst->receive_idx = next_buffer_index(ipicall_inst->receive_idx);
 			} while (os_ipicall_new_request_available(ipicall_cfg) == TRUE);
 		}
 	}
@@ -448,13 +428,12 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task_asyn(os_ipicall_data_
 /*! get application state */
 FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_get_application_state(os_ipicall_data_t *param)
 {
-	Os_StatusType Os_IpiCallRecvGetApplicationStatus;
-	ApplicationStateType AppState = APPLICATION_TERMINATED;
+	Os_StatusType status;
+	ApplicationStateType app_state = APPLICATION_TERMINATED;
 
-	Os_IpiCallRecvGetApplicationStatus =
-		os_get_app_state(param->send_element.in_param.get_app_state_param.app_id, &AppState);
-	param->ret_element.out_param.get_app_state_param.AppState = AppState;
-	return Os_IpiCallRecvGetApplicationStatus;
+	status = os_get_app_state(param->send_element.in_param.get_app_state_param.app_id, &app_state);
+	param->ret_element.out_param.get_app_state_param.app_state = app_state;
+	return status;
 }
 
 /*! get event values */
@@ -500,11 +479,11 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_stop_scheduletable(os_ipicall_data_
 
 FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_get_scheduletable_status(os_ipicall_data_t *param)
 {
-	ScheduleTableStatusType SchedTableStatus;
+	ScheduleTableStatusType schedtable_status;
 	Os_StatusType RecvGetScheduleTableStatus = os_get_schedule_table_status(
-		param->send_element.in_param.get_schtbl_status_param.schedtable_id, &SchedTableStatus);
-	param->ret_element.out_param.get_schtbl_status_param.SchedTableStatus = SchedTableStatus;
-	(void)SchedTableStatus;
+		param->send_element.in_param.get_schtbl_status_param.schedtable_id, &schedtable_status);
+	param->ret_element.out_param.get_schtbl_status_param.schedtable_status = schedtable_status;
+	(void)schedtable_status;
 	return RecvGetScheduleTableStatus;
 }
 
@@ -535,6 +514,24 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_sync_scheduletable(os_ipicall_data_
 FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_scheduletable_async(os_ipicall_data_t *param)
 {
 	return os_set_schedule_table_async(param->send_element.in_param.set_schtbl_async_param.schedtable_id);
+}
+
+FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_deviate_schedule_table(os_ipicall_data_t *param)
+{
+	return os_deviate_schedule_table(param->send_element.in_param.deviate_schtbl_param.schedtable_id,
+					 param->send_element.in_param.deviate_schtbl_param.deviate_value);
+}
+
+FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_schedule_table_app_id(os_ipicall_data_t *param)
+{
+	return os_set_schedule_table_app_id(param->send_element.in_param.set_schtbl_appid_param.schedtable_id,
+					    param->send_element.in_param.set_schtbl_appid_param.app_id);
+}
+
+FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_clear_schedule_table_app_id(os_ipicall_data_t *param)
+{
+	return os_clear_schedule_table_app_id(param->send_element.in_param.clear_schtbl_appid_param.schedtable_id,
+					      param->send_element.in_param.clear_schtbl_appid_param.app_id);
 }
 
 #endif
@@ -601,18 +598,57 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_stop_schedule_table(uint32 target_core, 
 }
 
 FUNC(Os_StatusType, OS_CODE)
+os_ipicall_deviate_schedule_table(uint32 target_core, ScheduleTableType schedtable_id, TickType deviate_value)
+{
+	os_ipicall_data_t param;
+
+	param.send_element.service = OS_IPICALL_DEVIATE_SCHEDULE_TABLE;
+	param.send_element.in_param.deviate_schtbl_param.schedtable_id = schedtable_id;
+	param.send_element.in_param.deviate_schtbl_param.deviate_value = deviate_value;
+	param.ret_element.return_status = OS_STATUS_NOT_OK;
+
+	return os_ipicall_send(target_core, &param);
+}
+
+FUNC(Os_StatusType, OS_CODE)
+os_ipicall_set_schedule_table_app_id(uint32 target_core, ScheduleTableType schedtable_id, ApplicationIDType app_id)
+{
+	os_ipicall_data_t param;
+
+	param.send_element.service = OS_IPICALL_SET_SCHEDULE_TABLE_APP_ID;
+	param.send_element.in_param.set_schtbl_appid_param.schedtable_id = schedtable_id;
+	param.send_element.in_param.set_schtbl_appid_param.app_id = app_id;
+	param.ret_element.return_status = OS_STATUS_NOT_OK;
+
+	return os_ipicall_send(target_core, &param);
+}
+
+FUNC(Os_StatusType, OS_CODE)
+os_ipicall_clear_schedule_table_app_id(uint32 target_core, ScheduleTableType schedtable_id, ApplicationIDType app_id)
+{
+	os_ipicall_data_t param;
+
+	param.send_element.service = OS_IPICALL_CLEAR_SCHEDULE_TABLE_APP_ID;
+	param.send_element.in_param.clear_schtbl_appid_param.schedtable_id = schedtable_id;
+	param.send_element.in_param.clear_schtbl_appid_param.app_id = app_id;
+	param.ret_element.return_status = OS_STATUS_NOT_OK;
+
+	return os_ipicall_send(target_core, &param);
+}
+
+FUNC(Os_StatusType, OS_CODE)
 os_ipicall_get_schedule_table_status(uint32 target_core, ScheduleTableType schedtable_id,
-				     ScheduleTableStatusType *SchedTableStatus)
+				     ScheduleTableStatusType *schedtable_status)
 {
 	os_ipicall_data_t param;
 
 	param.send_element.service = OS_IPICALL_GET_SCHEDULE_TABLE_STATUS;
 	param.send_element.in_param.get_schtbl_status_param.schedtable_id = schedtable_id;
 	param.ret_element.return_status = OS_STATUS_NOT_OK;
-	Os_StatusType GetScheduleTableStatusStatus = os_ipicall_send_sync(target_core, &param);
-	*SchedTableStatus = param.ret_element.out_param.get_schtbl_status_param.SchedTableStatus;
+	Os_StatusType status = os_ipicall_send(target_core, &param);
+	*schedtable_status = param.ret_element.out_param.get_schtbl_status_param.schedtable_status;
 
-	return GetScheduleTableStatusStatus;
+	return status;
 }
 
 FUNC(Os_StatusType, OS_CODE)
@@ -676,7 +712,7 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_set_schedule_table_async(uint32 target_c
 	param.send_element.in_param.set_schtbl_async_param.schedtable_id = schedtable_id;
 	param.ret_element.return_status = OS_STATUS_NOT_OK;
 
-	return os_ipicall_send_sync(target_core, &param);
+	return os_ipicall_send_async(target_core, &param);
 }
 
 #endif
@@ -692,7 +728,7 @@ os_ipicall_get_app_state(uint32 target_core, ApplicationType app_id, Application
 	param.send_element.in_param.get_app_state_param.app_id = app_id;
 	param.ret_element.return_status = OS_STATUS_NOT_OK;
 	status = os_ipicall_send_sync(target_core, &param);
-	*state = (ApplicationStateType)param.ret_element.out_param.get_app_state_param.AppState;
+	*state = (ApplicationStateType)param.ret_element.out_param.get_app_state_param.app_state;
 
 	return status;
 }

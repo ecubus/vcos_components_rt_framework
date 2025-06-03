@@ -14,6 +14,7 @@
  */
 #include <nuttx/config.h>
 #include "Os.h"
+#include <nuttx/irq.h>
 #include "os_core.h"
 #include "os_task.h"
 #include "os_event.h"
@@ -24,8 +25,31 @@
 #if defined(CONFIG_RT_FRAMEWORK_SPINLOCK) && (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
 #include "os_spinlock.h"
 #endif
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
+#include "os_resource.h"
+#endif
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 #include "os_syscall_internal.h"
+#endif
+#if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
+#include "os_counter.h"
+#endif
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+static inline_function bool syscall_is_required(void)
+{
+	if (up_is_privilege_mode() == FALSE) {
+		return TRUE;
+	}
+
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+	if (up_get_mpu_set() != 0) {
+		return TRUE;
+	}
+#endif
+
+	return FALSE;
+}
 #endif
 
 #define OS_START_SEC_CODE
@@ -33,18 +57,32 @@
 
 FUNC(CoreIdType, OS_CODE) GetCoreID(void)
 {
-	return os_get_core_id();
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
+#endif
+		return os_get_core_id();
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_GETCOREID;
+
+		up_syscall(&syscall);
+
+		return syscall.syscall_return_value.return_coreid_type;
+	}
+#endif
 }
 
 FUNC(StatusType, OS_CODE) ActivateTask(TaskType task_id)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_activate_task(task_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -62,11 +100,11 @@ FUNC(StatusType, OS_CODE) ActivateTask(TaskType task_id)
 
 FUNC(void, OS_CODE) ActivateTaskAsyn(TaskType task_id)
 {
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		(void)os_activate_task_asyn(task_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -91,11 +129,11 @@ FUNC(StatusType, OS_CODE) WaitEvent(EventMaskType mask)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_wait_event(mask);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -115,11 +153,11 @@ FUNC(StatusType, OS_CODE) SetEvent(TaskType task_id, EventMaskType mask)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_set_event(task_id, mask);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -138,11 +176,11 @@ FUNC(StatusType, OS_CODE) SetEvent(TaskType task_id, EventMaskType mask)
 
 FUNC(void, OS_CODE) SetEventAsyn(TaskType task_id, EventMaskType mask)
 {
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		(void)os_set_event_asyn(task_id, mask);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -159,11 +197,11 @@ FUNC(StatusType, OS_CODE) GetEvent(TaskType task_id, EventMaskRefType mask)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_get_event(task_id, mask);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -184,11 +222,11 @@ FUNC(StatusType, OS_CODE) ClearEvent(EventMaskType mask)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_clear_event(mask);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -209,11 +247,11 @@ FUNC(StatusType, OS_CODE) StartScheduleTableRel(ScheduleTableType schedtable_id,
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_start_schedule_table_rel(schedtable_id, Offset);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -234,11 +272,11 @@ FUNC(StatusType, OS_CODE) StartScheduleTableAbs(ScheduleTableType schedtable_id,
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_start_schedule_table_abs(schedtable_id, start);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -259,11 +297,11 @@ FUNC(StatusType, OS_CODE) StartScheduleTableSynchron(ScheduleTableType schedtabl
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_start_schedule_table_synchron(schedtable_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -283,11 +321,11 @@ FUNC(StatusType, OS_CODE) StopScheduleTable(ScheduleTableType schedtable_id)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_stop_schedule_table(schedtable_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -303,15 +341,65 @@ FUNC(StatusType, OS_CODE) StopScheduleTable(ScheduleTableType schedtable_id)
 	return (StatusType)status;
 }
 
+FUNC(StatusType, OS_CODE) SetScheduleTableAppId(ScheduleTableType schedtable_id, ApplicationIDType app_id)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
+#endif
+		status = os_set_schedule_table_app_id(schedtable_id, app_id);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_DEVIATECORE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_scheduletable = schedtable_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_applicationid = app_id;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) ClearScheduleTableAppId(ScheduleTableType schedtable_id, ApplicationIDType app_id)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
+#endif
+		status = os_clear_schedule_table_app_id(schedtable_id, app_id);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_DEVIATECORE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_scheduletable = schedtable_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_applicationid = app_id;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+
+	return (StatusType)status;
+}
+
 FUNC(StatusType, OS_CODE) NextScheduleTable(ScheduleTableType curr_schedtable_id, ScheduleTableType next_schedtable_id)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_next_schedule_table(curr_schedtable_id, next_schedtable_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -333,11 +421,11 @@ NextScheduleTableFromStop(ScheduleTableType curr_schedtable_id, ScheduleTableTyp
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_next_schedule_table_from_stop(curr_schedtable_id, next_schedtable_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -358,11 +446,11 @@ FUNC(StatusType, OS_CODE) SyncScheduleTable(ScheduleTableType schedtable_id, Tic
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_sync_schedule_table(schedtable_id, tick_value);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -379,15 +467,40 @@ FUNC(StatusType, OS_CODE) SyncScheduleTable(ScheduleTableType schedtable_id, Tic
 	return (StatusType)status;
 }
 
+FUNC(StatusType, OS_CODE) DeviateScheduleTable(ScheduleTableType schedtable_id, TickType deviate_value)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
+#endif
+		status = os_deviate_schedule_table(schedtable_id, deviate_value);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_DEVIATECORE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_scheduletable = schedtable_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_tick_t = deviate_value;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+
+	return (StatusType)status;
+}
+
 FUNC(StatusType, OS_CODE) GetScheduleTableStatus(ScheduleTableType schedtable_id, ScheduleTableStatusRefType StatusRef)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_get_schedule_table_status(schedtable_id, StatusRef);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -408,11 +521,11 @@ FUNC(StatusType, OS_CODE) SetScheduleTableAsync(ScheduleTableType schedtable_id)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_set_schedule_table_async(schedtable_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
@@ -435,11 +548,11 @@ FUNC(StatusType, OS_CODE) GetSpinlock(SpinlockIdType spinlock_id)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_get_spinlock(spinlock_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_GETSPINLOCK;
@@ -457,11 +570,11 @@ FUNC(StatusType, OS_CODE) ReleaseSpinlock(SpinlockIdType spinlock_id)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_release_spinlock(spinlock_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_RELEASESPINLOCK;
@@ -478,11 +591,11 @@ FUNC(StatusType, OS_CODE) ReleaseSpinlock(SpinlockIdType spinlock_id)
 FUNC(StatusType, OS_CODE) TryToGetSpinlock(SpinlockIdType spinlock_id, TryToGetSpinlockType *success)
 {
 	Os_StatusType status;
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_try_to_get_spinlock(spinlock_id, success);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_TRYTOGETSPINLOCK;
@@ -501,11 +614,11 @@ FUNC(StatusType, OS_CODE) GetSpinlockRead(SpinlockIdType spinlock_id)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_get_spinlock_read(spinlock_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_GETSPINLOCKREAD;
@@ -523,11 +636,11 @@ FUNC(StatusType, OS_CODE) GetSpinlockWrite(SpinlockIdType spinlock_id)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_get_spinlock_write(spinlock_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_GETSPINLOCKWRITE;
@@ -545,11 +658,11 @@ FUNC(StatusType, OS_CODE) ReleaseSpinlockRead(SpinlockIdType spinlock_id)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_release_spinlock_read(spinlock_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_RELEASESPINLOCKREAD;
@@ -567,11 +680,11 @@ FUNC(StatusType, OS_CODE) ReleaseSpinlockWrite(SpinlockIdType spinlock_id)
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_release_spinlock_write(spinlock_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_RELEASESPINLOCKWRITE;
@@ -589,11 +702,11 @@ FUNC(StatusType, OS_CODE) TryToGetSpinlockRead(SpinlockIdType spinlock_id, TryTo
 {
 	Os_StatusType status;
 
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_try_to_get_spinlock_read(spinlock_id, success);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_TRYTOGETSPINLOCKREAD;
@@ -611,11 +724,11 @@ FUNC(StatusType, OS_CODE) TryToGetSpinlockRead(SpinlockIdType spinlock_id, TryTo
 FUNC(StatusType, OS_CODE) TryToGetSpinlockWrite(SpinlockIdType spinlock_id, TryToGetSpinlockType *success)
 {
 	Os_StatusType status;
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		status = os_try_to_get_spinlock_write(spinlock_id, success);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_TRYTOGETSPINLOCKWRITE;
@@ -634,11 +747,11 @@ FUNC(StatusType, OS_CODE) TryToGetSpinlockWrite(SpinlockIdType spinlock_id, TryT
 
 FUNC(void, OS_CODE) DisableAllInterrupts(void)
 {
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		os_disable_all_interrupts();
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_DISABLEALLINTERRUPTS;
@@ -649,11 +762,11 @@ FUNC(void, OS_CODE) DisableAllInterrupts(void)
 
 FUNC(void, OS_CODE) EnableAllInterrupts(void)
 {
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		os_enable_all_interrupts();
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_ENABLEALLINTERRUPTS;
@@ -664,11 +777,11 @@ FUNC(void, OS_CODE) EnableAllInterrupts(void)
 
 FUNC(void, OS_CODE) SuspendAllInterrupts(void)
 {
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		os_suspend_all_interrupts();
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_SUSPENDALLINTERRUPTS;
@@ -679,11 +792,11 @@ FUNC(void, OS_CODE) SuspendAllInterrupts(void)
 
 FUNC(void, OS_CODE) ResumeAllInterrupts(void)
 {
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		os_resume_all_interrupts();
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_RESUMEALLINTERRUPTS;
@@ -694,11 +807,11 @@ FUNC(void, OS_CODE) ResumeAllInterrupts(void)
 
 FUNC(void, OS_CODE) SuspendOSInterrupts(void)
 {
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		os_suspend_osinterrupts();
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_SUSPENDOSINTERRUPTS;
@@ -709,11 +822,11 @@ FUNC(void, OS_CODE) SuspendOSInterrupts(void)
 
 FUNC(void, OS_CODE) ResumeOSInterrupts(void)
 {
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
-	if (TRUE == is_privilege_mode()) {
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
 #endif
 		os_resume_osinterrupts();
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL== 1)
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 		syscall.syscall_id = OS_SYSCALLID_RESUMEOSINTERRUPTS;
@@ -721,6 +834,126 @@ FUNC(void, OS_CODE) ResumeOSInterrupts(void)
 	}
 #endif
 }
+
+#if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
+FUNC(StatusType, OS_CODE) GetResource(ResourceType resource_id)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_get_resource(resource_id);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_GETRESOURCE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_resource = resource_id;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) ReleaseResource(ResourceType resource_id)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_release_resource(resource_id);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_RELEASERESOURCE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_resource = resource_id;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	return (StatusType)status;
+}
+#endif /* CONFIG_RT_FRAMEWORK_RESOURCE */
+
+#if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
+FUNC(StatusType, OS_CODE) GetCounterValue(CounterType counter_id, TickRefType tick_value)
+{
+	Os_StatusType status;
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_counter_get_value(counter_id, tick_value);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_GETCOUNTERVALUE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_counter_type = counter_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_tick_ref_type = tick_value;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) GetElapsedValue(CounterType counter_id, TickRefType pre_value, TickRefType elapsed_value)
+{
+	Os_StatusType status;
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_counter_get_elapsed_value(counter_id, pre_value, elapsed_value);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_GETELAPSEDVALUE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_counter_type = counter_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_tick_ref_type = pre_value;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_3].param_tick_ref_type = elapsed_value;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) IncrementCounter(CounterType counter_id)
+{
+	Os_StatusType status;
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_counter_increment(counter_id);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_INCREMENTCOUNTER;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_counter_type = counter_id;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	return (StatusType)status;
+}
+
+#endif
 
 #define OS_STOP_SEC_CODE
 #include "os_memmap.h"

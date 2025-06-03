@@ -1,0 +1,110 @@
+/*
+ * Copyright (c) 2025 Li Auto Inc. and its affiliates
+ * Licensed under the Apache License, Version 2.0(the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Description: task Configuration
+ * AutoGenerate Code, DO NOT EDIT!!!
+ * {{get_generation_time()}}
+ * {{get_project_name()}}
+ * {{get_vcos_version()}}
+ */
+
+/* Including File */
+#include <nuttx/config.h>
+#include "os_thread_types.h"
+#include "os_hook.h"
+#include "hook_cfg.h"
+#include "stack_cfg.h"
+#include "os_context.h"
+#include "os_compiler_cfg.h"
+#include "application_cfg.h"
+#include "os_core.h"
+#include "core_cfg.h"
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+#include "memory_protection_cfg.h"
+#endif
+
+{%- set core_cfg = get_core_configs() %}
+{%- set app_cfg = get_app_cfg() %}
+{%- set os_hook_cfg, os_hook_cnt = get_os_hook_cfg() %}
+{%- for core_val in core_cfg.values() %}
+    {%- set core_id = core_val["core_id"][-1] %}
+    {%- for os_hook_name, os_hook_value in os_hook_cfg.items() %}
+        {%- set bsw_app_name = get_bsw_app_from_coreid(core_id) %}
+        {%- if os_hook_cfg[os_hook_name]["enabled"] %}
+        {%- set os_hook_stacksize = os_hook_cfg[os_hook_name]["stack_size"] %}
+DeclareThreadStack(OS_CORE{{core_id}}_{{os_hook_name.upper()}}_STACK_SECTION, OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID, {{os_hook_stacksize}});
+DeclareHook(OS_CONST_SECTION, {{app_cfg[bsw_app_name]["AppInstSection"]}}, OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID) = {
+/* .context      = */
+    {
+        /* .instance             = */            &HOOKOBJVAR(OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID),
+        /* .instance_name        = */            "core{{core_id}}_{{os_hook_name}}",
+        /* .core                = */             &OSCORECFGVAR(Os_Core{{app_cfg[bsw_app_name]['CoreNumber']}}),
+        /* .int_api_state         = */           &(OSCOREOBJVAR(Os_Core{{app_cfg[bsw_app_name]['CoreNumber']}}).int_api_state),
+        /* .arch_ctx_cfg      = */
+        {
+            /* .stack_addr       = */            (OsStackAddrType)THREADSTACKVAR(OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID),
+            /* .stack_size       = */            (OsStackSizeType)THREADSTACKSIZEVAR({{os_hook_stacksize}}),
+            /* .entry_addr       = */            (os_context_entry_t)NULL_PTR,
+            /* .exit_addr        = */            (os_context_exit_t)NULL_PTR,
+            /* .entry_param      = */            (os_context_entry_para_t)NULL_PTR,
+        },
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
+        /* .app_owner_cfg        = */            &OSAPPCFGVAR({{bsw_app_name}}),
+        {%- set access_app = [bsw_app_name] %}
+        {%- set access_str = get_access_app_mask(access_app, index_size=50) %}
+        /* .access_app_mask   = */               ({{access_str}}),
+#endif /* #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1) */
+        /* .initial_ctx_id    = */              {{os_hook_name.upper()}}_CONTEXT_ID,
+#if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
+        /* .mpu_access_right  = */              &{{bsw_app_name.lower()}}_access_right,
+#endif
+    },
+    /* .hook_id = */                            OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID,
+    /* .nesting_mask = */                       {{os_hook_cfg[os_hook_name]["nesting_mask"]}},
+    /* .callback = */                           (void_hook_callback_t){{os_hook_name}},
+};
+        {%- endif %}
+    {%- endfor %}
+{%- endfor %}
+
+{%- if os_hook_cnt > 0 %}
+#define OS_START_SEC_CONST
+#include "os_memmap.h"
+{%- for core_val in core_cfg.values() %}
+    {%- set core_id = core_val["core_id"][-1] %}
+CONSTP2CONST(os_hook_cfg_t, AUTOMATIC, OS_CONST) os_core{{core_id}}_hook_cfg_ref_table[] = {
+    {%- for os_hook_name, os_hook_value in os_hook_cfg.items() %}
+        {%- if os_hook_cfg[os_hook_name]["enabled"] %}
+    &HOOKCFGVAR(OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID),
+        {%- endif %}
+    {%- endfor %}
+};
+CONST(OsObjIndexType, OS_CONST) os_core{{core_id}}_hook_cfg_ref_table_size = NELEMENTS(os_core{{core_id}}_hook_cfg_ref_table);
+{% endfor %}
+{%- endif %}
+#define OS_STOP_SEC_CONST
+#include "os_memmap.h"
+
+DeclareOsRefTable(OS_CONST_SECTION, hook, OS_HOOK_CNT) = {
+{%- for core_val in core_cfg.values() %}
+    {%- set core_id = core_val["core_id"][-1] %}
+    {%- for os_hook_name, os_hook_value in os_hook_cfg.items() %}
+        {%- if os_hook_cfg[os_hook_name]["enabled"] %}
+    &HOOKCFGVAR(OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID),
+        {%- endif %}
+    {%- endfor %}
+{% endfor %}
+};

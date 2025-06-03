@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_INTERRUPT_H
-#define AUTOSAROS_INC_OS_INTERRUPT_H
+#ifndef RT_FRAMEWORK_INC_OS_INTERRUPT_H
+#define RT_FRAMEWORK_INC_OS_INTERRUPT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,20 +26,10 @@ extern "C" {
 #include "Os_Types.h"
 #include "os_interrupt_internal.h"
 
-/* Global Macro Definition */
-
-/* Global Enumeration Definition */
-
-/* Global Type & Structure Definition */
-
-/* Global Variable Declaration */
-
-/* Global Function Declaration */
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_INTERRUPT_H */
+#endif /* RT_FRAMEWORK_INC_OS_INTERRUPT_H */
 /*! @} */
 /*! @} */

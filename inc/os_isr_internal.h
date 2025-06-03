@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOSAROS_INC_OS_ISR_INTERNAL_H
-#define AUTOSAROS_INC_OS_ISR_INTERNAL_H
+#ifndef RT_FRAMEWORK_INC_OS_ISR_INTERNAL_H
+#define RT_FRAMEWORK_INC_OS_ISR_INTERNAL_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -92,6 +92,7 @@ typedef enum {
 /* Global Type & Structure Definition */
 /*! ISR实例描述结构体 os_isr_inst_t */
 struct os_isr_inst {
+	os_ctx_inst_t ctx_instance; /*! Context instance. Must be the first member !!! */
 	/* 32 bit */
 	volatile StackType_t *top_of_stack; /*! this must come first!!*/
 
@@ -155,4 +156,4 @@ FUNC(void, OS_CODE) os_isr_init(const os_isr_cfg_t *const os_isr_cfg_table[], Os
 }
 #endif
 
-#endif /* AUTOSAROS_INC_OS_ISR_INTERNAL_H */
+#endif /* RT_FRAMEWORK_INC_OS_ISR_INTERNAL_H */
