@@ -23,13 +23,13 @@
 
 /* Including File */
 #include <nuttx/config.h>
-#include "os_thread_types.h"
+#include "rtfw_thread_types.h"
 #include "task_cfg.h"
 #include "stack_cfg.h"
-#include "os_context.h"
-#include "os_compiler_cfg.h"
+#include "rtfw_context.h"
+#include "rtfw_compiler_cfg.h"
 #include "application_cfg.h"
-#include "os_core.h"
+#include "rtfw_core.h"
 #include "core_cfg.h"
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
 #include "memory_protection_cfg.h"
@@ -105,7 +105,7 @@ DeclareExtendedTask(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}
 
 
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 {%- for app, app_val in app_cfg.items() %}
     {%- if app_val["AppTaskList"] %}
 
@@ -120,9 +120,9 @@ CONST(OsObjIndexType, OS_CONST) {{app_val["AppTaskTable"]}}_size = NELEMENTS({{a
 {%- endfor %}
 
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
-DeclareOsRefTable(OS_CONST_SECTION, task, OS_TASK_CNT) = {
+DeclareRtfwRefTable(OS_CONST_SECTION, task, OS_TASK_CNT) = {
 {%- for app in app_cfg %}
     {%- for task in app_cfg[app]["AppTaskList"] %}
     &TASKCFGVAR({{task.upper()}}_CFG),

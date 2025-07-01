@@ -15,11 +15,11 @@ extern "C"
 #endif
 
 #include <nuttx/config.h>
-#include <arch/chip/mpu.h>
-#include "Os_Types.h"
+#include <nuttx/irq.h>
+#include "rtfw_types.h"
 
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 {%- set mpu_cfg = get_mpu_cfg() %}
 {%- set app_cfg = get_app_cfg() %}
 
@@ -40,7 +40,7 @@ extern CONST(struct mpu_access_right_s, OS_CONST) {{isr_name.lower()}}_access_ri
 	{%- endfor %}
 {%- endif %}
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
 #ifdef __cplusplus
 }

@@ -14,7 +14,7 @@
  */
 
 /*
- * Description: task Configuration
+ * Description: Hook Configuration
  * AutoGenerate Code, DO NOT EDIT!!!
  * {{get_generation_time()}}
  * {{get_project_name()}}
@@ -23,12 +23,14 @@
 
 /* Including File */
 #include <nuttx/config.h>
-#include "Os_Types.h"
-#include "os_thread_types.h"
-#include "os_hook.h"
+#include "rtfw_types.h"
+#include "rtfw_thread_types.h"
+#include "rtfw_hook.h"
 
 {%- set core_cfg = get_core_configs() %}
 {%- set os_hook_cfg, os_hook_cnt = get_os_hook_cfg() %}
+{%- set app_cfg = get_app_cfg() %}
+{%- set all_apps_hook_cfg = get_app_hook_cfg() %}
 
 {%- if os_hook_cfg["os_errorhook"]["enabled"] %}
 extern void os_errorhook(StatusType Error);
@@ -43,9 +45,20 @@ extern void os_shutdownhook(StatusType Error);
 extern void os_startuphook(void);
 {%- endif %}
 
+{%- for app_hook_cfg in all_apps_hook_cfg.values() %}
+    {%- for app_hook_name, hook_cfg in app_hook_cfg.items() %}
+        {%- if "errorhook" in app_hook_name or 'shutdownhook' in app_hook_name %}
+extern void os_{{hook_cfg['app_hook_name'].lower()}}(StatusType Error);
+        {%- else %}
+extern void os_{{hook_cfg['app_hook_name'].lower()}}(void);
+        {%- endif %}
+    {%- endfor %}
+{%- endfor %}
+{{'\n'}}
+
 {%- if os_hook_cnt > 0 %}
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 {%- for core_val in core_cfg.values() %}
     {%- set core_id = core_val["core_id"][-1] %}
     {%- for os_hook_name, os_hook_value in os_hook_cfg.items() %}
@@ -60,8 +73,27 @@ extern CONSTP2CONST(os_hook_cfg_t, AUTOMATIC, OS_CONST) os_core{{core_id}}_hook_
 extern CONST(OsObjIndexType, OS_CONST) os_core{{core_id}}_hook_cfg_ref_table_size;
 {% endfor %}
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 {%- endif %}
+
+{{'\n'}}
+{%- for app_hook_cfg in all_apps_hook_cfg.values() %}
+    {%- for hook_cfg in app_hook_cfg.values() %}
+extern const os_hook_cfg_t HOOKCFGVAR({{hook_cfg['hook_id']}});
+    {%- endfor %}
+{%- endfor %}
+
+{{'\n'}}
+{%- for app_name, app_hook_cfg in all_apps_hook_cfg.items() %}
+    {%- if app_hook_cfg | length > 0 %}
+#define OS_START_SEC_CONST
+#include "rtfw_memmap.h"
+extern CONSTP2CONST(os_hook_cfg_t, AUTOMATIC, OS_CONST) {{app_cfg[app_name]["AppHookTable"]}}[];
+extern CONST(OsObjIndexType, OS_CONST) {{app_cfg[app_name]["AppHookTable"]}}_size;
+#define OS_STOP_SEC_CONST
+#include "rtfw_memmap.h"
+    {%- endif %}
+{%- endfor %}
 
 typedef enum
 {
@@ -71,6 +103,12 @@ typedef enum
         {%- if os_hook_cfg[os_hook_name]["enabled"] %}
     OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID,
         {%- endif %}
+    {%- endfor %}
+{%- endfor %}
+
+{%- for app_hook_cfg in all_apps_hook_cfg.values() %}
+    {%- for hook_cfg in app_hook_cfg.values() %}
+    {{hook_cfg['hook_id']}},
     {%- endfor %}
 {%- endfor %}
     OS_HOOK_CNT,

@@ -27,7 +27,7 @@ extern "C"
 {
 #endif
 /* Including File */
-#include "os_schedtable.h"
+#include "rtfw_schedtable.h"
 
 /* global Macro Definition */
 #ifndef OSAUTOSTARTMODE
@@ -59,11 +59,11 @@ typedef enum {
 {%- for appname, appval in app_cfg.items() %}
     {%- if appval is mapping and "AppScheduleTableList" in appval and appval["AppScheduleTableList"] %}
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 extern CONSTP2CONST(os_schedtable_cfg_t, AUTOMATIC, OS_CONST) {{appval["AppSchedTblTable"]}}[];
 extern CONST(OsObjIndexType, OS_CONST) {{appval["AppSchedTblTable"]}}_size;
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
     {%- endif %}
 {%- endfor %}
 

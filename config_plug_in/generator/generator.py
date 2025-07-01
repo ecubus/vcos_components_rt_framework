@@ -14,6 +14,7 @@
 ############################################################################
 
 import os
+import shutil
 
 from func_module.health_monitor.logger import logger
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
@@ -47,6 +48,18 @@ def render_os_template(template, out_dir, file_name, config):
             out_stream.flush()
         logger.info("Finish generating %s file" % (file_name))
 
+def render_os_callout_template(template, out_dir, file_name, config):
+    if template is not None:
+        file_path = os.path.join(out_dir, file_name)
+        if os.path.exists(file_path):
+            backup_file_path = file_path + '.bak'
+            shutil.copy(file_path, backup_file_path)
+        render_output = template.render(config)
+        with open(file_path, "w", encoding="utf-8") as out_stream:
+            out_stream.write(render_output)
+            out_stream.flush()
+        logger.info("Finish generating %s file" % (file_name))
+
 
 def prepare_os_base_config(sys_config:dict, config_dict:dict):
     # get EcuC Configs
@@ -76,6 +89,9 @@ def generate_dynamic_code(sys_config: dict, config_dict: dict):
 
     output_dir = os.path.realpath(
         os.path.join(sys_config["gendata_path"], "Os"))
+    callout_dir = get_dict_path(sys_config, ['path', 'bswcallout_path'])
+    if not os.path.exists(callout_dir):
+        os.makedirs(callout_dir)
 
     config = prepare_os_base_config(sys_config, config_dict)
 
@@ -190,6 +206,9 @@ def generate_dynamic_code(sys_config: dict, config_dict: dict):
     # ################################################## #
     #    Hook                                            #
     # ################################################## #
+    template = env_ui.get_template("hook_user_callout.c.jinja2")
+    render_os_callout_template(template, callout_dir, "hook_user_callout.c", config)
+
     template = env_ui.get_template("hook_cfg.c.jinja2")
     render_os_template(template, output_dir, "hook_cfg.c", config)
 

@@ -15,6 +15,7 @@
 
 from components.rt_framework.config_plug_in.generator import utils
 from func_module.generator.common.common import FunctionBase
+from func_module.generator.common.user_code_extract import UserCodeExtract
 from components.memory.mempool.config_plug_in.generator.utils import get_os_mempool_all_config_dict
 from jinja2 import pass_context
 from decimal import Decimal
@@ -48,7 +49,7 @@ class Function(FunctionBase):
         app_cfg = Function.get_app_cfg(context)
         for app in app_set:
             if app != '':
-                app_mask = app_mask + '|\n' + indent + "OS_APPID2MASK(%s)" % (app_cfg[app]["AppId"])
+                app_mask = app_mask + '|\n' + indent + "RTFW_APPID2MASK(%s)" % (app_cfg[app]["AppId"])
         return app_mask[2:].lstrip()
 
     @staticmethod
@@ -151,10 +152,28 @@ class Function(FunctionBase):
                 "AppIsrTable": name.lower() + "_isr_cfg_ref_table",
                 "AppScheduleTableList": utils.resolve_ref_list("OsAppScheduleTableRef", value),
                 "AppSchedTblTable": name.lower() + "_schedtable_cfg_ref_table",
+                "AppHookTable": name.lower() + "_hook_cfg_ref_table",
                 "AppPrivileged": "TRUE" if value["OsIsPrivileged"]["Value"] else "FALSE",
                 "AppId": f"OS_CORE{app_coreid}_{name.upper()}_ID",
-                "AppInstSection": f"OS_{name.upper()}_BSS_SECTION"
+                "AppInstSection": f"OS_{name.upper()}_BSS_SECTION",
+                "AppStartupHook": False,
+                "AppErrorHook": False,
+                "AppShutdownHook": False,
+                "AppHookCnt": 0
             }
+
+            app_hooks = value.get("OsApplicationHooks", {})
+            if app_hooks:
+                if app_hooks["OsAppStartupHook"]['Value'] == True:
+                    app_cfg["AppStartupHook"] = True
+                    app_cfg["AppHookCnt"] += 1
+                if app_hooks["OsAppErrorHook"]['Value'] == True:
+                    app_cfg["AppErrorHook"] = True
+                    app_cfg["AppHookCnt"] += 1
+                if app_hooks["OsAppShutdownHook"]['Value'] == True:
+                    app_cfg["AppShutdownHook"] = True
+                    app_cfg["AppHookCnt"] += 1
+
             all_app_cfg[name] = app_cfg
 
         # get the mapping between coreid and bsw app
@@ -307,6 +326,30 @@ class Function(FunctionBase):
 
     @staticmethod
     @pass_context
+    @utils.cache_once(_cache)
+    def get_core_referenced_resource(context):
+        """
+        Get resource list referenced by each core
+        Returns a dict: {core_id: [resource_name_list]}
+        """
+        resource_cfg = Function.get_resource_cfg(context)
+        core_resource_map = {}
+
+        # Initialize empty resource list for all cores
+        core_cnt = Function.get_core_cnt(context)
+        for core_id in range(core_cnt):
+            core_resource_map[str(core_id)] = []
+
+        # Assign resources to corresponding cores
+        for resource_name, resource_info in resource_cfg.items():
+            core_id = resource_info["CoreID"]
+            if core_id in core_resource_map:
+                core_resource_map[core_id].append(resource_name)
+
+        return core_resource_map
+
+    @staticmethod
+    @pass_context
     def get_event_cfg(context):
         event_cfg = {}
         task_cfg = Function.get_task_cfg(context)
@@ -358,7 +401,7 @@ class Function(FunctionBase):
         target = Function.get_target(context)
         if target in ("AURIX2G_TC397"):
             return True
-        elif target in ("E3650"):
+        elif target in ("E3650", "J6E"):
             return False
         else:
             raise TypeError("没有适配的架构！")
@@ -475,16 +518,27 @@ class Function(FunctionBase):
 
             # Synchronization strategy
             schedtable_cfg[name]["OsScheduleTableSync"] = {}
-            if "OsScheduleTableSyncStrategy" in value:
-                sync_strategy = value["OsScheduleTableSyncStrategy"]["Value"]
-                if sync_strategy == "EXPLICIT":
-                    schedtable_cfg[name]["OsScheduleTableSync"]["OsScheduleTblSyncStrategy"] = "EXPLICIT"
-                elif sync_strategy == "IMPLICIT":
-                    schedtable_cfg[name]["OsScheduleTableSync"]["OsScheduleTblSyncStrategy"] = "IMPLICIT"
+            if "OsScheduleTableSync" in value:
+                sync_container = value["OsScheduleTableSync"]
+                if "OsScheduleTblSyncStrategy" in sync_container:
+                    sync_strategy = sync_container["OsScheduleTblSyncStrategy"]["Value"]
+                    if sync_strategy == "EXPLICIT":
+                        schedtable_cfg[name]["OsScheduleTableSync"]["OsScheduleTblSyncStrategy"] = "EXPLICIT"
+                    elif sync_strategy == "IMPLICIT":
+                        schedtable_cfg[name]["OsScheduleTableSync"]["OsScheduleTblSyncStrategy"] = "IMPLICIT"
+                    else:
+                        schedtable_cfg[name]["OsScheduleTableSync"]["OsScheduleTblSyncStrategy"] = "NONE"
                 else:
                     schedtable_cfg[name]["OsScheduleTableSync"]["OsScheduleTblSyncStrategy"] = "NONE"
+
+                # Parse explicit precision parameter
+                if "OsScheduleTblExplicitPrecision" in sync_container:
+                    schedtable_cfg[name]["OsScheduleTableSync"]["OsScheduleTblExplicitPrecision"] = sync_container["OsScheduleTblExplicitPrecision"]["Value"]
+                else:
+                    schedtable_cfg[name]["OsScheduleTableSync"]["OsScheduleTblExplicitPrecision"] = 0
             else:
                 schedtable_cfg[name]["OsScheduleTableSync"]["OsScheduleTblSyncStrategy"] = "NONE"
+                schedtable_cfg[name]["OsScheduleTableSync"]["OsScheduleTblExplicitPrecision"] = 0
 
             # Autostart configuration
             schedtable_cfg[name]["OsScheduleTableAutostart"] = {}
@@ -610,6 +664,26 @@ class Function(FunctionBase):
                         schedtable_cfg[name]["OsScheduleTableExpiryPoint"][ep_name]["OsScheduleTblAdjustableExpPoint"]["OsScheduleTableMaxLengthen"] = 0
 
         return schedtable_cfg
+
+    @staticmethod
+    @pass_context
+    def get_schedtable_sync_strategy(context, schedtable_cfg, schedtable_name):
+        """Get schedule table synchronization strategy"""
+        if ("OsScheduleTableSync" in schedtable_cfg[schedtable_name] and
+            "OsScheduleTblSyncStrategy" in schedtable_cfg[schedtable_name]["OsScheduleTableSync"]):
+            return schedtable_cfg[schedtable_name]["OsScheduleTableSync"]["OsScheduleTblSyncStrategy"]
+        else:
+            return "NONE"
+
+    @staticmethod
+    @pass_context
+    def get_schedtable_sync_precision(context, schedtable_cfg, schedtable_name):
+        """Get schedule table synchronization precision"""
+        if ("OsScheduleTableSync" in schedtable_cfg[schedtable_name] and
+            "OsScheduleTblExplicitPrecision" in schedtable_cfg[schedtable_name]["OsScheduleTableSync"]):
+            return schedtable_cfg[schedtable_name]["OsScheduleTableSync"]["OsScheduleTblExplicitPrecision"]
+        else:
+            return 0
 
     @staticmethod
     @pass_context
@@ -829,43 +903,132 @@ class Function(FunctionBase):
         OsOS_cfg = Function.get_os_module_list(context, "/Os/OsOS")
         os_hooks = {}
         os_hooks = OsOS_cfg.get("OsOS",{}).get("OsHooks",{})
-        os_hooks_cfg = {}
-        os_hooks_cfg["os_errorhook"] = {}
-        os_hooks_cfg["os_protectionhook"] = {}
-        os_hooks_cfg["os_shutdownhook"] = {}
-        os_hooks_cfg["os_startuphook"] = {}
-        os_hooks_cfg["os_errorhook"]["enabled"] = False
-        os_hooks_cfg["os_protectionhook"]["enabled"] = False
-        os_hooks_cfg["os_shutdownhook"]["enabled"] = False
-        os_hooks_cfg["os_startuphook"]["enabled"] = False
+        os_hooks_cfg = {
+            'os_errorhook': {'enabled': False},
+            'os_protectionhook': {'enabled': False},
+            'os_shutdownhook': {'enabled': False},
+            'os_startuphook': {'enabled': False}
+        }
         os_hook_cnt = 0
 
         if os_hooks:
-            os_hooks_cfg["os_errorhook"]["enabled"] = os_hooks.get("OsErrorHook",{}).get("Value","")
-            os_hooks_cfg["os_errorhook"]["stack_size"] = os_hooks.get("OsErrorHookStackSize",{}).get("Value","")
-            os_hooks_cfg["os_errorhook"]["nesting_mask"] = "OS_ERRORHOOK_HOOKNESTINGMASK"
-            if os_hooks_cfg["os_errorhook"]["enabled"]:
-                os_hook_cnt = os_hook_cnt + 1
+            os_hooks_cfg['os_errorhook'].update({
+                'enabled': os_hooks.get("OsErrorHook",{}).get("Value",""),
+                'stack_size': os_hooks.get("OsErrorHookStackSize",{}).get("Value",""),
+                'nesting_mask': 'OS_ERRORHOOK_HOOKNESTINGMASK'
+            })
 
-            os_hooks_cfg["os_protectionhook"]["enabled"] = os_hooks.get("OsProtectionHook",{}).get("Value","")
-            os_hooks_cfg["os_protectionhook"]["stack_size"] = os_hooks.get("OsProtectionHookStackSize",{}).get("Value","")
-            os_hooks_cfg["os_protectionhook"]["nesting_mask"] = "OS_PROTECTIONHOOK_HOOKNESTINGMASK"
-            if os_hooks_cfg["os_protectionhook"]["enabled"]:
-                os_hook_cnt = os_hook_cnt + 1
+            os_hooks_cfg['os_protectionhook'].update({
+                'enabled': os_hooks.get("OsProtectionHook",{}).get("Value",""),
+                'stack_size': os_hooks.get("OsProtectionHookStackSize",{}).get("Value",""),
+                'nesting_mask': 'OS_PROTECTIONHOOK_HOOKNESTINGMASK'
+            })
 
-            os_hooks_cfg["os_shutdownhook"]["enabled"] = os_hooks.get("OsShutdownHook",{}).get("Value","")
-            os_hooks_cfg["os_shutdownhook"]["stack_size"] = os_hooks.get("OsShutdownHookStackSize",{}).get("Value","")
-            os_hooks_cfg["os_shutdownhook"]["nesting_mask"] = "OS_SHUTDOWNHOOK_HOOKNESTINGMASK"
-            if os_hooks_cfg["os_shutdownhook"]["enabled"]:
-                os_hook_cnt = os_hook_cnt + 1
+            os_hooks_cfg['os_shutdownhook'].update({
+                'enabled': os_hooks.get("OsShutdownHook",{}).get("Value",""),
+                'stack_size': os_hooks.get("OsShutdownHookStackSize",{}).get("Value",""),
+                'nesting_mask': 'OS_SHUTDOWNHOOK_HOOKNESTINGMASK'
+            })
 
-            os_hooks_cfg["os_startuphook"]["enabled"] = os_hooks.get("OsStartupHook",{}).get("Value","")
-            os_hooks_cfg["os_startuphook"]["stack_size"] = os_hooks.get("OsStartupHookStackSize",{}).get("Value","")
-            os_hooks_cfg["os_startuphook"]["nesting_mask"] = "OS_STARTUPHOOK_HOOKNESTINGMASK"
-            if os_hooks_cfg["os_startuphook"]["enabled"]:
-                os_hook_cnt = os_hook_cnt + 1
+            os_hooks_cfg['os_startuphook'].update({
+                'enabled': os_hooks.get("OsStartupHook",{}).get("Value",""),
+                'stack_size': os_hooks.get("OsStartupHookStackSize",{}).get("Value",""),
+                'nesting_mask': 'OS_STARTUPHOOK_HOOKNESTINGMASK'
+            })
+
+            for cfg in os_hooks_cfg.values():
+                if cfg['enabled']:
+                    os_hook_cnt += 1
 
         return os_hooks_cfg, os_hook_cnt
+
+    @staticmethod
+    @pass_context
+    @utils.cache_once(_cache)
+    def get_app_hook_cfg(context):
+        all_apps_hook_cfg = {}
+        app_cfg = Function.get_app_cfg(context)
+        os_hook_cfg, _ = Function.get_os_hook_cfg(context)
+        app_hook_key_map = {"AppErrorHook": "errorhook",
+                            "AppStartupHook": "startuphook",
+                            "AppShutdownHook": "shutdownhook"}
+
+        for app_name, app_val in app_cfg.items():
+            app_hook_cfg = {}
+            if app_val['AppHookCnt'] > 0:
+                for attr_key, hook_type in app_hook_key_map.items():
+                    if app_val[attr_key] != True:
+                        continue
+                    os_hook_name = (f'os_{hook_type}').lower()
+                    if os_hook_cfg[os_hook_name]['enabled'] != True:
+                        continue
+
+                    app_hook_cfg[hook_type] = {
+                        'app_hook_name': (f'{app_name}_{hook_type}').lower(),
+                        'hook_type': hook_type,
+                        'hook_id': (f'OS_CORE{app_val["CoreNumber"]}_{app_name}_{hook_type}_ID').upper(),
+                        'hook_name': os_hook_name,
+                        'stack_size': os_hook_cfg[os_hook_name]['stack_size'],
+                        'stack_name': (f'OS_CORE{app_val["CoreNumber"]}_{app_name}_{hook_type}_STACK_SECTION').upper(),
+                        'nesting_mask': os_hook_cfg[os_hook_name]['nesting_mask']
+                    }
+            all_apps_hook_cfg[app_name] = app_hook_cfg
+
+        return all_apps_hook_cfg
+
+    @staticmethod
+    @pass_context
+    def get_hook_callout_code(context):
+        user_code_extract = UserCodeExtract()
+        hook_callout_path = utils.get_dict_path(context, ['sys_cfg', 'path', 'bswcallout_path'])
+        bsw_callout_code = user_code_extract.bsw_callout_user_code(hook_callout_path)
+        return bsw_callout_code.get('hook_user_callout', {})
+
+
+    @staticmethod
+    @pass_context
+    @utils.cache_once(_cache)
+    def get_no_stack_hook_list(context):
+        ret = []
+        os_cfg = Function.get_os_module_list(context, "/Os/OsOS")
+        os_hook = utils.get_dict_path(os_cfg, ['OsOS', 'OsHooks'])
+        if os_hook.get('OsPanicHook', {}).get('Value', '') == True:
+            ret.append('os_panichook')
+        if os_hook.get('OsPreTaskHook', {}).get('Value', '') == True:
+            ret.append('os_pretaskhook')
+        if os_hook.get('OsPostTaskHook', {}).get('Value', '') == True:
+            ret.append('os_posttaskhook')
+        return ret
+
+    @staticmethod
+    @pass_context
+    def get_enable_hook_cfg_marcos(context):
+        hook_cfg, hook_cnt = Function.get_os_hook_cfg(context)
+        ret = []
+        if hook_cfg['os_errorhook']['enabled'] == True:
+            ret.append('CONFIG_RT_FRAMEWORK_ERROR_HOOK=y')
+        if hook_cfg['os_protectionhook']['enabled'] == True:
+            ret.append('CONFIG_RT_FRAMEWORK_PROTECTION_HOOK=y')
+        if hook_cfg['os_shutdownhook']['enabled'] == True:
+            ret.append('CONFIG_RT_FRAMEWORK_SHUTDOWN_HOOK=y')
+        if hook_cfg['os_startuphook']['enabled'] == True:
+            ret.append('CONFIG_RT_FRAMEWORK_STARTUP_HOOK=y')
+
+        if hook_cnt > 0:
+            ret.append('CONFIG_RT_FRAMEWORK_HOOK=y')
+
+        no_stack_hook_list = Function.get_no_stack_hook_list(context)
+        if 'os_panichook' in no_stack_hook_list:
+            ret.append('CONFIG_RT_FRAMEWORK_PANIC_HOOK=y')
+
+        if 'os_pretaskhook' in no_stack_hook_list:
+            ret.append('CONFIG_RT_FRAMEWORK_PRETASK_HOOK=y')
+
+        if 'os_posttaskhook' in no_stack_hook_list:
+            ret.append('CONFIG_RT_FRAMEWORK_POSTTASK_HOOK=y')
+
+        return ret
+
     @staticmethod
     @pass_context
     def get_osmempool_spinlock_id_set_ui(context):
@@ -944,9 +1107,7 @@ class Function(FunctionBase):
 
         # CONFIG_RT_FRAMEWORK_HOOK
         ########################################################
-        os_hook_cfg, os_hook_cnt = Function.get_os_hook_cfg(context)
-        if os_hook_cnt > 0:
-            rtfw_config.append("CONFIG_RT_FRAMEWORK_HOOK=y")
+        rtfw_config += Function.get_enable_hook_cfg_marcos(context)
         ########################################################
 
         # CONFIG_RT_FRAMEWORK_SYSCALL
@@ -956,7 +1117,9 @@ class Function(FunctionBase):
 
         # CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION
         ########################################################
-        # mpu is determined by the board， so it is set in board/config/defconfig
+        osos_cfg = Function.get_osos_cfg(context)
+        if osos_cfg.get("ScalabilityClass","") in ("SC3","SC4"):
+            rtfw_config.append("CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION=y")
         ########################################################
 
         # CONFIG_RT_FRAMEWORK_ISOLATE

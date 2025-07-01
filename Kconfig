@@ -92,6 +92,55 @@ config RT_FRAMEWORK_HOOK
 	---help---
 		Enable RT_FRAMEWORK_HOOK
 
+config RT_FRAMEWORK_PANIC_HOOK
+	bool "RT_FRAMEWORK_PANIC_HOOK"
+	depends on RT_FRAMEWORK_HOOK
+	default n
+	---help---
+		Enable RT_FRAMEWORK_PANIC_HOOK
+
+config RT_FRAMEWORK_PRETASK_HOOK
+	bool "RT_FRAMEWORK_PRETASK_HOOK"
+	depends on RT_FRAMEWORK_HOOK
+	default n
+	---help---
+		Enable RT_FRAMEWORK_PRETASK_HOOK
+
+config RT_FRAMEWORK_POSTTASK_HOOK
+	bool "RT_FRAMEWORK_POSTTASK_HOOK"
+	depends on RT_FRAMEWORK_HOOK
+	default n
+	---help---
+		Enable RT_FRAMEWORK_POSTTASK_HOOK
+
+config RT_FRAMEWORK_ERROR_HOOK
+	bool "RT_FRAMEWORK_ERROR_HOOK"
+	depends on RT_FRAMEWORK_HOOK
+	default n
+	---help---
+		Enable RT_FRAMEWORK_ERROR_HOOK
+
+config RT_FRAMEWORK_PROTECTION_HOOK
+	bool "RT_FRAMEWORK_PROTECTION_HOOK"
+	depends on RT_FRAMEWORK_HOOK
+	default n
+	---help---
+		Enable RT_FRAMEWORK_PROTECTION_HOOK
+
+config RT_FRAMEWORK_SHUTDOWN_HOOK
+	bool "RT_FRAMEWORK_SHUTDOWN_HOOK"
+	depends on RT_FRAMEWORK_HOOK
+	default n
+	---help---
+		Enable RT_FRAMEWORK_SHUTDOWN_HOOK
+
+config RT_FRAMEWORK_STARTUP_HOOK
+	bool "RT_FRAMEWORK_STARTUP_HOOK"
+	depends on RT_FRAMEWORK_HOOK
+	default n
+	---help---
+		Enable RT_FRAMEWORK_STARTUP_HOOK
+
 config RT_FRAMEWORK_SYSCALL
 	bool "RT_FRAMEWORK_SYSCALL"
 	default n
@@ -100,12 +149,13 @@ config RT_FRAMEWORK_SYSCALL
 
 config RT_FRAMEWORK_ERROR
 	bool "RT_FRAMEWORK_ERROR"
-	default n
+	default y
 	---help---
 		Enable RT_FRAMEWORK_ERROR
 
 config RT_FRAMEWORK_MEMORY_PROTECTION
 	depends on RT_FRAMEWORK_SYSCALL
+	select KERNEL_MEMORY_PROTECTION
 	bool "RT_FRAMEWORK_MEMORY_PROTECTION"
 	default n
 	---help---

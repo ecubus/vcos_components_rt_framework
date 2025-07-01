@@ -23,30 +23,30 @@
 
 /* Including File */
 #include <nuttx/config.h>
-#include "os_core.h"
+#include "rtfw_core.h"
 #include "core_cfg.h"
-#include "os_compiler_cfg.h"
+#include "rtfw_compiler_cfg.h"
 #include "application_cfg.h"
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
-#include "os_ipicall.h"
+#include "rtfw_ipicall.h"
 #include "ipicall_cfg.h"
 #endif
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
 #include "memory_protection_cfg.h"
 #endif
 #if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
-#include "os_resource.h"
+#include "rtfw_resource.h"
 #include "resource_cfg.h"
 #endif /* CONFIG_RT_FRAMEWORK_RESOURCE */
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-#include "os_hook.h"
+#include "rtfw_hook.h"
 #include "hook_cfg.h"
 #endif /* CONFIG_RT_FRAMEWORK_HOOK */
 
 {%- set core_config = get_core_configs() %}
 {%- set hw2log = get_hw2log_map() %}
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
 /* Physical ID as index, Logical ID as Value */
 CONST(uint32, OS_CONST) ulCoreIdTable[OS_CORE_PHYSICAL_CNT] = {
@@ -64,7 +64,7 @@ CONST(uint32, OS_CONST) ulCoreIdLog2PhyTable[OS_CORE_CNT] = {
 };
 
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
 {%- set os_hook_cfg, os_hook_cnt = get_os_hook_cfg() %}
 {%- for core, core_val in core_config.items() %}
@@ -86,8 +86,14 @@ DeclareCore(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{core}}) = {
     /* .ipicall_count = */    &os_core{{core_num}}_ipicalls_cfg_ref_table_size,
 #endif /* CONFIG_RT_FRAMEWORK_IPICALL */
 #if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
+    {%- set core_resource_map = get_core_referenced_resource() %}
+    {%- if core_resource_map[core_num|string] %}
     /* .resource_refs = */     os_core{{core_num}}_resource_cfg_ref_table,
     /* .resource_count = */    &os_core{{core_num}}_resource_cfg_ref_table_size,
+    {%- else %}
+    /* .resource_refs = */     NULL_PTR,
+    /* .resource_count = */    NULL_PTR,
+    {%- endif %}
 #endif /* CONFIG_RT_FRAMEWORK_RESOURCE */
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
 {%- if os_hook_cfg["os_startuphook"]["enabled"] %}
@@ -124,7 +130,7 @@ DeclareCore(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{core}}) = {
 };
 {%- endfor %}
 
-DeclareOsRefTable(OS_CONST_SECTION, core, OS_CORE_CNT) = {
+DeclareRtfwRefTable(OS_CONST_SECTION, core, OS_CORE_CNT) = {
 {%- for core in core_config.values() %}
     &OSCORECFGVAR(Os_Core{{core["core_id"][-1]}}),
 {%-endfor%}

@@ -46,14 +46,14 @@ typedef enum {
 /* global type & Structure Definition */
 
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 {%- set core_cnt = get_core_cnt() %}
 {%- for this_core in range(core_cnt): %}
 extern CONSTP2CONST(os_ipicall_cfg_t, AUTOMATIC, OS_CONST) os_core{{this_core}}_ipicalls_cfg_ref_table[];
 extern CONST(OsObjIndexType, OS_CONST) os_core{{this_core}}_ipicalls_cfg_ref_table_size;
 {%- endfor %}
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
 /* global Function Declaration */
 /* global Function Implementation */

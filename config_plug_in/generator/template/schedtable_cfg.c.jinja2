@@ -23,16 +23,16 @@
 
 /* Including File */
 #include <nuttx/config.h>
-#include "Std_Types.h"
-#include "schedtable_cfg.h"
 #include "Os.h"
+#include "rtfw_types.h"
+#include "schedtable_cfg.h"
 #include "application_cfg.h"
-#include "os_task.h"
+#include "rtfw_task.h"
 #include "task_cfg.h"
 #include "event_cfg.h"
-#include "os_counter.h"
+#include "rtfw_counter.h"
 #include "counter_cfg.h"
-#include "os_compiler_cfg.h"
+#include "rtfw_compiler_cfg.h"
 
 {%- set app_cfg = get_app_cfg() %}
 {%- set system_counter_list = get_system_counter_list() %}
@@ -129,7 +129,7 @@ DeclareSchedTable(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, 
     /* .duration = */              {{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableDuration"]}},
     /* .expire_point_list = */     EXPIREPOINTCFGVAR(SchedTable_{{SchedTable_Name}}_ExpiryPointList),
     /* .expiry_point_cnt = */      NELEMENTS(EXPIREPOINTCFGVAR(SchedTable_{{SchedTable_Name}}_ExpiryPointList)),
-    /* .sync_strategy = */         {% if "OsScheduleTableSync" in SchedTable_Cfg[SchedTable_Name] and "OsScheduleTblSyncStrategy" in SchedTable_Cfg[SchedTable_Name]["OsScheduleTableSync"] %}{{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableSync"]["OsScheduleTblSyncStrategy"]}}{% else %}NONE{% endif %},
+    /* .sync_strategy = */         {{get_schedtable_sync_strategy(SchedTable_Cfg, SchedTable_Name)}},
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
     {%- set access_app = SchedTable_Cfg[SchedTable_Name]["OsSchTblAccessingApplication"] + [appname] %}
     {%- set access_str = get_access_app_mask(access_app, index_size=31) %}
@@ -140,7 +140,7 @@ DeclareSchedTable(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, 
         /* .type = */                  {{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableAutostart"]["OsScheduleTableAutostartType"]}},
         /* .Offset = */                {{SchedTable_Cfg[SchedTable_Name]["OsScheduleTableAutostart"]["OsScheduleTableStartValue"]}},
                                     },
-    /* .precision = */             0
+    /* .precision = */              {{get_schedtable_sync_precision(SchedTable_Cfg, SchedTable_Name)}},
 };
             {%- endif %}
         {%- endfor %}
@@ -148,7 +148,7 @@ DeclareSchedTable(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, 
 {%- endfor %}
 
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
 /* Schedule Table Reference Tables */
 {%- for appname, appval in app_cfg.items() %}
@@ -168,9 +168,9 @@ CONST(OsObjIndexType, OS_CONST) {{appval["AppSchedTblTable"]}}_size = NELEMENTS(
 {%- endfor %}
 
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
-DeclareOsRefTable(OS_CONST_SECTION, schedtable, OS_SCHED_TABLE_CNT) = {
+DeclareRtfwRefTable(OS_CONST_SECTION, schedtable, OS_SCHED_TABLE_CNT) = {
 {%- for appname, appval in app_cfg.items() %}
     {%- if appval is mapping and "AppScheduleTableList" in appval and appval["AppScheduleTableList"] %}
         {%- for SchedTable_Name in appval["AppScheduleTableList"] %}

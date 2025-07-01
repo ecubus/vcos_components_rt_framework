@@ -15,58 +15,78 @@
 # ##############################################################################
 
 if(CONFIG_RT_FRAMEWORK)
-  set(CSRCS src/os.c
-            src/os_task.c
-            src/os_thread.c
-            src/os_isr.c
-            src/os_interrupt.c
-            src/os_event.c
-            src/os_core.c
-            src/os_wrapper.c)
+  set(CSRCS src/rtfw.c
+            src/rtfw_task.c
+            src/rtfw_thread.c
+            src/rtfw_isr.c
+            src/rtfw_interrupt.c
+            src/rtfw_event.c
+            src/rtfw_core.c
+            src/rtfw_wrapper.c
+            ${GENDATA_DIR}/Os/core_cfg.c
+            ${GENDATA_DIR}/Os/task_cfg.c
+            ${GENDATA_DIR}/Os/isr_cfg.c)
 
   if (CONFIG_RT_FRAMEWORK_MULTIAPP)
-    list(APPEND CSRCS src/os_application.c)
+    list(APPEND CSRCS src/rtfw_application.c)
+    list(APPEND CSRCS ${GENDATA_DIR}/Os/application_cfg.c)
   endif()
 
   if (CONFIG_RT_FRAMEWORK_SPINLOCK)
-    list(APPEND CSRCS src/os_spinlock.c)
+    list(APPEND CSRCS src/rtfw_spinlock.c)
+    list(APPEND CSRCS ${GENDATA_DIR}/Os/spinlock_cfg.c)
   endif()
 
   if (CONFIG_RT_FRAMEWORK_COUNTER)
-    list(APPEND CSRCS src/os_counter.c)
+    list(APPEND CSRCS src/rtfw_counter.c)
+    list(APPEND CSRCS ${GENDATA_DIR}/Os/counter_cfg.c)
   endif()
 
   if (CONFIG_RT_FRAMEWORK_SYSCALL)
-    list(APPEND CSRCS src/os_syscall.c)
+    list(APPEND CSRCS src/rtfw_syscall.c)
   endif()
 
   if (CONFIG_RT_FRAMEWORK_IPICALL)
-    list(APPEND CSRCS src/os_ipicall.c)
+    list(APPEND CSRCS src/rtfw_ipicall.c)
+    list(APPEND CSRCS ${GENDATA_DIR}/Os/ipicall_cfg.c)
   endif()
 
   if (CONFIG_RT_FRAMEWORK_SCHTBL)
-    list(APPEND CSRCS src/os_schedtable.c)
+    list(APPEND CSRCS src/rtfw_schedtable.c)
+    list(APPEND CSRCS ${GENDATA_DIR}/Os/schedtable_cfg.c)
   endif()
 
   if (CONFIG_RT_FRAMEWORK_RESOURCE)
-    list(APPEND CSRCS src/os_resource.c)
+    list(APPEND CSRCS src/rtfw_resource.c)
+    list(APPEND CSRCS ${GENDATA_DIR}/Os/resource_cfg.c)
   endif()
   if (CONFIG_RT_FRAMEWORK_MEMPOOL)
-    list(APPEND CSRCS src/os_mempool.c)
+    list(APPEND CSRCS src/rtfw_mempool.c)
+    list(APPEND CSRCS ${GENDATA_DIR}/MemPool/mempool_cfg.c)
   endif ()
 
   if (CONFIG_RT_FRAMEWORK_HOOK)
-    list(APPEND CSRCS src/os_hook.c)
+    list(APPEND CSRCS src/rtfw_hook.c)
+    list(APPEND CSRCS ${GENDATA_DIR}/Os/hook_cfg.c)
+  endif()
+
+  if (CONFIG_RT_FRAMEWORK_ERROR)
+    list(APPEND CSRCS src/rtfw_error.c)
   endif()
 
   if (CONFIG_RT_FRAMEWORK_ISOLATE)
-    list(APPEND CSRCS src/os_isolate.c)
+    list(APPEND CSRCS src/rtfw_isolate.c)
     list(APPEND CSRCS ${GENDATA_DIR}/Isolate/isolate_ppc_cfg.c)
+  endif()
+
+  if (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION)
+    list(APPEND CSRCS ${GENDATA_DIR}/Os/memory_protection_cfg.c)
   endif()
 
   set(INCLUDE_DIRS ${NUTTX_DIR}/sched
                    ${CMAKE_CURRENT_LIST_DIR}/src
                    ${CMAKE_CURRENT_LIST_DIR}/inc
+                   ${NUTTX_APPS_DIR}/components/include
                    ${NUTTX_APPS_DIR}/components/include/autosar)
 
   list(APPEND INCLUDE_DIRS ${NUTTX_APPS_DIR}/${APPS_DIR}/apps)
@@ -86,4 +106,3 @@ endif ()
   target_sources(rt_framework PRIVATE ${CSRCS})
   target_include_directories(rt_framework PRIVATE ${INCLUDE_DIRS} ${VENDOR_THIRD_PARTY_DRIVER_INCDIR})
 endif()
-

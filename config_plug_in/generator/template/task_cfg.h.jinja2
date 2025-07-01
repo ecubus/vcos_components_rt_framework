@@ -30,7 +30,7 @@ extern "C"
 #endif
 
 /* Including File */
-#include "os_task.h"
+#include "rtfw_task.h"
 
 /* global Macro Definition */
 
@@ -55,11 +55,11 @@ typedef enum {
 {%- for app, app_val in app_cfg.items() %}
     {%- if app_val["AppTaskList"]: %}
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 extern CONSTP2CONST(os_task_cfg_t, AUTOMATIC, OS_CONST) {{app_val["AppTaskTable"]}}[];
 extern CONST(OsObjIndexType, OS_CONST) {{app_val["AppTaskTable"]}}_size;
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
     {%- endif %}
 
 {%- endfor %}

@@ -23,17 +23,17 @@
 
 /* Including File */
 #include <nuttx/config.h>
-#include "os_ipicall.h"
+#include "rtfw_ipicall.h"
 #include "ipicall_cfg.h"
-#include "os_core.h"
+#include "rtfw_core.h"
 #include "core_cfg.h"
-#include "os_compiler_cfg.h"
+#include "rtfw_compiler_cfg.h"
 
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 extern CONST(os_ipicall_service_t, OS_CONST) os_ipicall_service_table[];
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
 {%- set core_cnt = get_core_cnt() %}
 {%- for this_core in range(core_cnt): %}
@@ -52,7 +52,7 @@ DeclareIpicall(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, OS_CORE{{this_core}}_IPI
 
 {%- for this_core in range(core_cnt): %}
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 CONSTP2CONST(os_ipicall_cfg_t, AUTOMATIC, OS_CONST) os_core{{this_core}}_ipicalls_cfg_ref_table[] =
 {
 {%- for target_core in range(core_cnt) %}
@@ -72,10 +72,10 @@ CONSTP2CONST(os_ipicall_cfg_t, AUTOMATIC, OS_CONST) os_core{{this_core}}_ipicall
 };
 CONST(OsObjIndexType, OS_CONST) os_core{{this_core}}_ipicalls_cfg_ref_table_size = (OsObjIndexType)NELEMENTS(os_core{{this_core}}_ipicalls_cfg_ref_table);
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 {%- endfor %}
 
-DeclareOsRefTable(OS_CONST_SECTION, ipicall, OS_IPICALL_CNT) = {
+DeclareRtfwRefTable(OS_CONST_SECTION, ipicall, OS_IPICALL_CNT) = {
 {%- for this_core in range(core_cnt): %}
     {%- for target_core in range(core_cnt) %}
         {%- if this_core !=  target_core %}

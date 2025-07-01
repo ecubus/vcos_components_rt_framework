@@ -30,7 +30,7 @@ extern "C"
 #endif
 
 /* Including File */
-#include "os_isr.h"
+#include "rtfw_isr.h"
 
 /* global Macro Definition */
 
@@ -62,7 +62,7 @@ typedef enum {
 /* global Variable Declaration */
 
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
 {%- for app in app_cfg %}
     {%- if app_cfg[app]["AppIsrList"] %}
@@ -73,7 +73,7 @@ extern CONST(OsObjIndexType, OS_CONST) {{app_cfg[app]["AppIsrTable"]}}_size;
 {%- endfor %}
 
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
 /* global Function Declaration */
 

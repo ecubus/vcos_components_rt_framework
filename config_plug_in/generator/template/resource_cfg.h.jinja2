@@ -30,7 +30,7 @@ extern "C"
 #endif
 
 /* Including File */
-#include "os_resource.h"
+#include "rtfw_resource.h"
 
 {%- set resource_cfg = get_resource_cfg() %}
 
@@ -43,14 +43,14 @@ typedef enum {
 } OS_RESOURCE_DEF;
 
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 {%- set core_cnt = get_core_cnt() %}
 {%- for core_id in range(core_cnt): %}
 extern CONSTP2CONST(os_resource_cfg_t, AUTOMATIC, OS_CONST) os_core{{core_id}}_resource_cfg_ref_table[];
 extern CONST(OsObjIndexType, OS_CONST) os_core{{core_id}}_resource_cfg_ref_table_size;
 {%- endfor %}
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
 #ifdef __cplusplus
 }

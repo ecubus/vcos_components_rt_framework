@@ -24,7 +24,7 @@
 #include "memory_protection_cfg.h"
 
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 {%- set mpu_cfg = get_mpu_cfg() %}
 {%- set app_cfg = get_app_cfg() %}
 {%- set target = get_target() %}
@@ -379,4 +379,4 @@ CONSTP2CONST(struct mpu_core_access_right_s, AUTOMATIC, OS_CONST) os_core_access
 CONST(OsObjIndexType, OS_CONST) os_core_access_right_ref_table_size = NELEMENTS(os_core_access_right_ref_table);
 {%- endif %}
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"

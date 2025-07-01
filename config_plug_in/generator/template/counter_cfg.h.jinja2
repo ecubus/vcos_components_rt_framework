@@ -31,7 +31,7 @@ extern "C"
 
 /* Including File */
 #include <nuttx/config.h>
-#include "os_counter.h"
+#include "rtfw_counter.h"
 
 /* global Macro Definition */
 {%- set counter_cfg = get_counter_cfg() %}
@@ -76,11 +76,11 @@ extern const os_counter_cfg_t COUNTERCFGVAR({{counter}}_cfg);
 {%- for app in app_cfg %}
     {%- if app_cfg[app]["AppCounterList"] %}
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 extern CONSTP2CONST(os_counter_cfg_t, AUTOMATIC, OS_CONST) {{app_cfg[app]["AppCounterTable"]}}[];
 extern CONST(OsObjIndexType, OS_CONST) {{app_cfg[app]["AppCounterTable"]}}_size;
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
     {%- endif %}
 {%- endfor %}
 

@@ -30,7 +30,7 @@ extern "C"
 #endif
 
 /* Including File */
-#include "os_application.h"
+#include "rtfw_application.h"
 
 /* global Macro Definition */
 {%- set app_cfg = get_app_cfg() %}
@@ -44,7 +44,7 @@ typedef enum {
 } OS_APPLICATIONID_DEF;
 
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 {% for app in app_cfg %}
 extern const os_app_cfg_t OSAPPCFGVAR({{app}});
 {%- endfor %}
@@ -55,7 +55,7 @@ extern CONSTP2CONST(os_app_cfg_t, AUTOMATIC, OS_CONST) os_core{{k.lstrip("Os_Cor
 extern CONST(OsObjIndexType, OS_CONST) os_core{{k.lstrip("Os_Core")}}_apps_cfg_ref_table_size;
 {% endfor %}
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
 #ifdef __cplusplus
 }

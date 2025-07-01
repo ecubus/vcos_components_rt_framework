@@ -23,11 +23,11 @@
 
 /* Including File */
 #include "Os.h"
-#include "os_resource.h"
+#include "rtfw_resource.h"
 #include "resource_cfg.h"
-#include "os_application.h"
+#include "rtfw_application.h"
 #include "application_cfg.h"
-#include "os_compiler_cfg.h"
+#include "rtfw_compiler_cfg.h"
 
 {%- set resource_cfg = get_resource_cfg() %}
 
@@ -47,23 +47,27 @@ DeclareResource(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{resource_id.upper()}}
 
 /* Resoure ref by Core */
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
+{%- set core_resource_map = get_core_referenced_resource() %}
 {%- set all_core_ids = range(get_core_cnt()) %}
 {%- for core_id in all_core_ids %}
+    {%- set core_resources = core_resource_map[core_id|string] %}
+    {%- if core_resources %}
 
 CONSTP2CONST(os_resource_cfg_t, AUTOMATIC, OS_CONST) os_core{{core_id}}_resource_cfg_ref_table[] =
 {
-    {%- for resource_name, resource in resource_cfg.items() if resource.CoreID == core_id|string %}
+        {%- for resource_name in core_resources %}
     &RESOURCECFGVAR({{resource_name.upper()}}),
-    {%- endfor %}
+        {%- endfor %}
 };
 CONST(OsObjIndexType, OS_CONST) os_core{{core_id}}_resource_cfg_ref_table_size = NELEMENTS(os_core{{core_id}}_resource_cfg_ref_table);
+    {%- endif %}
 
 {%- endfor %}
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
-DeclareOsRefTable(OS_CONST_SECTION, resource, OS_RESOURCE_CNT) = {
+DeclareRtfwRefTable(OS_CONST_SECTION, resource, OS_RESOURCE_CNT) = {
 {%- for resource_id in resource_cfg %}
     &RESOURCECFGVAR({{resource_id.upper()}}),
 {%- endfor %}

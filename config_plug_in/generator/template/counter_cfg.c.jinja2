@@ -23,11 +23,11 @@
 
 /* Including File */
 #include <nuttx/config.h>
-#include "os_counter.h"
+#include "rtfw_counter.h"
 #include "counter_cfg.h"
 #include "application_cfg.h"
 #include "isr_cfg.h"
-#include "os_compiler_cfg.h"
+#include "rtfw_compiler_cfg.h"
 
 /* global Variable Definition */
 {%- set counter_cfg = get_counter_cfg() %}
@@ -64,7 +64,7 @@ DeclareCounter(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{c
 /* Counter table Declaration */
 
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 {%- for app in app_cfg %}
     {%- if app_cfg[app]["AppCounterList"] %}
 
@@ -94,4 +94,4 @@ CONSTP2CONST(os_counter_cfg_t, AUTOMATIC, OS_CONST) os_counter_cfg_ref_table[] =
 
 CONST(OsObjIndexType, OS_CONST) os_counter_cfg_ref_table_size = OS_COUNTER_CNT;
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"

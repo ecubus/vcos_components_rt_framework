@@ -24,12 +24,12 @@
 /* Including File */
 #include <nuttx/config.h>
 #include "isr_cfg.h"
-#include "os_context_types.h"
-#include "os_core.h"
+#include "rtfw_context_types.h"
+#include "rtfw_core.h"
 #include "core_cfg.h"
 #include "application_cfg.h"
-#include "os_compiler_cfg.h"
-#include "os_counter.h"
+#include "rtfw_compiler_cfg.h"
+#include "rtfw_counter.h"
 #include "counter_cfg.h"
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
 #include "memory_protection_cfg.h"
@@ -143,7 +143,7 @@ DeclareISR(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{core_
 {%- endfor %}
 
 #define OS_START_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
 {%- for app in app_cfg %}
     {%- if app_cfg[app]["AppIsrList"] %}
@@ -158,9 +158,9 @@ CONST(OsObjIndexType, OS_CONST) {{app_cfg[app]["AppIsrTable"]}}_size = NELEMENTS
 {%- endfor %}
 
 #define OS_STOP_SEC_CONST
-#include "os_memmap.h"
+#include "rtfw_memmap.h"
 
-DeclareOsRefTable(OS_CONST_SECTION, isr, OS_ISR_CNT) = {
+DeclareRtfwRefTable(OS_CONST_SECTION, isr, OS_ISR_CNT) = {
 {%- for app in app_cfg %}
     {%- for candit in app_cfg[app]["AppIsrList"] %}
     (os_isr_cfg_t *)&ISRCFGVAR(Core{{app_cfg[app]["CoreNumber"]}}, {{candit}}_ID),
