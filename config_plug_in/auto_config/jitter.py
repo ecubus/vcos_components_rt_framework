@@ -233,7 +233,7 @@ class Algorithm:
 
         tasks_copy_init = [
             t for t in tasks_copy_init
-            if not (t.period > 100000 and float(t.CET/t.period) <= 0.01)
+            if not (t.period >= 100000 and float(t.CET/t.period) <= 0.01)
         ]
 
         max_simulation_time = scheduler.calculate_max_time(tasks_copy_init)

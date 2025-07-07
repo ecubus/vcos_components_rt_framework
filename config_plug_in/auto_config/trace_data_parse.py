@@ -169,9 +169,16 @@ class FtraceLogParser:
                         cet_list = [round(x * 1e6) for x in cet_list]  # Convert to microseconds and round
 
                     if period > 0 and (cet_max > 0 or cet_avg > 0):
+                        # Calculate jitter: |DT max - Period|
+                        jitter = 0
+                        if dt_list:
+                            dt_max = max(dt_list)
+                            jitter = abs(dt_max - period) if period > 0 else 0
+
                         task_params[task_name] = {
                             'priority': priority,
                             'period': period,
+                            'jitter': jitter,
                             'cet_max': cet_max,
                             'cet_avg': cet_avg,
                             'cet_std_dev': cet_std_dev,
@@ -232,7 +239,7 @@ def parse_ftrace_log(ftrace_file: str) -> Optional[Dict[str, Dict[str, Any]]]:
             if not isinstance(params, dict):
                 print(f"Error: Invalid parameters format for task {task_name}")
                 return None
-            required_keys = {'priority', 'period', 'cet_max', 'cet_avg', 'cet_std_dev', 'PCET'}
+            required_keys = {'priority', 'period', 'jitter', 'cet_max', 'cet_avg', 'cet_std_dev', 'PCET'}
             if not all(key in params for key in required_keys):
                 print(f"Error: Missing required parameters for task {task_name}")
                 return None
@@ -320,9 +327,16 @@ class BinaryTraceParser:
 
                 priority = self.priority_map.get(task_name, -1)
                 if period > 0 or cet_max > 0 or cet_avg > 0:
+                    # Calculate jitter: |DT max - Period|
+                    jitter = 0
+                    if dt_list:
+                        dt_max = max(dt_list)
+                        jitter = abs(dt_max - period) if period > 0 else 0
+
                     task_params[task_name] = {
                         'priority': priority,
                         'period': period,
+                        'jitter': jitter,
                         'cet_max': cet_max,
                         'cet_avg': cet_avg,
                         'cet_std_dev': cet_std_dev,
@@ -358,28 +372,39 @@ def calculate_percentiles(data, percentiles):
             results.append(d0 + d1)
     return results
 
-def print_formatted_output(task_params: Dict[str, Dict[str, Any]], plot_type: str = None) -> None:
+def print_formatted_output(task_params: Dict[str, Dict[str, Any]], plot_type: str = None, show_jitter: bool = False) -> None:
     """
     Print formatted task information with improved layout
 
     Args:
         task_params: Dictionary of task parameters
         plot_type: Type of samples to display (dt or cet)
+        show_jitter: Whether to show Jitter column and hide PCET column
     """
-    # Calculate the maximum length needed for PCET values
+    # Calculate the maximum length needed for PCET values only if not showing jitter
     max_pcet_length = 0
-    for params in task_params.values():
-        pcet_str = f"[{', '.join(str(int(x)) for x in params['PCET'])}]"
-        max_pcet_length = max(max_pcet_length, len(pcet_str))
+    if not show_jitter:
+        for params in task_params.values():
+            pcet_str = f"[{', '.join(str(int(x)) for x in params['PCET'])}]"
+            max_pcet_length = max(max_pcet_length, len(pcet_str))
 
     print("\nTask Parameters By Core:")
-    print("=" * 150)  # Extend the separator line
 
-    # Format string for consistent column widths
-    header_format = (
-        f"{'Task Name':<40} {'Priority':<10} {'Period(us)':<12} {'CET Max(us)':<12} "
-        f"{'CET Avg(us)':<12} {'CET StdDev(us)':<12} {'PCET(us)':<{max_pcet_length}} | {'Samples':<8}"
-    )
+    # Adjust separator line length based on whether showing jitter or PCET
+    if show_jitter:
+        print("=" * 150)
+        # Format string for jitter mode (no PCET column)
+        header_format = (
+            f"{'Task Name':<40} {'Priority':<10} {'Period(us)':<12} {'Jitter(us)':<12} {'CET Max(us)':<12} "
+            f"{'CET Avg(us)':<12} {'CET StdDev(us)':<12} | {'Samples':<8}"
+        )
+    else:
+        print("=" * 160)
+        # Format string for normal mode (with PCET, no jitter)
+        header_format = (
+            f"{'Task Name':<40} {'Priority':<10} {'Period(us)':<12} {'CET Max(us)':<12} "
+            f"{'CET Avg(us)':<12} {'CET StdDev(us)':<12} {'PCET(us)':<{max_pcet_length}} | {'Samples':<8}"
+        )
 
     # Group tasks by core
     cores_dict = {}
@@ -394,15 +419,17 @@ def print_formatted_output(task_params: Dict[str, Dict[str, Any]], plot_type: st
     # Print tasks by core
     for core_name, tasks in sorted(cores_dict.items()):
         print(f"\n{core_name}:")
-        print("-" * 150)  # Extend the separator line
+        if show_jitter:
+            print("-" * 150)  # Shorter line for jitter mode
+        else:
+            print("-" * 160)  # Longer line for normal mode
         print(header_format)
-        print("-" * 150)  # Extend the separator line
+        if show_jitter:
+            print("-" * 150)
+        else:
+            print("-" * 160)
 
         for task_name, params in sorted(tasks, key=lambda x: x[1]['priority'], reverse=True):
-            # Format PCET list
-            pcet_str = f"[{', '.join(str(int(x)) for x in params['PCET'])}]"
-            pcet_str = f"{pcet_str:<{max_pcet_length}}"  # Fixed PCET column width
-
             # Get sample count based on plot_type
             # Only show DT samples if plot_type is explicitly 'dt'
             # Otherwise default to CET samples
@@ -413,14 +440,28 @@ def print_formatted_output(task_params: Dict[str, Dict[str, Any]], plot_type: st
 
             samples_str = f"{samples_count:>8}"  # Right-align sample count without "samples" text
 
-            # Print task information with aligned columns
-            print(
-                f"{task_name:<40} {params['priority']:<10} {params['period']:<12} "
-                f"{params['cet_max']:<12} {params['cet_avg']:<12} {params['cet_std_dev']:<12} "
-                f"{pcet_str} | {samples_str}"
-            )
+            if show_jitter:
+                # Jitter mode: show jitter column, hide PCET column
+                jitter = params.get('jitter', 0)
+                print(
+                    f"{task_name:<40} {params['priority']:<10} {params['period']:<12} "
+                    f"{jitter:<12} {params['cet_max']:<12} {params['cet_avg']:<12} {params['cet_std_dev']:<12} "
+                    f"| {samples_str}"
+                )
+            else:
+                # Normal mode: show PCET column, hide jitter column
+                pcet_str = f"[{', '.join(str(int(x)) for x in params['PCET'])}]"
+                pcet_str = f"{pcet_str:<{max_pcet_length}}"  # Fixed PCET column width
+                print(
+                    f"{task_name:<40} {params['priority']:<10} {params['period']:<12} "
+                    f"{params['cet_max']:<12} {params['cet_avg']:<12} {params['cet_std_dev']:<12} "
+                    f"{pcet_str} | {samples_str}"
+                )
 
-        print("-" * 150)  # Extend the separator line
+        if show_jitter:
+            print("-" * 150)
+        else:
+            print("-" * 160)
 
 
 def organize_tasks_by_core(
@@ -906,11 +947,19 @@ def check_file_exists(file_path):
 if __name__ == '__main__':
     try:
         plot_type = None
+        show_jitter = False
+
         if len(sys.argv) > 1:
-            if sys.argv[1].lower() == 'dt':
+            arg = sys.argv[1].lower()
+            if arg == 'dt':
                 plot_type = 'dt'
-            elif sys.argv[1].lower() == 'cet':
+            elif arg == 'cet':
                 plot_type = 'cet'
+            elif arg == 'jitter':
+                show_jitter = True
+                # When showing jitter, we don't need to set plot_type for plotting
+                # but we can set it for sample count display (default to CET samples)
+                plot_type = None  # Don't set plot_type to avoid affecting sample count display
 
         app = QApplication.instance() or QApplication([])
 
@@ -957,8 +1006,8 @@ if __name__ == '__main__':
         if task_params:
             cores_dict = organize_tasks_by_core(task_params)
 
-            # Pass plot_type to print_formatted_output function
-            print_formatted_output(task_params, plot_type)
+            # Pass both plot_type and show_jitter to print_formatted_output function
+            print_formatted_output(task_params, plot_type, show_jitter)
 
             # Save to JSON file
             # Ensure the output directory exists
@@ -971,6 +1020,8 @@ if __name__ == '__main__':
                 plot_all_task_dt_samples(task_params, DT_PLOTS_DIR)
             elif plot_type == 'cet':
                 plot_all_task_cet_samples(task_params, CET_PLOTS_DIR)
+            elif show_jitter:
+                print("\nJitter mode: No plots generated. Use 'python trace_data_parse.py dt' to generate DT plots or 'python trace_data_parse.py cet' to generate CET plots.")
             else:
                 print("\nSkip generating plots. Use 'python trace_data_parse.py dt' to generate DT plots or 'python trace_data_parse.py cet' to generate CET plots.")
 
