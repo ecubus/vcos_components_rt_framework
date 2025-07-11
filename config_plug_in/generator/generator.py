@@ -149,6 +149,10 @@ def generate_dynamic_code(sys_config: dict, config_dict: dict):
     template = env_ui.get_template("isr_cfg.c.jinja2")
     render_os_template(template, output_dir, "isr_cfg.c", config)
 
+    if sys_config['target'] == "AURIX2G_TC397":
+        template = env_ui.get_template("tricore_irq_dispatch.c.jinja2")
+        render_os_template(template, output_dir, "tricore_irq_dispatch.c", config)
+
     template = env_ui.get_template("isr_cfg.h.jinja2")
     render_os_template(template, output_dir, "isr_cfg.h", config)
 

@@ -13,6 +13,9 @@
  * limitations under the License.
  */
 #include <nuttx/config.h>
+#ifdef CONFIG_IRQ_USE_ARCH_DISPATCH
+#include "arch/irq_dispatch.h"
+#endif
 #include "rtfw_isr.h"
 #include "rtfw_core.h"
 #include <sched/sched.h>
@@ -39,11 +42,13 @@ static inline_function void os_isr_irq_prio_mask_restore(uint32 irq_prio_mask)
 
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
-
-static FUNC(int, OS_CODE) os_isr_run(int irq, void *cxt, void *arg)
+#ifdef CONFIG_IRQ_USE_ARCH_DISPATCH
+FUNC(uintptr_t, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg)
+#else
+FUNC(int, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg)
+#endif
 {
 	UNUSED(irq);
-	UNUSED(cxt);
 	const os_isr_cfg_t *isr_cfg = (os_isr_cfg_t *)arg;
 	os_core_cfg_t *core = NULL_PTR;
 	const os_ctx_cfg_t *pre_context = NULL_PTR;
@@ -51,6 +56,12 @@ static FUNC(int, OS_CODE) os_isr_run(int irq, void *cxt, void *arg)
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
 	const struct mpu_access_right_s *pre_access_right = NULL_PTR;
 	const struct mpu_access_right_s *this_access_right = NULL_PTR;
+#endif
+
+#ifdef CONFIG_IRQ_USE_ARCH_DISPATCH
+	up_irq_dispatch_enter(regs);
+#else
+	UNUSED(regs);
 #endif
 
 #if (CONFIG_ARCH_IRQ_NESTING_LIMIT > 1)
@@ -108,10 +119,15 @@ static FUNC(int, OS_CODE) os_isr_run(int irq, void *cxt, void *arg)
 #endif
 	(void)os_context_nest_dec(OS_CORE_GET_CONTEXTNEST_REF(core), NULL_PTR);
 
+#ifdef CONFIG_IRQ_USE_ARCH_DISPATCH
+	regs = up_irq_dispatch_exit(regs);
+	return (uintptr_t)regs;
+#else
 	return 0;
+#endif
 }
 
-FUNC(void, OS_CODE) os_isr_init(const os_isr_cfg_t *const os_isr_cfg_table[], OsObjIndexType size)
+FUNC(void, OS_CODE) rtfw_isr_init(const os_isr_cfg_t *const os_isr_cfg_table[], OsObjIndexType size)
 {
 	const os_isr_cfg_t *isr_cfg;
 	os_isr_inst_t *isrInst;
@@ -137,7 +153,9 @@ FUNC(void, OS_CODE) os_isr_init(const os_isr_cfg_t *const os_isr_cfg_table[], Os
 		isrInst = OS_ISR_GET_INSTANCE_REF(isr_cfg);
 		isrInst->top_of_stack = NULL_PTR;
 		os_context_init_context_instance(ctx_cfg);
-		irq_attach((int)(arch_ctx_cfg->irq), os_isr_run, (void *)isr_cfg);
+#ifndef CONFIG_IRQ_USE_ARCH_DISPATCH
+		irq_attach((int)(arch_ctx_cfg->irq), rtfw_isr_handler, (void *)isr_cfg);
+#endif
 		up_init_irq((int)(arch_ctx_cfg->vector_num), (int)(arch_ctx_cfg->level));
 		if (isr_cfg->is_enabled_on_init) {
 			up_enable_irq((int)(arch_ctx_cfg->vector_num));

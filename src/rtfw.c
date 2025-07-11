@@ -61,7 +61,7 @@ FUNC(void, OS_CODE) StartOS(void)
 	}
 #else
 	os_task_init(os_task_cfg_ref_table, os_task_cfg_ref_table_size);
-	os_isr_init(os_isr_cfg_ref_table, os_isr_cfg_ref_table_size);
+	rtfw_isr_init(os_isr_cfg_ref_table, os_isr_cfg_ref_table_size);
 #if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
 	os_counter_init(os_counter_cfg_ref_table, os_counter_cfg_ref_table_size);
 	os_counter_start(os_counter_cfg_ref_table, os_counter_cfg_ref_table_size);

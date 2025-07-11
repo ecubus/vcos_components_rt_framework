@@ -60,7 +60,7 @@ FUNC(void, OS_CODE) os_app_init(const os_app_cfg_t *const os_app_cfg_table[], Os
 			os_task_init(app_cfg->task_refs, *(app_cfg->task_count));
 		}
 		if ((app_cfg->isr_refs != NULL_PTR) && (app_cfg->isr_count != NULL_PTR)) {
-			os_isr_init(app_cfg->isr_refs, *(app_cfg->isr_count));
+			rtfw_isr_init(app_cfg->isr_refs, *(app_cfg->isr_count));
 		}
 
 #if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
