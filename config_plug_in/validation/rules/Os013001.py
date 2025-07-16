@@ -24,10 +24,11 @@ class Os013001Rule(BasicRule):
     ruleset_name = "Os013001"
     validation_result = False
 
-    def __init__(self, logs, ecuc_os_dict) -> None:
+    def __init__(self, logs, ecuc_os_dict, validation_cfg) -> None:
         super().__init__()
         self.logs = logs
         self.ecuc_os_dict = ecuc_os_dict
+        self.validation_cfg = validation_cfg
         self.validation_code = self.__class__.ruleset_name
         self.validation_summary = "Each application associated with tasks that reference a given resource must be included in OsResourceAccessingApplication."
         self.durable_init()

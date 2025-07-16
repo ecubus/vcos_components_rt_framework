@@ -24,10 +24,11 @@ class Os014018Rule(BasicRule):
     ruleset_name = "Os014018"
     validation_result = False
 
-    def __init__(self, logs, ecuc_os_dict) -> None:
+    def __init__(self, logs, ecuc_os_dict, validation_cfg) -> None:
         super().__init__()
         self.logs = logs
         self.ecuc_os_dict = ecuc_os_dict
+        self.validation_cfg = validation_cfg
         self.validation_code = self.__class__.ruleset_name
         self.validation_summary = "The number of applications accessed by the task must be >=1, including at least the task's owner application"
         self.durable_init()

@@ -820,6 +820,14 @@
                       <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
                       <DEFAULT-VALUE>CATEGORY_2</DEFAULT-VALUE>
                       <LITERALS>
+                        <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:6464a8f3-1fc1-4f7a-8d24-ce9c8427a2a3">
+                          <SHORT-NAME>CATEGORY_0</SHORT-NAME>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                        </ECUC-ENUMERATION-LITERAL-DEF>
+                        <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:24186082-92a8-460f-a0c0-7e06153fa0ae">
+                          <SHORT-NAME>CATEGORY_TP</SHORT-NAME>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                        </ECUC-ENUMERATION-LITERAL-DEF>
                         <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:2e25f577-6916-89cb-52c3-cf8f0f997b8f">
                           <SHORT-NAME>CATEGORY_1</SHORT-NAME>
                           <ORIGIN>AUTOSAR_ECUC</ORIGIN>

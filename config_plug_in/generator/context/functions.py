@@ -191,6 +191,7 @@ class Function(FunctionBase):
 
     @staticmethod
     @pass_context
+    @utils.cache_once(_cache)
     def get_isr_cfg(context):
         isr_dict = Function.get_os_module_list(context, "/Os/OsIsr")
         all_isr_cfg = {}
@@ -1031,6 +1032,37 @@ class Function(FunctionBase):
 
     @staticmethod
     @pass_context
+    def get_int_level_cfg_marcos(context):
+        ret = []
+
+        int_level_cfg = utils.get_dict_path(context, ['sys_cfg', 'sys_target_dict', 'validate', 'ignore_option', 'Os'])
+        ret += [
+            f'CONFIG_RT_FRAMEWORK_MAX_INT_LEVEL={int_level_cfg["max_interrupt_priority"]}',
+            f'CONFIG_RT_FRAMEWORK_MIN_INT_LEVEL={int_level_cfg["min_interrupt_priority"]}',
+            f'CONFIG_RT_FRAMEWORK_MAX_CAT2_INT_LEVEL={int_level_cfg["max_cat2_interrupt_priority"]}',
+            f'CONFIG_RT_FRAMEWORK_MAX_CAT1_INT_LEVEL={int_level_cfg["max_cat1_interrupt_priority"]}',
+            f'CONFIG_RT_FRAMEWORK_MAX_TP_INT_LEVEL={int_level_cfg["max_tp_interrupt_priority"]}',
+            f'CONFIG_RT_FRAMEWORK_MAX_CAT0_INT_LEVEL={int_level_cfg["max_cat0_interrupt_priority"]}'
+        ]
+
+        isr_cfgs = Function.get_isr_cfg(context)
+        isr_map = {'ISR_CAT0': 0, 'ISR_TP': 0,
+                   'ISR_CAT1': 0, 'ISR_CAT2': 0}
+
+        for isr_cfg in isr_cfgs.values():
+            isr_map[isr_cfg['IsrCategory']] += 1
+
+        if isr_map['ISR_CAT0'] > 0 or isr_map['ISR_TP'] > 0 or isr_map['ISR_CAT1'] > 0:
+            ret.append('CONFIG_RT_FRAMEWORK_INT_LEVEL=y')
+            ret.append('CONFIG_RT_FRAMEWORK_CAT2_INT_LEVEL_CONTROL=y')
+
+        if isr_map['ISR_CAT0'] > 0 or isr_map['ISR_TP'] > 0:
+            ret.append('CONFIG_RT_FRAMEWORK_CAT1_INT_LEVEL_CONTROL=y')
+
+        return ret
+
+    @staticmethod
+    @pass_context
     def get_osmempool_spinlock_id_set_ui(context):
         os_mempool_ui_dict = context["config_dict"].get("bsw",{}).get("mempool",{}).get("ArPackages",{}).get("ActiveEcuC",{}).get("MemPool",{})
         os_mempool_all_cfg = get_os_mempool_all_config_dict(os_mempool_ui_dict, context["config_dict"])
@@ -1120,6 +1152,11 @@ class Function(FunctionBase):
         osos_cfg = Function.get_osos_cfg(context)
         if osos_cfg.get("ScalabilityClass","") in ("SC3","SC4"):
             rtfw_config.append("CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION=y")
+        ########################################################
+
+        # CONFIG_RT_FRAMEWORK_INT_LEVEL
+        ########################################################
+        rtfw_config += Function.get_int_level_cfg_marcos(context)
         ########################################################
 
         # CONFIG_RT_FRAMEWORK_ISOLATE

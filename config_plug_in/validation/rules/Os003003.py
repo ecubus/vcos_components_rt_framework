@@ -23,10 +23,11 @@ class Os003003Rule(BasicRule):
     ruleset_name = "Os003003"
     validation_result = False
 
-    def __init__(self, logs, ecuc_os_dict) -> None:
+    def __init__(self, logs, ecuc_os_dict, validation_cfg) -> None:
         super().__init__()
         self.logs = logs
         self.ecuc_os_dict = ecuc_os_dict
+        self.validation_cfg = validation_cfg
         self.validation_code = self.__class__.ruleset_name
         self.validation_summary = "Range of OsCounterMaxAllowedValue & OsCounterMinCycle is [0,4294967295]"
         self.durable_init()

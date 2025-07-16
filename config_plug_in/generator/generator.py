@@ -82,11 +82,6 @@ def prepare_os_base_config(sys_config:dict, config_dict:dict):
 def generate_dynamic_code(sys_config: dict, config_dict: dict):
     context.Function.clear_caches()
 
-    project_target = sys_config.get("target", "")
-    if project_target in sys_config["sys_target_dict"]["validate"]["ignore_option"]:
-        sys_config["sys_target_dict"]["validate"]["ignore_option"] = \
-            sys_config["sys_target_dict"]["validate"]["ignore_option"][project_target]
-
     output_dir = os.path.realpath(
         os.path.join(sys_config["gendata_path"], "Os"))
     callout_dir = get_dict_path(sys_config, ['path', 'bswcallout_path'])

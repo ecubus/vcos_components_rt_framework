@@ -22,9 +22,9 @@
 #include "rtfw_context_internal.h"
 
 #if (CONFIG_ARCH_IRQ_NESTING_LIMIT > 1) && !defined(CONFIG_ARCH_HAVE_IRQ_PRIO_MASK_CONTEXT)
-static inline_function uint32_t os_isr_irq_prio_mask_save(uint32 irq_nesting, const os_ctx_cfg_t *pre_context)
+static inline_function irqlevel_t os_isr_irq_prio_mask_save(uint32 irq_nesting, const os_ctx_cfg_t *pre_context)
 {
-	uint32_t irq_prio_mask = 0U;
+	irqlevel_t irq_prio_mask = 0U;
 
 	if (irq_nesting == 1) {
 		irq_prio_mask = up_get_irq_mask_level();
@@ -66,7 +66,7 @@ FUNC(int, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg)
 
 #if (CONFIG_ARCH_IRQ_NESTING_LIMIT > 1)
 #ifndef CONFIG_ARCH_HAVE_IRQ_PRIO_MASK_CONTEXT
-	uint32_t irq_prio_mask = 0U;
+	irqlevel_t irq_prio_mask = 0U;
 #endif
 	uint8_t irq_nesting = up_get_irq_nesting();
 

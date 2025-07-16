@@ -161,7 +161,7 @@ struct os_arch_context_cfg {
 }; /* os_arch_ctx_cfg_t */
 
 struct os_arch_isr_cfg {
-	int_level_t level; /*! ISR优先级 */
+	irqlevel_t level; /*! ISR优先级 */
 
 	int_vector_num_t vector_num; /*! 硬件中断号 */
 

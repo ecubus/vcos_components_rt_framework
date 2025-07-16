@@ -27,22 +27,38 @@
 
 static inline void os_int_suspend_cat1(os_int_state_t *const cat1_state)
 {
+#if defined(CONFIG_RT_FRAMEWORK_CAT1_INT_LEVEL_CONTROL) && (CONFIG_RT_FRAMEWORK_CAT1_INT_LEVEL_CONTROL == 1)
+	cat1_state->level = up_irq_level_save(CONFIG_RT_FRAMEWORK_MAX_CAT1_INT_LEVEL);
+#else
 	cat1_state->global = up_irq_save();
+#endif
 }
 
 static inline void os_int_resume_cat1(const os_int_state_t *const cat1_state)
 {
+#if defined(CONFIG_RT_FRAMEWORK_CAT1_INT_LEVEL_CONTROL) && (CONFIG_RT_FRAMEWORK_CAT1_INT_LEVEL_CONTROL == 1)
+	up_irq_level_restore(cat1_state->level);
+#else
 	up_irq_restore(cat1_state->global);
+#endif
 }
 
 static inline void os_int_suspend_cat2(os_int_state_t *const cat2_state)
 {
+#if defined(CONFIG_RT_FRAMEWORK_CAT2_INT_LEVEL_CONTROL) && (CONFIG_RT_FRAMEWORK_CAT2_INT_LEVEL_CONTROL == 1)
+	cat2_state->level = up_irq_level_save(CONFIG_RT_FRAMEWORK_MAX_CAT2_INT_LEVEL);
+#else
 	cat2_state->global = up_irq_save();
+#endif
 }
 
 static inline void os_int_resume_cat2(const os_int_state_t *const cat2_state)
 {
+#if defined(CONFIG_RT_FRAMEWORK_CAT2_INT_LEVEL_CONTROL) && (CONFIG_RT_FRAMEWORK_CAT2_INT_LEVEL_CONTROL == 1)
+	up_irq_level_restore(cat2_state->level);
+#else
 	up_irq_restore(cat2_state->global);
+#endif
 }
 
 /***********************************************************************************************************************
@@ -169,23 +185,7 @@ FUNC(void, OS_CODE) os_resume_os_interrupts(void)
 FUNC(void, OS_CODE) os_interrupt_init(os_int_api_state_t *const int_state)
 {
 	if (int_state != NULL_PTR) {
-		int_state->lock_state.in_disableall = (os_int_api_cnt_t)0;
-
-		int_state->lock_state.suspend_all_cnt = (os_int_api_cnt_t)0;
-
-		int_state->lock_state.suspend_os_cnt = (os_int_api_cnt_t)0;
-
-		int_state->suspend_all_prev_state.global = (os_int_global_state_t)0;
-
-		int_state->suspend_all_prev_state.level = (os_int_level_t)0;
-
-		int_state->suspend_os_prev_state.global = (os_int_global_state_t)0;
-
-		int_state->suspend_os_prev_state.level = (os_int_level_t)0;
-
-		int_state->suspend_all_snapshot = (os_int_api_cnt_t)0;
-
-		int_state->suspend_os_snapshot = (os_int_api_cnt_t)0;
+		memset(int_state, 0, sizeof(*int_state));
 	}
 }
 
@@ -196,12 +196,20 @@ FUNC(boolean, OS_CODE) os_interrupt_is_disabled(void)
 
 FUNC(void, OS_CODE) os_int_suspend_kernel(os_int_state_t *const int_state)
 {
+#if defined(CONFIG_RT_FRAMEWORK_INT_LEVEL) && (CONFIG_RT_FRAMEWORK_INT_LEVEL == 1)
+	int_state->level = up_irq_level_save(CONFIG_RT_FRAMEWORK_MAX_TP_INT_LEVEL);
+#else
 	int_state->global = up_irq_save();
+#endif
 }
 
 FUNC(void, OS_CODE) os_int_resume_kernel(const os_int_state_t *const int_state)
 {
+#if defined(CONFIG_RT_FRAMEWORK_INT_LEVEL) && (CONFIG_RT_FRAMEWORK_INT_LEVEL == 1)
+	up_irq_level_restore(int_state->level);
+#else
 	up_irq_restore(int_state->global);
+#endif
 }
 
 FUNC(void, OS_CODE) os_int_disable_global(void)

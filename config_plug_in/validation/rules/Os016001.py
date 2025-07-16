@@ -23,10 +23,11 @@ class Os016001Rule(BasicRule):
     ruleset_name = "Os016001"
     validation_result = False
 
-    def __init__(self, logs, ecuc_os_dict) -> None:
+    def __init__(self, logs, ecuc_os_dict, validation_cfg) -> None:
         super().__init__()
         self.logs = logs
         self.ecuc_os_dict = ecuc_os_dict
+        self.validation_cfg = validation_cfg
         self.validation_code = self.__class__.ruleset_name
         self.validation_summary = "Spinlocks are used to co-ordinate concurrent access by Tasks/ISRs on different cores to a shared resource."
         self.durable_init()
@@ -55,6 +56,7 @@ class Os016001Rule(BasicRule):
                 param_path = "/ActiveEcuC/Os/" + OsSpinlockName + "/OsSpinlockAccessingApplication"
                 try:
                     self.__class__.validation_result = True
+                    validation_data = {}
                     if len(spinlock_coreid_dict.keys()) == 1:
                         spinlock_key = list(spinlock_coreid_dict.keys())[0]
                         if spinlock_coreid_dict[spinlock_key] > 1:
@@ -72,7 +74,7 @@ class Os016001Rule(BasicRule):
                 self.vlog(
                     self.validation_code,
                     self.validation_summary,
-                    f"validation_data:{param_path}",
+                    f"validation_data:{validation_data}",
                     param_path,
                     "pass" if self.__class__.validation_result else "fail"
                 )

@@ -30,7 +30,7 @@ class OsRule:
         "OsResource": ["013001","013006","014012"],
         "OsCounter": ["003003","014003","016011"],
         "OsEvent": ["003004","001002","014017"],
-        "OsIsr": ["011003","014004"],
+        "OsIsr": ["011003","014004", "013008"],
         "OsScheduleTable": ["001007","002002","012003","013010","016003","014005","016004","016007"],
         "OsSpinlock": ["003002", "016001"],
         "OsTask": ["013004","014006","014008","014009","014010","014015","014016","014018"],
@@ -62,7 +62,7 @@ class OsRule:
                 validate_rule_package = importlib.import_module(module_path, __package__)
                 validate_rule_class = getattr(validate_rule_package, f'Os{validate_mark}Rule')
 
-                os_rule_obj = validate_rule_class(self.logs, ecuc_os_dict)
+                os_rule_obj = validate_rule_class(self.logs, ecuc_os_dict, validation_cfg)
                 os_rule_obj.validation_run()
 
             except Exception as e:

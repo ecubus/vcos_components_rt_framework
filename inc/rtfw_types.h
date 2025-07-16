@@ -28,14 +28,12 @@ typedef int16_t isr_id_t;
 typedef nxevent_mask_t os_event_mask_t;
 
 /* Global Type & Structure Definition */
-typedef uintptr_t int_level_t; /* Interrupt level type */
 typedef uintptr_t int_global_state_t; /* Interrupt global state type */
 typedef uintptr_t int_vector_num_t; /* Interrupt vector number */
 typedef uintptr_t register_t; /* Register type */
 typedef uint16_t os_spin_id_t;
 
 typedef int_global_state_t os_int_global_state_t;
-typedef int_level_t os_int_level_t;
 typedef uint16_t os_int_api_cnt_t; // TODO 性能优化可以变为 uint32
 
 typedef uint32_t os_context_id_t;

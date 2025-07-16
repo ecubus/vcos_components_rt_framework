@@ -24,10 +24,11 @@ class Os013006Rule(BasicRule):
     ruleset_name = "Os013006"
     validation_result = False
 
-    def __init__(self, logs, ecuc_os_dict) -> None:
+    def __init__(self, logs, ecuc_os_dict, validation_cfg) -> None:
         super().__init__()
         self.logs = logs
         self.ecuc_os_dict = ecuc_os_dict
+        self.validation_cfg = validation_cfg
         self.validation_code = self.__class__.ruleset_name
         self.validation_summary = "Tasks/Applications that reference the same resource cannot be cross-core"
         self.durable_init()
