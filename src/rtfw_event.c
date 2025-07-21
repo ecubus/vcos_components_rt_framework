@@ -41,7 +41,7 @@ FUNC(Os_StatusType, OS_CODE) os_wait_event(os_event_mask_t mask)
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}
-	if (UNLIKELY(TRUE != task_cfg->is_extended)) {
+	if (UNLIKELY(NULL_PTR == task_cfg->event_hdl)) {
 		return OS_STATUS_NOEXTENDEDTASK_CALLER;
 	}
 
@@ -51,9 +51,9 @@ FUNC(Os_StatusType, OS_CODE) os_wait_event(os_event_mask_t mask)
 		return lock_status;
 	}
 
-	os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(cur_context);
+	os_task_event_t *task_event = task_cfg->event_hdl;
 
-	ret = nxevent_tickwait(&(task_inst->wait), &(task_inst->event), mask, NXEVENT_WAIT_NOCLEAR, UINT32_MAX);
+	ret = nxevent_tickwait(&(task_event->wait), &(task_event->event), mask, NXEVENT_WAIT_NOCLEAR, UINT32_MAX);
 	/* returns 0 when events were not received */
 	if (UNLIKELY(ret == (nxevent_mask_t)0)) {
 		return OS_STATUS_NOT_OK;
@@ -77,7 +77,7 @@ FUNC(Os_StatusType, OS_CODE) rtfw_event_tickwait(os_event_mask_t mask, uint32_t 
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}
-	if (UNLIKELY(TRUE != task_cfg->is_extended)) {
+	if (UNLIKELY(NULL_PTR == task_cfg->event_hdl)) {
 		return OS_STATUS_NOEXTENDEDTASK_CALLER;
 	}
 
@@ -87,9 +87,9 @@ FUNC(Os_StatusType, OS_CODE) rtfw_event_tickwait(os_event_mask_t mask, uint32_t 
 		return lock_status;
 	}
 
-	os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(cur_context);
+	os_task_event_t *task_event = task_cfg->event_hdl;
 
-	ret = nxevent_tickwait(&(task_inst->wait), &(task_inst->event), mask, NXEVENT_WAIT_NOCLEAR, ticks_to_wait);
+	ret = nxevent_tickwait(&(task_event->wait), &(task_event->event), mask, NXEVENT_WAIT_NOCLEAR, ticks_to_wait);
 	/* returns 0 when events were not received or timeout occurred */
 	if (UNLIKELY(ret == (nxevent_mask_t)0)) {
 		return OS_STATUS_TIMEOUT;
@@ -116,23 +116,21 @@ FUNC(Os_StatusType, OS_CODE) os_set_event(TaskType task_id, os_event_mask_t mask
 	}
 	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[task_id];
 
-	if (UNLIKELY(TRUE != task_cfg->is_extended)) {
+	if (UNLIKELY(NULL_PTR == task_cfg->event_hdl)) {
 		return OS_STATUS_NOEXTENDEDTASK_CALLER;
 	}
 	const os_ctx_cfg_t *task_context = &(task_cfg->context);
-	os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(task_context);
+	os_task_event_t *task_event = task_cfg->event_hdl;
 	CoreIdType task_core_id = OS_CONTEXT_GET_OWNER_COREID(task_context);
 
 	if (task_core_id == os_get_core_id()) {
-#ifdef CONFIG_SIG_SIGSTOP_ACTION
-		if (UNLIKELY(TSTATE_TASK_STOPPED == (task_inst->tcb).task_state)) {
+		os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(task_context);
+
+		if (UNLIKELY(task_inst->thread.tcb.flags & TCB_FLAG_THREAD_IS_SUSPENDED)) {
 			return OS_STATUS_STATE_STOPPED;
 		} else {
-			(void)nxevent_post(&(task_inst->event), mask, 0);
+			return (nxevent_post(&(task_event->event), mask, 0) == 0 ? OS_STATUS_OK : OS_STATUS_NOT_OK);
 		}
-#else
-		(void)nxevent_post(&(task_inst->event), mask, 0);
-#endif
 	} else {
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_set_event((uint32)task_core_id, task_id, mask);
@@ -147,19 +145,17 @@ FUNC(Os_StatusType, OS_CODE) os_set_event_asyn(TaskType task_id, os_event_mask_t
 {
 	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[task_id];
 	const os_ctx_cfg_t *task_context = &(task_cfg->context);
-	os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(task_context);
+	os_task_event_t *task_event = task_cfg->event_hdl;
 	CoreIdType task_core_id = OS_CONTEXT_GET_OWNER_COREID(task_context);
 
 	if (task_core_id == os_get_core_id()) {
-#ifdef CONFIG_SIG_SIGSTOP_ACTION
-		if (UNLIKELY(TSTATE_TASK_STOPPED == (task_inst->tcb).task_state)) {
+		os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(task_context);
+
+		if (UNLIKELY(task_inst->thread.tcb.flags & TCB_FLAG_THREAD_IS_SUSPENDED)) {
 			return OS_STATUS_STATE_STOPPED;
 		} else {
-			(void)nxevent_post(&(task_inst->event), mask, 0);
+			return (nxevent_post(&(task_event->event), mask, 0) == 0 ? OS_STATUS_OK : OS_STATUS_NOT_OK);
 		}
-#else
-		(void)nxevent_post(&(task_inst->event), mask, 0);
-#endif
 	} else {
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_set_event_asyn((uint32)task_core_id, task_id, mask);
@@ -191,24 +187,22 @@ FUNC(Os_StatusType, OS_CODE) os_get_event(TaskType task_id, os_event_mask_t *mas
 	}
 	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[task_id];
 
-	if (UNLIKELY(TRUE != task_cfg->is_extended)) {
+	if (UNLIKELY(NULL_PTR == task_cfg->event_hdl)) {
 		return OS_STATUS_NOEXTENDEDTASK_CALLER;
 	}
 
 	const os_ctx_cfg_t *task_context = &(task_cfg->context);
-	os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(task_context);
+	os_task_event_t *task_event = task_cfg->event_hdl;
 	CoreIdType task_core_id = OS_CONTEXT_GET_OWNER_COREID(task_context);
 
 	if (task_core_id == os_get_core_id()) {
-#ifdef CONFIG_SIG_SIGSTOP_ACTION
-		if (UNLIKELY(TSTATE_TASK_STOPPED == (task_inst->tcb).task_state)) {
+		os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(task_context);
+
+		if (UNLIKELY(task_inst->thread.tcb.flags & TCB_FLAG_THREAD_IS_SUSPENDED)) {
 			return OS_STATUS_STATE_STOPPED;
 		} else {
-			*mask = nxevent_getmask(&(task_inst->event));
+			*mask = nxevent_getmask(&(task_event->event));
 		}
-#else
-		*mask = nxevent_getmask(&(task_inst->event));
-#endif
 	} else {
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_get_event((uint32)task_core_id, task_id, mask);
@@ -233,13 +227,10 @@ FUNC(Os_StatusType, OS_CODE) os_clear_event(os_event_mask_t mask)
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}
-	if (UNLIKELY(TRUE != task_cfg->is_extended)) {
+	if (UNLIKELY(NULL_PTR == task_cfg->event_hdl)) {
 		return OS_STATUS_NOEXTENDEDTASK_CALLER;
 	}
-	const os_ctx_cfg_t *task_context = &(task_cfg->context);
-
-	os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(task_context);
-	(void)nxevent_clear(&(task_inst->event), mask);
+	(void)nxevent_clear(&(task_cfg->event_hdl->event), mask);
 
 	return OS_STATUS_OK;
 }

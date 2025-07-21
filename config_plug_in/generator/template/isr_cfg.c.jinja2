@@ -148,7 +148,7 @@ DeclareISR(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{core_
 {%- for app in app_cfg %}
     {%- if app_cfg[app]["AppIsrList"] %}
 
-CONSTP2CONST(os_isr_cfg_t, AUTOMATIC, OS_CONST) {{app_cfg[app]["AppIsrTable"]}}[] = {
+CONSTP2CONST(os_isr_cfg_t, OS_CONST, AUTOMATIC) {{app_cfg[app]["AppIsrTable"]}}[] = {
     {%- for candit in app_cfg[app]["AppIsrList"] %}
     (os_isr_cfg_t *)&ISRCFGVAR(Core{{app_cfg[app]["CoreNumber"]}}, {{candit}}_ID),
     {%- endfor %}

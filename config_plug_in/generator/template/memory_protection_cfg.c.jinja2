@@ -369,7 +369,7 @@ CONST(struct mpu_access_right_s, OS_CONST) {{isr_name.lower()}}_access_right = {
 		{%- endfor %}
 	{%- endfor %}
 
-CONSTP2CONST(struct mpu_core_access_right_s, AUTOMATIC, OS_CONST) os_core_access_right_ref_table[] = {
+CONSTP2CONST(struct mpu_core_access_right_s, OS_CONST, AUTOMATIC) os_core_access_right_ref_table[] = {
 	{%- for coreid in mpu_cfg %}
 		{%- if coreid is number %}
 	&core{{coreid}}_access_right,

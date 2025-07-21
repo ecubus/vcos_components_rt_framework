@@ -245,7 +245,7 @@ static inline void os_context_set_curcontext_id(const os_ctx_cfg_t *const ctx_re
 static inline os_context_id_t os_context_get_curcontext_id(const os_ctx_cfg_t *const ctx_ref);
 /* 切换 current_ctx_id，写入新值，返回旧值 */
 static inline os_context_id_t os_context_switch_curcontext_id(const os_ctx_cfg_t *const ctx_ref,
-							      os_context_id_t current_ctx_id);
+								  os_context_id_t current_ctx_id);
 
 /* 检查 中断是否处于 Disabled 状态 */
 static inline boolean os_context_check_irq_disabled(const os_ctx_cfg_t *const ctx_ref);
@@ -363,7 +363,7 @@ static inline os_context_id_t os_context_get_curcontext_id(const os_ctx_cfg_t *c
 
 /* 切换 current_ctx_id，写入新值，返回旧值 */
 static inline os_context_id_t os_context_switch_curcontext_id(const os_ctx_cfg_t *const ctx_ref,
-							      os_context_id_t current_ctx_id)
+								  os_context_id_t current_ctx_id)
 {
 	os_context_id_t PrvContextID = OS_CONTEXT_GET_CURRENT_CONTEXTID(ctx_ref);
 
@@ -394,6 +394,11 @@ static inline boolean os_context_is_any_task(const os_ctx_cfg_t *const ctx_ref)
 static inline boolean os_context_is_any_isr(const os_ctx_cfg_t *const ctx_ref)
 {
 	return ((OS_CONTEXT_GET_INITCONTEXTID(ctx_ref) & OS_CONTEXT_ANYISR)) != FALSE;
+}
+
+static inline boolean os_context_is_any_hook(const os_ctx_cfg_t *const ctx_ref)
+{
+	return ((OS_CONTEXT_GET_INITCONTEXTID(ctx_ref) & OS_CONTEXT_ANYHOOK)) != FALSE;
 }
 
 static inline Os_StatusType os_context_check_locklist(const os_ctx_cfg_t *const ctx_ref)

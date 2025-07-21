@@ -122,6 +122,11 @@ struct os_ipicall_clear_schtbl_appid_param {
 	ApplicationIDType app_id;
 };
 #endif
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL_TEST) && (CONFIG_RT_FRAMEWORK_IPICALL_TEST == 1)
+struct os_ipicall_test_param {
+	uint32 test_value;
+};
+#endif
 union os_ipicall_param_e {
 	os_ipicall_activate_task_param_t avtivate_task_param;
 	os_ipicall_get_event_param_t get_event_param;
@@ -141,6 +146,9 @@ union os_ipicall_param_e {
 	os_ipicall_set_schtbl_appid_param_t set_schtbl_appid_param;
 	os_ipicall_clear_schtbl_appid_param_t clear_schtbl_appid_param;
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1) */
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL_TEST) && (CONFIG_RT_FRAMEWORK_IPICALL_TEST == 1)
+	os_ipicall_test_param_t ipc_test_param;
+#endif
 };
 
 struct os_ipicall_send_s {
@@ -235,6 +243,10 @@ extern FUNC(Os_StatusType, OS_CODE) os_ipicall_activate_task_asyn(uint32 target_
 extern FUNC(Os_StatusType, OS_CODE) os_ipicall_get_event(uint32 target_core, TaskType task_id, os_event_mask_t *mask);
 extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_event(uint32 target_core, TaskType task_id, os_event_mask_t mask);
 extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_event_asyn(uint32 target_core, TaskType task_id, os_event_mask_t mask);
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL_TEST) && (CONFIG_RT_FRAMEWORK_IPICALL_TEST == 1)
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_ipc_test_function(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_ipc_test_function(uint32 target_core, uint32 test_value);
+#endif
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"
 

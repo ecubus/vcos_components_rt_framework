@@ -62,7 +62,7 @@ DeclareSpinlock(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{osmempool_spinlock_id
     /* .obj_des = */              &SPINLOCKOBJVAR({{osmempool_spinlock_id | upper}}),
     /* .method  = */              LOCK_CAT2_INTERRUPTS,
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-    /* .ccess_app_mask  = */   (RTFW_APPID2MASK(0) | (~RTFW_APPID2MASK(0))),
+    /* .access_app_mask  = */     (RTFW_APPID2MASK(0) | (~RTFW_APPID2MASK(0))),
 #endif
     /* .check  = */               SPINLOCKCHECK_DISABLED,
     /* .spin_id = */          {{osmempool_spinlock_id | upper}},

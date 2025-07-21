@@ -25,11 +25,17 @@ extern "C" {
 
 #define STACKSIZE_ROUND_UP(size, data_type) (((size) + sizeof(data_type) - 1) & (~(sizeof(data_type) - 1)))
 
-#define DeclareThreadStack(section, thread_id, byte_size)                                                                \
+#define DeclareThreadStack(section, thread_id, byte_size)                                                              \
 	RTFW_TABLE_DECLARE(section, os_stack, StackType_t, thread_id, STACKSIZE_ROUND_UP(byte_size, StackType_t))
 
 #define THREADSTACKVAR(task_id) (&(RTFW_LINK_ENTRY_NAME(os_stack, task_id)[0]))
 #define THREADSTACKSIZEVAR(byte_size) STACKSIZE_ROUND_UP(byte_size, StackType_t)
+
+struct os_task_thread_inst_s;
+typedef struct os_task_thread_inst_s os_task_thread_inst_t;
+
+struct os_hook_thread_inst_s;
+typedef struct os_hook_thread_inst_s os_hook_thread_inst_t;
 
 #ifdef __cplusplus
 }

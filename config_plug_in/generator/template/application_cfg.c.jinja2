@@ -126,7 +126,7 @@ DeclareOsApplication(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}
 {% for k, v in core_info.items(): %}
 {%- set core_num = k.lstrip("Os_Core") %}
 /* {{k}} config referenc table */
-CONSTP2CONST(os_app_cfg_t, AUTOMATIC, OS_CONST) os_core{{core_num}}_apps_cfg_ref_table[] = {
+CONSTP2CONST(os_app_cfg_t, OS_CONST, AUTOMATIC) os_core{{core_num}}_apps_cfg_ref_table[] = {
 {%- for app_key, app_val in app_cfg.items() %}
     {%- if app_val["CoreNumber"] == core_num: %}
     &OSAPPCFGVAR({{app_key}}),

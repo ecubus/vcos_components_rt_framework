@@ -50,9 +50,10 @@ FUNC(int, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg)
 {
 	UNUSED(irq);
 	const os_isr_cfg_t *isr_cfg = (os_isr_cfg_t *)arg;
-	os_core_cfg_t *core = NULL_PTR;
-	const os_ctx_cfg_t *pre_context = NULL_PTR;
 	const os_ctx_cfg_t *this_context = NULL_PTR;
+#if (CONFIG_ARCH_IRQ_NESTING_LIMIT > 1) || defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION)
+	const os_ctx_cfg_t *pre_context = os_context_get_contexthdl();
+#endif
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
 	const struct mpu_access_right_s *pre_access_right = NULL_PTR;
 	const struct mpu_access_right_s *this_access_right = NULL_PTR;
@@ -78,11 +79,8 @@ FUNC(int, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg)
 		up_irq_enable();
 	}
 #endif
-	core = (os_core_cfg_t *)OS_ISR_GET_CORE_REF(isr_cfg);
-	pre_context = os_context_get_contexthdl();
 	this_context = OS_ISR_GET_CONTEXT_REF(isr_cfg);
 
-	(void)os_context_nest_inc(OS_CORE_GET_CONTEXTNEST_REF(core), pre_context);
 	os_context_set_contexthdl(this_context);
 
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
@@ -100,7 +98,7 @@ FUNC(int, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg)
 	isr_cfg->context.arch_ctx_cfg.entry_addr(NULL_PTR);
 
 #if defined(CONFIG_STACK_OVERFLOW_CHECK) && (CONFIG_STACK_OVERFLOW_CHECK == 1)
-	if (0U != up_check_intstack_overflow(OS_CORE_GET_COREID(core))) {
+	if (0U != up_check_intstack_overflow(os_get_core_id())) {
 		// TODO 待添加TRAP后处理
 	}
 #endif
@@ -116,8 +114,10 @@ FUNC(int, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg)
 		os_isr_irq_prio_mask_restore(irq_prio_mask);
 #endif
 	}
+	if (irq_nesting > 1) {
+		os_context_set_contexthdl(pre_context);
+	}
 #endif
-	(void)os_context_nest_dec(OS_CORE_GET_CONTEXTNEST_REF(core), NULL_PTR);
 
 #ifdef CONFIG_IRQ_USE_ARCH_DISPATCH
 	regs = up_irq_dispatch_exit(regs);

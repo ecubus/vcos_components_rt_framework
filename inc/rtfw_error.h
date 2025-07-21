@@ -38,6 +38,7 @@ FUNC(void, OS_CODE) os_protection_error_report(StatusType error_status);
 #include "rtfw_memmap.h"
 
 #define REPORT_FATAL_ERROR()    os_fatal_error_report(__func__ , __LINE__)
+#define REPORT_PROTECTION_ERROR(status)    os_protection_error_report(status)
 #define REPORT_SERVICE_ERROR(service_id, status, param_cnt, ...) \
 	do { \
 		if (UNLIKELY((status) != OS_STATUS_OK)) { \
@@ -47,8 +48,18 @@ FUNC(void, OS_CODE) os_protection_error_report(StatusType error_status);
 
 #else
 
+static inline_function void
+service_error_report(OSServiceIdType service_id, Os_StatusType error_status, uint32 param_cnt, ...)
+{
+	UNUSED(service_id);
+	UNUSED(error_status);
+	UNUSED(param_cnt);
+}
+
 #define REPORT_FATAL_ERROR()
-#define REPORT_SERVICE_ERROR(service_id, status, param_cnt, ...)
+#define REPORT_PROTECTION_ERROR(status)    UNUSED(status)
+#define REPORT_SERVICE_ERROR(service_id, status, param_cnt, ...) \
+		service_error_report(service_id, status, param_cnt, ##__VA_ARGS__)
 
 #endif
 

@@ -83,6 +83,10 @@ if(CONFIG_RT_FRAMEWORK)
     list(APPEND CSRCS ${GENDATA_DIR}/Os/memory_protection_cfg.c)
   endif()
 
+  if (CONFIG_RT_FRAMEWORK_HAVE_TRAP_HANDLER)
+    list(APPEND CSRCS src/rtfw_trap.c)
+  endif()
+
   set(INCLUDE_DIRS ${NUTTX_DIR}/sched
                    ${CMAKE_CURRENT_LIST_DIR}/src
                    ${CMAKE_CURRENT_LIST_DIR}/inc

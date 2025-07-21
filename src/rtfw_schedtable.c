@@ -506,10 +506,13 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_rel(ScheduleTableType sched
 		if (UNLIKELY(SCHED_CHECK_ID(schedtable_id) == (boolean)FALSE)) {
 			return OS_STATUS_ID_1;
 		}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
 		}
+#endif
 
 		schtbl_ptr = os_get_sched_table_by_id(schedtable_id);
 		cfg_ptr = os_get_sched_table_cfg_by_id(schtbl_ptr->schedtable_id);
@@ -569,10 +572,13 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_abs(ScheduleTableType sched
 		if (UNLIKELY(SCHED_CHECK_ID(schedtable_id) == (boolean)FALSE)) {
 			return OS_STATUS_ID_1;
 		}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
 		}
+#endif
 
 		schedtbl_ptr = os_get_sched_table_by_id(schedtable_id);
 		cfg_ptr = os_get_sched_table_cfg_by_id(schedtable_id);
@@ -637,10 +643,13 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType 
 		if (UNLIKELY(SCHED_CHECK_ID(schedtable_id) == (boolean)FALSE)) {
 			return OS_STATUS_ID_1;
 		}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
 		}
+#endif
 
 		schedtable_ptr = os_get_sched_table_by_id(schedtable_id);
 		cfg_ptr = os_get_sched_table_cfg_by_id(schedtable_id);
@@ -704,10 +713,13 @@ FUNC(Os_StatusType, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable
 		if (UNLIKELY(SCHED_CHECK_ID(schedtable_id) == (boolean)FALSE)) {
 			return OS_STATUS_ID_1;
 		}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
 		}
+#endif
 
 		schtbl_ptr = os_get_sched_table_by_id(schedtable_id);
 		cfg_ptr = os_get_sched_table_cfg_by_id(schedtable_id);
@@ -763,10 +775,13 @@ FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_app_id(ScheduleTableType sche
 		if (UNLIKELY(SCHED_CHECK_ID(schedtable_id) == (boolean)FALSE)) {
 			return OS_STATUS_ID_1;
 		}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
 		}
+#endif
 
 		schedtable_ptr = os_get_sched_table_by_id(schedtable_id);
 
@@ -816,10 +831,13 @@ FUNC(Os_StatusType, OS_CODE) os_clear_schedule_table_app_id(ScheduleTableType sc
 		if (UNLIKELY(SCHED_CHECK_ID(schedtable_id) == (boolean)FALSE)) {
 			return OS_STATUS_ID_1;
 		}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
 		}
+#endif
 
 		schedtable_ptr = os_get_sched_table_by_id(schedtable_id);
 
@@ -868,6 +886,8 @@ os_next_schedule_table(ScheduleTableType schedule_table_id_from, ScheduleTableTy
 		SCHED_CHECK_ID(schedule_table_id_to) == (boolean)FALSE)) {
 			return OS_STATUS_ID_1;
 		}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedule_table_id_from)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
@@ -876,6 +896,7 @@ os_next_schedule_table(ScheduleTableType schedule_table_id_from, ScheduleTableTy
 			(schedule_table_id_to)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
 		}
+#endif
 
 		sched_from_ptr = os_get_sched_table_by_id(schedule_table_id_from);
 		sched_to_ptr = os_get_sched_table_by_id(schedule_table_id_to);
@@ -941,6 +962,8 @@ os_next_schedule_table_from_stop(ScheduleTableType schedule_table_id_from, Sched
 			SCHED_CHECK_ID(schedule_table_id_to) == (boolean)FALSE)) {
 			return OS_STATUS_ID_1;
 		}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedule_table_id_from)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
@@ -949,6 +972,7 @@ os_next_schedule_table_from_stop(ScheduleTableType schedule_table_id_from, Sched
 			(schedule_table_id_to)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
 		}
+#endif
 
 		sched_from_ptr = os_get_sched_table_by_id(schedule_table_id_from);
 		sched_to_ptr = os_get_sched_table_by_id(schedule_table_id_to);
@@ -1014,10 +1038,13 @@ FUNC(Os_StatusType, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable
 		if (UNLIKELY(SCHED_CHECK_ID(schedtable_id) == (boolean)FALSE)) {
 			return OS_STATUS_ID_1;
 		}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
 		}
+#endif
 
 		schedtable_ptr = os_get_sched_table_by_id(schedtable_id);
 		schedtable_cfg_ptr = os_get_sched_table_cfg_by_id(schedtable_id);
@@ -1104,10 +1131,13 @@ FUNC(Os_StatusType, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedta
 		if (UNLIKELY(SCHED_CHECK_ID(schedtable_id) == (boolean)FALSE)) {
 			return OS_STATUS_ID_1;
 		}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
 		}
+#endif
 
 		schedtable_ptr = os_get_sched_table_by_id(schedtable_id);
 		schedtable_cfg_ptr = os_get_sched_table_cfg_by_id(schedtable_id);
@@ -1186,10 +1216,13 @@ os_get_schedule_table_status(ScheduleTableType schedtable_id, ScheduleTableStatu
 		if (UNLIKELY(SCHED_CHECK_ID(schedtable_id) == (boolean)FALSE)) {
 			return OS_STATUS_ID_1;
 		}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
 		}
+#endif
 
 		schedtable_ptr = os_get_sched_table_by_id(schedtable_id);
 
@@ -1246,10 +1279,13 @@ FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_async(ScheduleTableType sched
 		if (UNLIKELY(SCHED_CHECK_ID(schedtable_id) == (boolean)FALSE)) {
 			return OS_STATUS_ID_1;
 		}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
 			return OS_STATUS_NOTACCESSIBLE_1;
 		}
+#endif
 
 		schedtable_ptr = os_get_sched_table_by_id(schedtable_id);
 

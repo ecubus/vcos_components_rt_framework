@@ -23,15 +23,27 @@ extern "C" {
 #include <nuttx/config.h>
 #include <nuttx/compiler.h>
 #include <nuttx/irq.h>
+#include <setjmp.h>
+#include <nuttx/semaphore.h>
+#include <nuttx/event.h>
+#include <nuttx/sched.h>
 #include "rtfw_types.h"
 #include "rtfw_thread_types.h"
-#include "rtfw_task.h"
-#if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-#include "rtfw_hook.h"
-#endif
+
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 #include "rtfw_syscall_internal.h"
 #endif
+
+struct os_task_thread_inst_s {
+	jmp_buf jmpbuf;
+	struct tcb_s tcb;
+	sem_t act_sem;
+};
+
+struct os_hook_thread_inst_s {
+	jmp_buf jmpbuf;
+	struct tcb_s tcb;
+};
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 static inline_function void os_set_thread_mode_to_privilege(void)
@@ -48,23 +60,6 @@ static inline_function void os_set_thread_mode_from_privilege(bool is_privilege)
 	if (TRUE != is_privilege) {
 		up_set_privilege_to_user();
 	}
-}
-#endif
-
-#if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-static inline_function uint32 os_thread_get_hook_action(os_context_id_t pre_context_id, boolean is_hook_call)
-{
-	uint32 hook_action = 0;
-
-	if (pre_context_id & OS_CONTEXT_ANYHOOK) {
-		hook_action = (is_hook_call ? HOOK_CALL_FROM_HOOK : HOOK_RETURN_TO_HOOK);
-	} else if (pre_context_id & OS_CONTEXT_ANYTASK) {
-		hook_action = (is_hook_call ? HOOK_CALL_FROM_TASK : HOOK_RETURN_TO_TASK);
-	} else {
-		hook_action = (is_hook_call ? HOOK_CALL_FROM_IRQ : HOOK_RETURN_TO_IRQ);
-	}
-
-	return hook_action;
 }
 #endif
 

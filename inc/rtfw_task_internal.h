@@ -27,12 +27,7 @@ extern "C" {
 #include "rtfw_list.h"
 #include "rtfw_context_internal.h"
 #include "rtfw_core_types.h"
-#ifdef __NuttX__
-#include <setjmp.h>
-#include <nuttx/semaphore.h>
-#include <nuttx/event.h>
-#include <nuttx/sched.h>
-#endif
+#include "rtfw_thread_internal.h"
 
 /* Global Macro Definition */
 
@@ -54,7 +49,6 @@ extern "C" {
 #define OS_TASK_GET_TASKID(task_cfg) ((task_cfg)->task_id)
 #define OS_TASK_GET_AUTOSTARTMODE(task_cfg) ((task_cfg)->autostart_mode)
 #define OS_TASK_GET_ACTIVATIONLIMIT(task_cfg) ((task_cfg)->activation_limit)
-#define OS_TASK_GET_ISEXTENDED(task_cfg) ((task_cfg)->is_extended)
 
 /* 通过 os_task_cfg_t(task_cfg) 获取 os_ctx_cfg_t(ContextRef) 的内部信息 */
 #define OS_TASK_GET_INSTANCE_REF(task_cfg) ((os_task_inst_t *)((task_cfg)->context.instance))
@@ -87,14 +81,15 @@ extern "C" {
 /* Global Enumeration Definition */
 
 /* Global Type & Structure Definition */
+struct os_task_event_s {
+	nxevent_wait_t wait;
+	nxevent_t event;
+};
+
 struct os_task_inst_s {
 	os_ctx_inst_t ctx_instance; /*! Context instance. Must be the first member !!! */
 	uint32 activate_cnt;
-	jmp_buf jmpbuf;
-	struct tcb_s tcb;
-	sem_t act_sem;
-	nxevent_wait_t wait;
-	nxevent_t event;
+	os_task_thread_inst_t thread; /*! Thread instance. Must be the second member !!! */
 }; /* os_task_inst_t */
 
 /*! Task configuration by user */
@@ -103,6 +98,8 @@ struct os_task_cfg_s {
 	os_ctx_cfg_t context; /*! Context configuration. Must be the first member !!! */
 
 	OsTaskPrioType base_priority; /*! The configured priority of a task. */
+
+	os_task_event_t *event_hdl;
 	/* enum */
 
 	/* 16 bit */
@@ -111,7 +108,6 @@ struct os_task_cfg_s {
 	/* 8 bit */
 	AppModeType autostart_mode; /*! Application modes where the task shall be activated during OS initialization. */
 	uint8 activation_limit; /*! Task activation limited, which must be > 1 */
-	boolean is_extended; /*! Tells whether a task is extended (TRUE) or not (FALSE). */
 }; /* os_task_cfg_t */
 
 DeclareRtfwRefTable_H(task) /*! Reference to OS task configuration table  */
@@ -120,7 +116,7 @@ DeclareRtfwRefTable_H(task) /*! Reference to OS task configuration table  */
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 
-extern FUNC(void, OS_CODE) os_task_init(const os_task_cfg_t *const os_task_cfg_table[], OsObjIndexType size);
+	extern FUNC(void, OS_CODE) os_task_init(const os_task_cfg_t *const os_task_cfg_table[], OsObjIndexType size);
 extern FUNC(void, OS_CODE) os_disable_level_km(void);
 extern FUNC(void, OS_CODE) os_enable_level_km(void);
 extern FUNC(Os_StatusType, OS_CODE) os_activate_task(TaskType task_id);
@@ -128,6 +124,7 @@ extern FUNC(Os_StatusType, OS_CODE) os_activate_task_asyn(TaskType task_id);
 extern FUNC(Os_StatusType, OS_CODE) os_terminate_task(void);
 extern FUNC(Os_StatusType, OS_CODE) os_chain_task(TaskType task_id);
 extern FUNC(Os_StatusType, OS_CODE) os_get_task_id(TaskRefType task_id_ref);
+extern FUNC(void, OS_CODE) os_task_reset(const os_task_cfg_t *const task_cfg);
 
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"

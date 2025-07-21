@@ -26,7 +26,32 @@
 #include "rtfw_core.h"
 #include "rtfw_compiler_cfg.h"
 #include "isr_cfg.h"
-#define DEFINE_IFX_INTERRUPT_INTERNAL(core, level, isr_id, arg) \
+
+#define DEFINE_CAT0_INTERRUPT_INTERNAL(core, level, isr_id, arg) \
+IFX_INTERRUPT_INTERNAL(rtfw_isr_##isr_id, core, level) {\
+                                                            const os_isr_cfg_t *isr_cfg = (os_isr_cfg_t *)arg;\
+                                                            __mtcr(TX3XX_CPU_PSW, __mfcr(TX3XX_CPU_PSW) | CPU_PSW_GW_MASK);\
+                                                            __dsync();\
+                                                            __isync();\
+                                                            const os_ctx_cfg_t *pre_context = os_context_get_contexthdl();\
+                                                            os_context_set_contexthdl(OS_ISR_GET_CONTEXT_REF(isr_cfg));\
+                                                            isr_cfg->context.arch_ctx_cfg.entry_addr(NULL_PTR);\
+                                                            os_context_set_contexthdl(pre_context);\
+                                                            }
+
+#define DEFINE_CAT1_INTERRUPT_INTERNAL(core, level, isr_id, arg) \
+IFX_INTERRUPT_INTERNAL(rtfw_isr_##isr_id, core, level) {\
+                                                            const os_isr_cfg_t *isr_cfg = (os_isr_cfg_t *)arg;\
+                                                            __mtcr(TX3XX_CPU_PSW, __mfcr(TX3XX_CPU_PSW) | CPU_PSW_GW_MASK);\
+                                                            __dsync();\
+                                                            __isync();\
+                                                            const os_ctx_cfg_t *pre_context = os_context_get_contexthdl();\
+                                                            os_context_set_contexthdl(OS_ISR_GET_CONTEXT_REF(isr_cfg));\
+                                                            isr_cfg->context.arch_ctx_cfg.entry_addr(NULL_PTR);\
+                                                            os_context_set_contexthdl(pre_context);\
+                                                            }
+
+#define DEFINE_CAT2_INTERRUPT_INTERNAL(core, level, isr_id, arg) \
 IFX_INTERRUPT_INTERNAL(rtfw_isr_##isr_id, core, level) {\
                                                             uintptr_t *regs = (uintptr_t *)__mfcr(TC3XX_CPU_PCXI);\
                                                             regs = (uintptr_t *)rtfw_isr_handler(0,regs,(void *)(arg));\
@@ -44,6 +69,12 @@ extern os_isr_cfg_t ISRCFGVAR(Core{{app_cfg[app]["CoreNumber"]}}, {{candit}}_ID)
 
 {%- for app in app_cfg %}
     {%- for candit in app_cfg[app]["AppIsrList"] %}
-DEFINE_IFX_INTERRUPT_INTERNAL({{app_cfg[app]["CoreNumber"]}}, {{isr_cfg_dict[candit]["IsrIntPriority"]}}, {{candit}}_ID, &ISRCFGVAR(Core{{app_cfg[app]["CoreNumber"]}}, {{candit}}_ID))
+    {%- if isr_cfg_dict[candit]["IsrCategory"] == "ISR_CAT0" %}
+DEFINE_CAT0_INTERRUPT_INTERNAL({{app_cfg[app]["CoreNumber"]}}, {{isr_cfg_dict[candit]["IsrIntPriority"]}}, {{candit}}_ID, &ISRCFGVAR(Core{{app_cfg[app]["CoreNumber"]}}, {{candit}}_ID))
+    {%- elif isr_cfg_dict[candit]["IsrCategory"] == "ISR_CAT1" %}
+DEFINE_CAT1_INTERRUPT_INTERNAL({{app_cfg[app]["CoreNumber"]}}, {{isr_cfg_dict[candit]["IsrIntPriority"]}}, {{candit}}_ID, &ISRCFGVAR(Core{{app_cfg[app]["CoreNumber"]}}, {{candit}}_ID))
+    {%- elif isr_cfg_dict[candit]["IsrCategory"] == "ISR_CAT2" %}
+DEFINE_CAT2_INTERRUPT_INTERNAL({{app_cfg[app]["CoreNumber"]}}, {{isr_cfg_dict[candit]["IsrIntPriority"]}}, {{candit}}_ID, &ISRCFGVAR(Core{{app_cfg[app]["CoreNumber"]}}, {{candit}}_ID))
+    {%- endif %}
     {%- endfor %}
 {%- endfor %}

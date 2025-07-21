@@ -21,6 +21,8 @@ extern "C" {
 #endif
 
 /* Including File */
+struct os_task_event_s;
+typedef struct os_task_event_s os_task_event_t;
 
 struct os_task_inst_s;
 typedef struct os_task_inst_s os_task_inst_t;

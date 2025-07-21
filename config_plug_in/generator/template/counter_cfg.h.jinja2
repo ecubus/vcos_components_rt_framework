@@ -77,7 +77,7 @@ extern const os_counter_cfg_t COUNTERCFGVAR({{counter}}_cfg);
     {%- if app_cfg[app]["AppCounterList"] %}
 #define OS_START_SEC_CONST
 #include "rtfw_memmap.h"
-extern CONSTP2CONST(os_counter_cfg_t, AUTOMATIC, OS_CONST) {{app_cfg[app]["AppCounterTable"]}}[];
+extern CONSTP2CONST(os_counter_cfg_t, OS_CONST, AUTOMATIC) {{app_cfg[app]["AppCounterTable"]}}[];
 extern CONST(OsObjIndexType, OS_CONST) {{app_cfg[app]["AppCounterTable"]}}_size;
 #define OS_STOP_SEC_CONST
 #include "rtfw_memmap.h"

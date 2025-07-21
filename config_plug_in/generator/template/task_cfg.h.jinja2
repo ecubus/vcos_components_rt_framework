@@ -56,7 +56,7 @@ typedef enum {
     {%- if app_val["AppTaskList"]: %}
 #define OS_START_SEC_CONST
 #include "rtfw_memmap.h"
-extern CONSTP2CONST(os_task_cfg_t, AUTOMATIC, OS_CONST) {{app_val["AppTaskTable"]}}[];
+extern CONSTP2CONST(os_task_cfg_t, OS_CONST, AUTOMATIC) {{app_val["AppTaskTable"]}}[];
 extern CONST(OsObjIndexType, OS_CONST) {{app_val["AppTaskTable"]}}_size;
 #define OS_STOP_SEC_CONST
 #include "rtfw_memmap.h"

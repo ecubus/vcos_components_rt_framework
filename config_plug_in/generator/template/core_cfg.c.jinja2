@@ -65,14 +65,14 @@ CONST(uint32, OS_CONST) ulCoreIdLog2PhyTable[OS_CORE_CNT] = {
 
 #define OS_STOP_SEC_CONST
 #include "rtfw_memmap.h"
-
+{%- set app_cfg = get_app_cfg() %}
 {%- set os_hook_cfg, os_hook_cnt = get_os_hook_cfg() %}
 {%- for core, core_val in core_config.items() %}
     {%- set core_num = core_val["core_id"][-1] %}
     {%- set bsw_app_name = get_bsw_app_from_coreid(core_num) %}
 
 /*! Core{{core_num}} Configuration Implementation */
-DeclareCore(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{core}}) = {
+DeclareCore(OS_CONST_SECTION, {{app_cfg[bsw_app_name]["AppInstSection"]}}, {{core}}) = {
     /* .instance = */        &OSCOREOBJVAR({{core}}),
     /* .core_id  = */        {{core_val["core_id"]}},
     /* .physical_id  = */         (CoreIdType){{core_val["PhyId"]}},

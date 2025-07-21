@@ -15,14 +15,10 @@
 
 #include <nuttx/config.h>
 #include <string.h>
-#if defined(CONFIG_RT_FRAMEWORK_SPINLOCK) && (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
 #include "rtfw_spinlock.h"
 #include "rtfw_core.h"
 #include "rtfw_application.h"
-
-#if defined(CONFIG_RT_FRAMEWORK_ERROR) && (CONFIG_RT_FRAMEWORK_ERROR == 1)
 #include "rtfw_error.h"
-#endif
 
 static inline void __spin_init(os_spin_t *lock)
 {
@@ -796,4 +792,3 @@ FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock_write(const os_spin_id_t spi
 
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"
-#endif /* CONFIG_RT_FRAMEWORK_SPINLOCK == 1 */

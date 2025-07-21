@@ -68,7 +68,7 @@ DeclareCounter(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{c
 {%- for app in app_cfg %}
     {%- if app_cfg[app]["AppCounterList"] %}
 
-CONSTP2CONST(os_counter_cfg_t, AUTOMATIC, OS_CONST) {{app_cfg[app]["AppCounterTable"]}}[] = {
+CONSTP2CONST(os_counter_cfg_t, OS_CONST, AUTOMATIC) {{app_cfg[app]["AppCounterTable"]}}[] = {
         {%- for counter in app_cfg[app]["AppCounterList"] %}
             {%- if counter in counter_cfg %}
     (os_counter_cfg_t*) &COUNTERCFGVAR({{counter}}_cfg),
@@ -80,7 +80,7 @@ CONST(OsObjIndexType, OS_CONST) {{app_cfg[app]["AppCounterTable"]}}_size = (OsOb
     {%- endif %}
 {%- endfor %}
 
-CONSTP2CONST(os_counter_cfg_t, AUTOMATIC, OS_CONST) os_counter_cfg_ref_table[] = {
+CONSTP2CONST(os_counter_cfg_t, OS_CONST, AUTOMATIC) os_counter_cfg_ref_table[] = {
 {%- for app in app_cfg %}
     {%- if app_cfg[app]["AppCounterList"] %}
         {%- for counter in app_cfg[app]["AppCounterList"] %}

@@ -25,6 +25,7 @@ extern "C" {
 #include "rtfw_types.h"
 #include "rtfw_hook_types.h"
 #include "rtfw_context_internal.h"
+#include "rtfw_thread_internal.h"
 #include "rtfw_core_types.h"
 #include <setjmp.h>
 
@@ -96,8 +97,11 @@ struct os_hook_inst_s {
 	os_hook_parameter_t parameter; /*! Hook parameter. */
 	os_hook_return_t return_value; /*! Hook return value. */
 	void *saved_regs;
-	jmp_buf jmpbuf;
-	struct tcb_s tcb;
+#if defined(CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK == 1)
+	os_hook_thread_inst_t *thread;
+#else
+	os_hook_thread_inst_t thread;
+#endif
 	uint8 cur_nesting_depth;
 }; /* os_hook_inst_s */
 
@@ -110,13 +114,18 @@ struct os_hook_cfg_s {
 
 DeclareRtfwRefTable_H(hook) /*! Reference to OS task configuration table  */
 
+#if defined(CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK == 1)
+	extern const os_hook_thread_inst_t *rtfw_shared_hook_thead_ref_table[];
+#endif
+
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
-
 extern FUNC(void, OS_CODE) os_hook_init(const os_hook_cfg_t *const os_hook_cfg_table[], OsObjIndexType size);
 extern FUNC(Os_StatusType, OS_CODE) os_hook_call_status_hook(HookType hook_id, StatusType error);
 extern FUNC(Os_StatusType, OS_CODE) os_hook_call_void_hook(HookType hook_id);
 extern FUNC(protection_return_t, OS_CODE) os_hook_call_protection_hook(HookType hook_id, StatusType error);
+extern FUNC(protection_return_t, OS_CODE) os_hook_call_callback(const os_hook_cfg_t *hook_cfg);
+extern FUNC(void, OS_CODE) os_hook_return(void);
 
 #if defined(CONFIG_RT_FRAMEWORK_ERROR_HOOK) && (CONFIG_RT_FRAMEWORK_ERROR_HOOK == 1)
 FUNC(void, OS_CODE) os_call_error_hook(const os_core_cfg_t *core_cfg, StatusType error_status);

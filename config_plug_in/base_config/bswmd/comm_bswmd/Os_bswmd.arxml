@@ -2496,6 +2496,28 @@
                       <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
                       <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
                       <PARAMETERS>
+                        <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:e961bc49-62e8-4638-9e8f-a0609e515fd6">
+                          <SHORT-NAME>OsEnableSharingHookStack</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">true: enable hook to share one stack.</L-2>
+                            <L-2 L="ZH">概述：OsEnableSharingHookStack配置项用于指定操作系统是否开启hook共栈功能，共栈后可以减少ram使用。</L-2>
+                            <L-2 L="ZH">注意：在配置时需确保最大hook栈的使用，避免栈溢出的可能。</L-2>
+                          </DESC>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE"/>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>ECU</SCOPE>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                          <DEFAULT-VALUE>false</DEFAULT-VALUE>
+                        </ECUC-BOOLEAN-PARAM-DEF>
                         <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:67f9db57-53e9-4e0e-8e47-23cc534733b5">
                           <SHORT-NAME>OsPostTaskHook</SHORT-NAME>
                           <DESC>
@@ -2521,7 +2543,7 @@
                             </ECUC-VALUE-CONFIGURATION-CLASS>
                           </VALUE-CONFIG-CLASSES>
                           <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                          <DEFAULT-VALUE>true</DEFAULT-VALUE>
+                          <DEFAULT-VALUE>false</DEFAULT-VALUE>
                         </ECUC-BOOLEAN-PARAM-DEF>
                         <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:fbfe7932-0338-461a-b87d-58af3a85bbcb">
                           <SHORT-NAME>OsPreTaskHook</SHORT-NAME>
@@ -2548,7 +2570,7 @@
                             </ECUC-VALUE-CONFIGURATION-CLASS>
                           </VALUE-CONFIG-CLASSES>
                           <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                          <DEFAULT-VALUE>true</DEFAULT-VALUE>
+                          <DEFAULT-VALUE>false</DEFAULT-VALUE>
                         </ECUC-BOOLEAN-PARAM-DEF>
                         <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:12fdd5b3-a654-4c22-a3e1-d9d0906515ad">
                           <SHORT-NAME>OsPanicHook</SHORT-NAME>
@@ -2575,7 +2597,7 @@
                             </ECUC-VALUE-CONFIGURATION-CLASS>
                           </VALUE-CONFIG-CLASSES>
                           <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                          <DEFAULT-VALUE>true</DEFAULT-VALUE>
+                          <DEFAULT-VALUE>false</DEFAULT-VALUE>
                         </ECUC-BOOLEAN-PARAM-DEF>
                         <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:825a1254-49f2-4f16-aa94-d9eedd045480">
                           <SHORT-NAME>OsErrorHook</SHORT-NAME>
@@ -2602,7 +2624,7 @@
                             </ECUC-VALUE-CONFIGURATION-CLASS>
                           </VALUE-CONFIG-CLASSES>
                           <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                          <DEFAULT-VALUE>true</DEFAULT-VALUE>
+                          <DEFAULT-VALUE>false</DEFAULT-VALUE>
                         </ECUC-BOOLEAN-PARAM-DEF>
                         <ECUC-INTEGER-PARAM-DEF UUID="ECUC:2c8a2ea4-a437-4c3b-98d9-f76dacf7cb43">
                           <SHORT-NAME>OsErrorHookStackSize</SHORT-NAME>
@@ -2660,7 +2682,7 @@
                             </ECUC-VALUE-CONFIGURATION-CLASS>
                           </VALUE-CONFIG-CLASSES>
                           <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                          <DEFAULT-VALUE>true</DEFAULT-VALUE>
+                          <DEFAULT-VALUE>false</DEFAULT-VALUE>
                         </ECUC-BOOLEAN-PARAM-DEF>
                         <ECUC-INTEGER-PARAM-DEF UUID="ECUC:f746ae3b-90ec-470e-88a3-058f25ef1790">
                           <SHORT-NAME>OsProtectionHookStackSize</SHORT-NAME>
@@ -2711,7 +2733,7 @@
                             </ECUC-VALUE-CONFIGURATION-CLASS>
                           </VALUE-CONFIG-CLASSES>
                           <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                          <DEFAULT-VALUE>true</DEFAULT-VALUE>
+                          <DEFAULT-VALUE>false</DEFAULT-VALUE>
                         </ECUC-BOOLEAN-PARAM-DEF>
                         <ECUC-INTEGER-PARAM-DEF UUID="ECUC:f8a27a59-714a-46f0-a166-4787af4870aa">
                           <SHORT-NAME>OsShutdownHookStackSize</SHORT-NAME>
@@ -2760,7 +2782,7 @@
                             </ECUC-VALUE-CONFIGURATION-CLASS>
                           </VALUE-CONFIG-CLASSES>
                           <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                          <DEFAULT-VALUE>true</DEFAULT-VALUE>
+                          <DEFAULT-VALUE>false</DEFAULT-VALUE>
                         </ECUC-BOOLEAN-PARAM-DEF>
                         <ECUC-INTEGER-PARAM-DEF UUID="ECUC:97afce32-3d8a-40cd-b3df-ddf8b4e60f42">
                           <SHORT-NAME>OsStartupHookStackSize</SHORT-NAME>

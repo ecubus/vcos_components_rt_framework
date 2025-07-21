@@ -53,7 +53,7 @@ DeclareIpicall(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, OS_CORE{{this_core}}_IPI
 {%- for this_core in range(core_cnt): %}
 #define OS_START_SEC_CONST
 #include "rtfw_memmap.h"
-CONSTP2CONST(os_ipicall_cfg_t, AUTOMATIC, OS_CONST) os_core{{this_core}}_ipicalls_cfg_ref_table[] =
+CONSTP2CONST(os_ipicall_cfg_t, OS_CONST, AUTOMATIC) os_core{{this_core}}_ipicalls_cfg_ref_table[] =
 {
 {%- for target_core in range(core_cnt) %}
     {%- if this_core ==  target_core %}

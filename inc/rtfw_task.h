@@ -33,11 +33,13 @@ extern "C" {
 	RTFW_LINK_ENTRY_DECLARE(section_const, os_task, const os_task_cfg_t, task_id)
 
 #define DeclareExtendedTask(section_const, section_var, task_id)                        \
+	RTFW_LINK_ENTRY_DECLARE(section_var, os_obj_eventhdl, os_task_event_t, task_id);      \
 	RTFW_LINK_ENTRY_DECLARE(section_var, os_obj, os_task_inst_t, task_id);                \
 	RTFW_LINK_ENTRY_DECLARE(section_const, os_task, const os_task_cfg_t, task_id)
 
 #define TASKCFGVAR(task_id) RTFW_LINK_ENTRY_NAME(os_task, task_id)
 #define TASKOBJVAR(task_id) RTFW_LINK_ENTRY_NAME(os_obj, task_id)
+#define TASKEVENTOBJVAR(task_id) RTFW_LINK_ENTRY_NAME(os_obj_eventhdl, task_id)
 
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"

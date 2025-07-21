@@ -47,6 +47,10 @@ extern "C" {
 #include "rtfw_error_internal.h"
 #endif
 
+#if defined (CONFIG_RT_FRAMEWORK_HAVE_TRAP_HANDLER) && (CONFIG_RT_FRAMEWORK_HAVE_TRAP_HANDLER == 1)
+#include "rtfw_trap_internal.h"
+#endif /* CONFIG_RT_FRAMEWORK_HAVE_TRAP_HANDLER */
+
 #include "rtfw_interrupt_internal.h"
 
 /* 获取 os_core_cfg_t 中的信息 */
@@ -88,6 +92,9 @@ struct os_core_inst {
 	struct os_error_info_s last_error_info;
 #endif
 	os_ctx_nest_t ctx_next; /*! 上下文嵌套信息 */
+#if defined(CONFIG_RT_FRAMEWORK_HAVE_TRAP_HANDLER) && (CONFIG_RT_FRAMEWORK_HAVE_TRAP_HANDLER == 1)
+	os_expt_full_context_t expt_full_context; /*! Exception full context */
+#endif /* CONFIG_RT_FRAMEWORK_HAVE_TRAP_HANDLER */
 };
 
 /*! Constant core configuration information. */

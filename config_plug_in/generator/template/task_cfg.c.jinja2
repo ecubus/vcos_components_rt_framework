@@ -90,14 +90,14 @@ DeclareExtendedTask(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}
 #endif
     },
     /* .base_priority            = */            {{t_cfg}}_PRIORITY,
+{%- if task_cfg[task]["TaskType"] == 'EXTENDED' %}
+    /* .event_hdl                = */            &TASKEVENTOBJVAR({{t_cfg}}),
+{%- else %}
+    /* .event_hdl                = */            NULL_PTR,
+{%- endif %}
     /* .task_id                  = */            OS_TASK_{{task.upper()}}_ID,
     /* .autostart_mode           = */            {{task_cfg[task]["TaskAutostart"]}},
     /* .activation_limit         = */            {{task_cfg[task]["TaskActivation"]}},
-{%- if task_cfg[task]["TaskType"] == 'EXTENDED' %}
-    /* .is_extended              = */            TRUE,
-{%- else %}
-    /* .is_extended              = */            FALSE,
-{%- endif %}
 };
         {%- endfor %}
     {%- endif %}
@@ -109,7 +109,7 @@ DeclareExtendedTask(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}
 {%- for app, app_val in app_cfg.items() %}
     {%- if app_val["AppTaskList"] %}
 
-CONSTP2CONST(os_task_cfg_t, AUTOMATIC, OS_CONST) {{app_val["AppTaskTable"]}}[] = {
+CONSTP2CONST(os_task_cfg_t, OS_CONST, AUTOMATIC) {{app_val["AppTaskTable"]}}[] = {
         {%- for task in app_cfg[app]["AppTaskList"] %}
     &TASKCFGVAR({{task.upper()}}_CFG),
         {%- endfor %}

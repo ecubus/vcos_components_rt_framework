@@ -46,7 +46,7 @@ typedef enum {
 #include "rtfw_memmap.h"
 {%- set core_cnt = get_core_cnt() %}
 {%- for core_id in range(core_cnt): %}
-extern CONSTP2CONST(os_resource_cfg_t, AUTOMATIC, OS_CONST) os_core{{core_id}}_resource_cfg_ref_table[];
+extern CONSTP2CONST(os_resource_cfg_t, OS_CONST, AUTOMATIC) os_core{{core_id}}_resource_cfg_ref_table[];
 extern CONST(OsObjIndexType, OS_CONST) os_core{{core_id}}_resource_cfg_ref_table_size;
 {%- endfor %}
 #define OS_STOP_SEC_CONST

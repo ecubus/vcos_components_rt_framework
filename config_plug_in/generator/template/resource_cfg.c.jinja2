@@ -54,7 +54,7 @@ DeclareResource(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{resource_id.upper()}}
     {%- set core_resources = core_resource_map[core_id|string] %}
     {%- if core_resources %}
 
-CONSTP2CONST(os_resource_cfg_t, AUTOMATIC, OS_CONST) os_core{{core_id}}_resource_cfg_ref_table[] =
+CONSTP2CONST(os_resource_cfg_t, OS_CONST, AUTOMATIC) os_core{{core_id}}_resource_cfg_ref_table[] =
 {
         {%- for resource_name in core_resources %}
     &RESOURCECFGVAR({{resource_name.upper()}}),

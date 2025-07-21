@@ -49,7 +49,12 @@
 #define OS_IPICALL_DEVIATE_SCHEDULE_TABLE ((os_ipicall_service_id_t)15)
 #define OS_IPICALL_SET_SCHEDULE_TABLE_APP_ID ((os_ipicall_service_id_t)16)
 #define OS_IPICALL_CLEAR_SCHEDULE_TABLE_APP_ID ((os_ipicall_service_id_t)17)
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL_TEST) && (CONFIG_RT_FRAMEWORK_IPICALL_TEST == 1)
+#define OS_IPICALL_IPC_TEST_FUNCTION ((os_ipicall_service_id_t)18)
+#define OS_IPICALL_SERVICE_MAX ((os_ipicall_service_id_t)19)
+#else
 #define OS_IPICALL_SERVICE_MAX ((os_ipicall_service_id_t)18)
+#endif
 
 #define OS_START_SEC_CONST
 #include "rtfw_memmap.h"
@@ -74,7 +79,10 @@ os_ipicall_service_table[OS_IPICALL_SERVICE_MAX] = {
 	[OS_IPICALL_SET_SCHEDULE_TABLE_ASYNC] = &os_ipicall_recv_set_scheduletable_async,
 	[OS_IPICALL_DEVIATE_SCHEDULE_TABLE] = &os_ipicall_recv_deviate_schedule_table,
 	[OS_IPICALL_SET_SCHEDULE_TABLE_APP_ID] = &os_ipicall_recv_set_schedule_table_app_id,
-	[OS_IPICALL_CLEAR_SCHEDULE_TABLE_APP_ID] = &os_ipicall_recv_clear_schedule_table_app_id
+	[OS_IPICALL_CLEAR_SCHEDULE_TABLE_APP_ID] = &os_ipicall_recv_clear_schedule_table_app_id,
+#endif
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL_TEST) && (CONFIG_RT_FRAMEWORK_IPICALL_TEST == 1)
+	[OS_IPICALL_IPC_TEST_FUNCTION] = &os_ipicall_recv_ipc_test_function,
 #endif
 };
 
@@ -416,35 +424,58 @@ static FUNC(void, OS_CODE) os_ipicall_isr_handler(void)
 /*! activate task belongs to other core */
 FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task(os_ipicall_data_t *param)
 {
-	return os_activate_task(param->send_element.in_param.avtivate_task_param.task_id);
+	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[param->send_element.in_param.avtivate_task_param.task_id];
+	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+	const os_ctx_cfg_t *task_context = OS_TASK_GET_CONTEXT_REF(task_cfg);
+
+	if (UNLIKELY(os_app_check_is_accessible(OS_CONTEXT_GET_APPONRWECFG_REF(task_context)) != OS_STATUS_OK)) {
+		return OS_STATUS_NOTACCESSIBLE_1;
+	}
+#endif
+	return (nxsem_post(&(task_inst->thread.act_sem)) == OK ? OS_STATUS_OK : OS_STATUS_NOT_OK);
 }
 
 /*! activate task belongs to other core */
 FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task_asyn(os_ipicall_data_t *param)
 {
-	return os_activate_task_asyn(param->send_element.in_param.avtivate_task_param.task_id);
+	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[param->send_element.in_param.avtivate_task_param.task_id];
+	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+	const os_ctx_cfg_t *task_context = OS_TASK_GET_CONTEXT_REF(task_cfg);
+
+	if (UNLIKELY(os_app_check_is_accessible(OS_CONTEXT_GET_APPONRWECFG_REF(task_context)) != OS_STATUS_OK)) {
+		return OS_STATUS_NOTACCESSIBLE_1;
+	}
+#endif
+	return (nxsem_post(&(task_inst->thread.act_sem)) == OK ? OS_STATUS_OK : OS_STATUS_NOT_OK);
 }
 
 /*! get application state */
 FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_get_application_state(os_ipicall_data_t *param)
 {
-	Os_StatusType status;
-	ApplicationStateType app_state = APPLICATION_TERMINATED;
+	const os_app_cfg_t *app_cfg = os_app_cfg_ref_table[param->send_element.in_param.get_app_state_param.app_id];
 
-	status = os_get_app_state(param->send_element.in_param.get_app_state_param.app_id, &app_state);
-	param->ret_element.out_param.get_app_state_param.app_state = app_state;
-	return status;
+	param->ret_element.out_param.get_app_state_param.app_state = app_cfg->instance->state;
+	return OS_STATUS_OK;
 }
 
 /*! get event values */
 FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_get_event(os_ipicall_data_t *param)
 {
-	Os_StatusType status;
 	os_event_mask_t mask = 0;
+	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[param->send_element.in_param.get_event_param.task_id];
+	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
 
-	status = os_get_event(param->send_element.in_param.get_event_param.task_id, &mask);
+	if (UNLIKELY(task_inst->thread.tcb.flags & TCB_FLAG_THREAD_IS_SUSPENDED)) {
+		return OS_STATUS_STATE_STOPPED;
+	} else {
+		mask = nxevent_getmask(&(task_cfg->event_hdl->event));
+	}
 	param->ret_element.out_param.get_event_param.mask = mask;
-	return status;
+	return OS_STATUS_OK;
 }
 
 FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_event(os_ipicall_data_t *param)
@@ -772,6 +803,20 @@ Os_StatusType os_ipicall_set_event_asyn(uint32 target_core, TaskType task_id, os
 
 	return os_ipicall_send_async(target_core, &param);
 }
+
+
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL_TEST) && (CONFIG_RT_FRAMEWORK_IPICALL_TEST == 1)
+FUNC(Os_StatusType, OS_CODE) os_ipicall_ipc_test_function(uint32 target_core, uint32 test_value)
+{
+	os_ipicall_data_t param;
+
+	param.send_element.service = OS_IPICALL_IPC_TEST_FUNCTION;
+	param.send_element.in_param.ipc_test_param.test_value = test_value;
+	param.ret_element.return_status = OS_STATUS_NOT_OK;
+
+	return os_ipicall_send(target_core, &param);
+}
+#endif
 
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"

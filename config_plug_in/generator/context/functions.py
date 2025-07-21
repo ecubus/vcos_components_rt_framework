@@ -409,6 +409,26 @@ class Function(FunctionBase):
 
     @staticmethod
     @pass_context
+    def select_compiler(context):
+        ret = []
+        target = Function.get_target(context)
+        compiler = context['sys_cfg']['compiler']
+        #Make sure the target chip option exists in the compiler, otherwise add it
+        if compiler == "tasking":
+            if target in ("AURIX2G_TC397"):
+                ret.append('CONFIG_TRICORE_TOOLCHAIN_TASKING=y')
+        elif compiler == "gcc":
+            if target in ("AURIX2G_TC397"):
+                ret.append('CONFIG_TRICORE_TOOLCHAIN_GNU=y')
+            elif target in ("E3650"):
+                ret.append('CONFIG_ARM_TOOLCHAIN_GNU=y')
+        elif compiler == "ghs":
+            if target in ("J6E"):
+                ret.append('CONFIG_ARM_TOOLCHAIN_GHS=y')
+        return ret
+
+    @staticmethod
+    @pass_context
     def get_isr_counter(context):
         isr_counter = {}
         counter_list = Function.get_os_module_list(context, "/Os/OsCounter")
@@ -903,12 +923,14 @@ class Function(FunctionBase):
     def get_os_hook_cfg(context):
         OsOS_cfg = Function.get_os_module_list(context, "/Os/OsOS")
         os_hooks = {}
+        os_max_hook_stack_size = 0
         os_hooks = OsOS_cfg.get("OsOS",{}).get("OsHooks",{})
         os_hooks_cfg = {
             'os_errorhook': {'enabled': False},
             'os_protectionhook': {'enabled': False},
             'os_shutdownhook': {'enabled': False},
-            'os_startuphook': {'enabled': False}
+            'os_startuphook': {'enabled': False},
+            'os_sharehook': {'enabled': False}
         }
         os_hook_cnt = 0
 
@@ -940,6 +962,13 @@ class Function(FunctionBase):
             for cfg in os_hooks_cfg.values():
                 if cfg['enabled']:
                     os_hook_cnt += 1
+                    if os_max_hook_stack_size < cfg['stack_size']:
+                        os_max_hook_stack_size = cfg['stack_size']
+
+            os_hooks_cfg['os_sharehook'].update({
+                'enabled': os_hooks.get("OsEnableSharingHookStack",{}).get("Value",""),
+                'stack_size': os_max_hook_stack_size,
+            })
 
         return os_hooks_cfg, os_hook_cnt
 
@@ -1014,6 +1043,8 @@ class Function(FunctionBase):
             ret.append('CONFIG_RT_FRAMEWORK_SHUTDOWN_HOOK=y')
         if hook_cfg['os_startuphook']['enabled'] == True:
             ret.append('CONFIG_RT_FRAMEWORK_STARTUP_HOOK=y')
+        if hook_cfg['os_sharehook']['enabled'] == True:
+            ret.append('CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK=y')
 
         if hook_cnt > 0:
             ret.append('CONFIG_RT_FRAMEWORK_HOOK=y')
@@ -1162,6 +1193,11 @@ class Function(FunctionBase):
         # CONFIG_RT_FRAMEWORK_ISOLATE
         ########################################################
         # isolate is a standalone configuration module not controled in rt_framework
+        ########################################################
+        
+        # CONFIG_RT_FRAMEWORK_TOOLCHAIN
+        ########################################################
+        rtfw_config += Function.select_compiler(context)
         ########################################################
 
         return rtfw_config

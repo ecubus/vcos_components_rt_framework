@@ -67,7 +67,7 @@ typedef enum {
 {%- for app in app_cfg %}
     {%- if app_cfg[app]["AppIsrList"] %}
 
-extern CONSTP2CONST(os_isr_cfg_t, AUTOMATIC, OS_CONST) {{app_cfg[app]["AppIsrTable"]}}[];
+extern CONSTP2CONST(os_isr_cfg_t, OS_CONST, AUTOMATIC) {{app_cfg[app]["AppIsrTable"]}}[];
 extern CONST(OsObjIndexType, OS_CONST) {{app_cfg[app]["AppIsrTable"]}}_size;
     {%- endif %}
 {%- endfor %}

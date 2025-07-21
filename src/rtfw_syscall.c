@@ -53,6 +53,14 @@ FUNC(void, OS_CODE) rtfw_syscall_handler(void *syscall_args, uint32_t *regs)
 			syscall->syscall_return_value.return_os_status =
 				os_activate_task_asyn(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_task_t);
 			break;
+		case OS_SYSCALLID_CHAINTASK:
+			syscall->syscall_return_value.return_os_status =
+				os_chain_task(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_task_t);
+			break;
+		case OS_SYSCALLID_GETTASKID:
+			syscall->syscall_return_value.return_os_status =
+				os_get_task_id(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_task_ref);
+			break;
 		case OS_SYSCALLID_TASK_TICKDELAY:
 			syscall->syscall_return_value.return_os_status =
 			rtfw_task_tickdelay(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_tick_t);

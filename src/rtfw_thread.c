@@ -16,7 +16,7 @@
 
 static noinline_function FUNC(void, OS_CODE) os_thread_enter_task(const os_task_cfg_t *task_cfg, boolean is_privilege)
 {
-	OS_TASK_GET_INSTANCE_REF(task_cfg)->tcb.flags &= ~TCB_FLAG_THREAD_IN_KERNEL_MPU_SET;
+	OS_TASK_GET_INSTANCE_REF(task_cfg)->thread.tcb.flags &= ~TCB_FLAG_THREAD_IN_KERNEL_MPU_SET;
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
 	up_mpu_enable_set(OS_TASK_GET_CONTEXTINST_REF(task_cfg)->current_mpu_access_right->set_num);
 #endif
@@ -29,46 +29,37 @@ static noinline_function FUNC(void, OS_CODE) os_thread_enter_task(const os_task_
 }
 
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-static noinline_function FUNC(void, OS_CODE) os_thread_enter_hook(const os_hook_cfg_t *hook_cfg, boolean is_privilege)
+static noinline_function FUNC(void, OS_CODE) os_thread_enter_hook(void)
 {
-	const os_ctx_cfg_t *this_context_cfg = OS_HOOK_GET_CONTEXT_REF(hook_cfg);
-	os_hook_inst_t *hook_inst = OS_CONTEXT_GET_HOOK_INSTANCE_REF(this_context_cfg);
-	os_context_id_t this_context_id = OS_CONTEXT_GET_INITCONTEXTID(this_context_cfg);
-	void_hook_callback_t hook_call_back = hook_cfg->callback;
-	StatusType hook_status = hook_inst->parameter.status;
-	protection_return_t protection_return = PRO_IGNORE;
+	protection_return_t protection_return;
+#if defined(CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK == 1)
+	os_hook_thread_inst_t *hook_thread = NULL_PTR;
+#endif
+	const os_ctx_cfg_t *current_context = os_context_get_contexthdl();
+	const os_hook_cfg_t *hook_cfg = OS_CONTEXT_GET_HOOK_CFG_REF(current_context);
+	os_hook_inst_t *hook_inst = OS_HOOK_GET_INSTANCE_REF(hook_cfg);
+	struct tcb_s *hook_tcb = NULL_PTR;
+#if defined(CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK == 1)
+	hook_tcb = &(hook_inst->thread->tcb);
+#else
+	hook_tcb = &(hook_inst->thread.tcb);
+#endif
 
-	OS_HOOK_GET_INSTANCE_REF(hook_cfg)->tcb.flags &= ~TCB_FLAG_THREAD_IN_KERNEL_MPU_SET;
+	hook_tcb->flags &= ~TCB_FLAG_THREAD_IN_KERNEL_MPU_SET;
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
 	up_mpu_enable_set(OS_HOOK_GET_CONTEXTINST_REF(hook_cfg)->current_mpu_access_right->set_num);
 #endif
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	os_set_thread_mode_from_privilege(is_privilege);
-#else
-	(void)is_privilege;
-#endif
-	switch (this_context_id) {
-		case OS_SHUTDOWNHOOK_CONTEXT_ID:
-		case OS_ERRORHOOK_CONTEXT_ID:
-			((status_hook_callback_t)hook_call_back)(hook_status);
-			break;
-		case OS_STARTUPHOOK_CONTEXT_ID:
-			((void_hook_callback_t)hook_call_back)();
-			break;
-		case OS_PROTECTIONHOOK_CONTEXT_ID:
-			protection_return = ((protection_hook_callback_t)hook_call_back)(hook_status);
-			break;
-		default:
-			break;
-	}
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	os_set_thread_mode_to_privilege();
-#endif
+	protection_return = os_hook_call_callback(hook_cfg);
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
 	up_mpu_enable_set(0U);
 #endif
 	hook_inst->return_value.protection_reaction = protection_return;
-	longjmp(hook_inst->jmpbuf, 1);
+#if defined(CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK == 1)
+	hook_thread = (os_hook_thread_inst_t *)rtfw_shared_hook_thead_ref_table[os_get_core_id()];
+	longjmp(hook_thread->jmpbuf, 1);
+#else
+	longjmp(hook_inst->thread.jmpbuf, 1);
+#endif
 }
 #endif
 
@@ -82,20 +73,12 @@ static noinline_function void os_task_thread_start(int argc, FAR char *argv[])
 	const os_task_cfg_t *task_cfg = OS_CONTEXT_GET_TASK_CFG_REF(current_context);
 	os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(current_context);
 
-	if (setjmp(task_inst->jmpbuf) == 1) {
-#if (CONFIG_RT_FRAMEWORK_TASK_MULTIPLE_ACTIVATION != 1)
-		nxsem_reset(&task_inst->act_sem, 0);
-#endif
-
-#ifdef CONFIG_SCHED_INSTRUMENTATION
-		if (task_inst->act_sem.semcount >= 1) {
-			sched_note_reactivate(&task_inst->tcb);
-		}
-#endif
+	if (setjmp(task_inst->thread.jmpbuf) == 1) {
+		os_task_reset(task_cfg);
 	}
-	up_irq_enable();
 
-	nxsem_wait_uninterruptible(&(task_inst->act_sem));
+	up_irq_enable();
+	nxsem_wait_uninterruptible(&(task_inst->thread.act_sem));
 
 	os_thread_enter_task(task_cfg, current_context->app_owner_cfg->is_privileged);
 
@@ -111,42 +94,22 @@ static noinline_function void os_hook_thread_start(int argc, FAR char *argv[])
 	UNUSED(argc);
 	UNUSED(argv);
 
-	const os_ctx_cfg_t *pre_context = NULL_PTR;
-	os_context_id_t pre_context_id = 0;
+#if defined(CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK == 1)
+	os_hook_thread_inst_t *hook_thread =
+		(os_hook_thread_inst_t *)rtfw_shared_hook_thead_ref_table[os_get_core_id()];
+
+	if (setjmp(hook_thread->jmpbuf) == 1) {
+#else
 	const os_ctx_cfg_t *current_context = os_context_get_contexthdl();
 	const os_hook_cfg_t *hook_cfg = OS_CONTEXT_GET_HOOK_CFG_REF(current_context);
-	os_hook_inst_t *hook_inst = OS_CONTEXT_GET_HOOK_INSTANCE_REF(current_context);
-	os_core_cfg_t *core = (os_core_cfg_t *)OS_HOOK_GET_CORE_REF(hook_cfg);
-	uint32 hook_action = 0;
+	os_hook_inst_t *hook_inst = OS_HOOK_GET_INSTANCE_REF(hook_cfg);
 
-	if (setjmp(hook_inst->jmpbuf) == 1) {
-		hook_inst->accumulated_hook_ctx = hook_cfg->context.initial_ctx_id;
-		hook_inst->cur_nesting_depth = 0;
-
-		pre_context = os_context_nest_dec(OS_CORE_GET_CONTEXTNEST_REF(core), NULL_PTR);
-		pre_context_id = OS_CONTEXT_GET_CURRENT_CONTEXTID(pre_context);
-
-		hook_action = os_thread_get_hook_action(pre_context_id, FALSE);
-
-		switch (hook_action) {
-			case HOOK_RETURN_TO_HOOK:
-				up_switch_hook_context(hook_action, &(hook_inst->tcb),
-						       &(OS_CONTEXT_GET_HOOK_INSTANCE_REF(pre_context)->tcb));
-				break;
-			case HOOK_RETURN_TO_TASK:
-				up_switch_hook_context(hook_action, &(hook_inst->tcb),
-						       &(OS_CONTEXT_GET_TASK_INSTANCE_REF(pre_context)->tcb));
-				break;
-			case HOOK_RETURN_TO_IRQ:
-				os_context_set_contexthdl(pre_context);
-				up_switch_hook_context(hook_action, &(hook_inst->tcb), hook_inst->saved_regs);
-				break;
-			default:
-				break;
-		}
+	if (setjmp(hook_inst->thread.jmpbuf) == 1) {
+#endif
+		os_hook_return();
 	}
 
-	os_thread_enter_hook(hook_cfg, current_context->app_owner_cfg->is_privileged);
+	os_thread_enter_hook();
 }
 #endif
 
@@ -162,10 +125,14 @@ void rtfw_thread_start(void)
 	DEBUGASSERT((cur_context_id & OS_CONTEXT_ANYTASK) || (cur_context_id & OS_CONTEXT_ANYHOOK));
 
 	if (this_is_task) {
-		tcb = &(OS_CONTEXT_GET_TASK_INSTANCE_REF(cur_context)->tcb);
+		tcb = &(OS_CONTEXT_GET_TASK_INSTANCE_REF(cur_context)->thread.tcb);
 	} else {
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-		tcb = &(OS_CONTEXT_GET_HOOK_INSTANCE_REF(cur_context)->tcb);
+#if defined(CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK == 1)
+		tcb = &(OS_CONTEXT_GET_HOOK_INSTANCE_REF(cur_context)->thread->tcb);
+#else
+		tcb = &(OS_CONTEXT_GET_HOOK_INSTANCE_REF(cur_context)->thread.tcb);
+#endif
 #endif
 	}
 

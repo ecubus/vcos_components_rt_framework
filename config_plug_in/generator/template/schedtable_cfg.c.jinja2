@@ -154,7 +154,7 @@ DeclareSchedTable(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, 
 {%- for appname, appval in app_cfg.items() %}
     {%- if appval is mapping and "AppScheduleTableList" in appval and appval["AppScheduleTableList"] %}
 
-CONSTP2CONST(os_schedtable_cfg_t, AUTOMATIC, OS_CONST) {{appval["AppSchedTblTable"]}}[] =
+CONSTP2CONST(os_schedtable_cfg_t, OS_CONST, AUTOMATIC) {{appval["AppSchedTblTable"]}}[] =
 {
         {%- for SchedTable_Name in appval["AppScheduleTableList"] %}
             {%- if SchedTable_Name in SchedTable_Cfg %}

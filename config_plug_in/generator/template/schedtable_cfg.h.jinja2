@@ -60,7 +60,7 @@ typedef enum {
     {%- if appval is mapping and "AppScheduleTableList" in appval and appval["AppScheduleTableList"] %}
 #define OS_START_SEC_CONST
 #include "rtfw_memmap.h"
-extern CONSTP2CONST(os_schedtable_cfg_t, AUTOMATIC, OS_CONST) {{appval["AppSchedTblTable"]}}[];
+extern CONSTP2CONST(os_schedtable_cfg_t, OS_CONST, AUTOMATIC) {{appval["AppSchedTblTable"]}}[];
 extern CONST(OsObjIndexType, OS_CONST) {{appval["AppSchedTblTable"]}}_size;
 #define OS_STOP_SEC_CONST
 #include "rtfw_memmap.h"

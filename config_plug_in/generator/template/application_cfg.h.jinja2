@@ -51,7 +51,7 @@ extern const os_app_cfg_t OSAPPCFGVAR({{app}});
 {%- set core_info = get_core_configs() %}
 {% for k, v in core_info.items(): %}
 /* {{k}} config referenc table */
-extern CONSTP2CONST(os_app_cfg_t, AUTOMATIC, OS_CONST) os_core{{k.lstrip("Os_Core")}}_apps_cfg_ref_table[];
+extern CONSTP2CONST(os_app_cfg_t, OS_CONST, AUTOMATIC) os_core{{k.lstrip("Os_Core")}}_apps_cfg_ref_table[];
 extern CONST(OsObjIndexType, OS_CONST) os_core{{k.lstrip("Os_Core")}}_apps_cfg_ref_table_size;
 {% endfor %}
 #define OS_STOP_SEC_CONST
