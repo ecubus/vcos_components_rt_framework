@@ -426,6 +426,7 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task(os_ipicall_data_t *pa
 {
 	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[param->send_element.in_param.avtivate_task_param.task_id];
 	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+	int ret;
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 	const os_ctx_cfg_t *task_context = OS_TASK_GET_CONTEXT_REF(task_cfg);
@@ -434,7 +435,12 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task(os_ipicall_data_t *pa
 		return OS_STATUS_NOTACCESSIBLE_1;
 	}
 #endif
-	return (nxsem_post(&(task_inst->thread.act_sem)) == OK ? OS_STATUS_OK : OS_STATUS_NOT_OK);
+	ret = nxsem_post(&(task_inst->thread.act_sem));
+	if (ret == -EOVERFLOW) {
+		return OS_STATUS_LIMIT;
+	} else {
+		return (ret == OK ? OS_STATUS_OK : OS_STATUS_NOT_OK);
+	}
 }
 
 /*! activate task belongs to other core */
@@ -442,6 +448,7 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task_asyn(os_ipicall_data_
 {
 	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[param->send_element.in_param.avtivate_task_param.task_id];
 	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+	int ret;
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 	const os_ctx_cfg_t *task_context = OS_TASK_GET_CONTEXT_REF(task_cfg);
@@ -450,7 +457,13 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task_asyn(os_ipicall_data_
 		return OS_STATUS_NOTACCESSIBLE_1;
 	}
 #endif
-	return (nxsem_post(&(task_inst->thread.act_sem)) == OK ? OS_STATUS_OK : OS_STATUS_NOT_OK);
+
+	ret = nxsem_post(&(task_inst->thread.act_sem));
+	if (ret == -EOVERFLOW) {
+		return OS_STATUS_LIMIT;
+	} else {
+		return (ret == OK ? OS_STATUS_OK : OS_STATUS_NOT_OK);
+	}
 }
 
 /*! get application state */
@@ -803,7 +816,6 @@ Os_StatusType os_ipicall_set_event_asyn(uint32 target_core, TaskType task_id, os
 
 	return os_ipicall_send_async(target_core, &param);
 }
-
 
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL_TEST) && (CONFIG_RT_FRAMEWORK_IPICALL_TEST == 1)
 FUNC(Os_StatusType, OS_CODE) os_ipicall_ipc_test_function(uint32 target_core, uint32 test_value)

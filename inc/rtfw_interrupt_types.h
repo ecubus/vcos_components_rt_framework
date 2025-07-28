@@ -32,7 +32,7 @@ typedef struct {
 
 typedef struct {
 	/*! Interrupt state to be used for global lock. */
-	os_int_global_state_t global;
+	irqlevel_t global;
 
 #if defined(CONFIG_RT_FRAMEWORK_INT_LEVEL) && (CONFIG_RT_FRAMEWORK_INT_LEVEL == 1)
 	/*! Interrupt state to be used for level lock. */

@@ -70,7 +70,7 @@ class Os013008Rule(BasicRule):
                 else:
                     limit_a, limit_b = -1, -1
 
-                if limit_a > 0 and limit_b > 0:
+                if limit_a >= 0 and limit_b >= 0:
                     upper_limit = max(limit_a, limit_b)
                     lower_limit = min(limit_a, limit_b)
                     if isr_priority >= lower_limit and isr_priority <= upper_limit:

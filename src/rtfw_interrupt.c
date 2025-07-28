@@ -196,20 +196,23 @@ FUNC(boolean, OS_CODE) os_interrupt_is_disabled(void)
 
 FUNC(void, OS_CODE) os_int_suspend_kernel(os_int_state_t *const int_state)
 {
+	irqlevel_t irq_state = up_kernel_int_save();
 #if defined(CONFIG_RT_FRAMEWORK_INT_LEVEL) && (CONFIG_RT_FRAMEWORK_INT_LEVEL == 1)
-	int_state->level = up_irq_level_save(CONFIG_RT_FRAMEWORK_MAX_TP_INT_LEVEL);
+	int_state->level = irq_state;
 #else
-	int_state->global = up_irq_save();
+	int_state->global = irq_state;
 #endif
 }
 
 FUNC(void, OS_CODE) os_int_resume_kernel(const os_int_state_t *const int_state)
 {
+	irqlevel_t irq_state;
 #if defined(CONFIG_RT_FRAMEWORK_INT_LEVEL) && (CONFIG_RT_FRAMEWORK_INT_LEVEL == 1)
-	up_irq_level_restore(int_state->level);
+	irq_state = int_state->level;
 #else
-	up_irq_restore(int_state->global);
+	irq_state = int_state->global;
 #endif
+	up_kernel_int_restore(irq_state);
 }
 
 FUNC(void, OS_CODE) os_int_disable_global(void)

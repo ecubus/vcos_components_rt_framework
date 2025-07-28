@@ -52,15 +52,16 @@ static inline_function void os_hook_call(const os_hook_cfg_t *hook_cfg)
 	os_core_cfg_t *core = (os_core_cfg_t *)OS_HOOK_GET_CORE_REF(hook_cfg);
 	uint32 hook_action = 0;
 	struct tcb_s *hook_tcb;
+	os_int_state_t int_state;
 
-	irqstate_t irq_state = up_irq_save();
+	os_int_suspend_kernel(&int_state);
 
 	if (pre_context_id & OS_CONTEXT_ANYHOOK) {
 		pre_hook_cfg = OS_CONTEXT_GET_HOOK_CFG_REF(pre_context);
 		pre_hook_inst = OS_HOOK_GET_INSTANCE_REF(pre_hook_cfg);
 		if (((pre_hook_inst->accumulated_hook_ctx & hook_cfg->nesting_mask) == 0) ||
 		    (pre_hook_inst->cur_nesting_depth >= OS_HOOK_MAX_NESTING)) {
-			up_irq_restore(irq_state);
+			os_int_resume_kernel(&int_state);
 			return;
 		} else {
 			this_hook_inst->accumulated_hook_ctx |= pre_hook_inst->accumulated_hook_ctx;
@@ -114,7 +115,7 @@ static inline_function void os_hook_call(const os_hook_cfg_t *hook_cfg)
 			break;
 	}
 
-	up_irq_restore(irq_state);
+	os_int_resume_kernel(&int_state);
 }
 
 #define OS_START_SEC_CODE

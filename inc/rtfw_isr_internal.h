@@ -150,9 +150,9 @@ DeclareRtfwRefTable_H(isr)
  */
 FUNC(void, OS_CODE) rtfw_isr_init(const os_isr_cfg_t *const os_isr_cfg_table[], OsObjIndexType size);
 #ifdef CONFIG_IRQ_USE_ARCH_DISPATCH
-FUNC(uintptr_t, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg);
+FUNC(uintptr_t, OS_CODE) rtfw_irq_handler(int irq, void *regs, void *arg);
 #else
-FUNC(int, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg);
+FUNC(int, OS_CODE) rtfw_irq_handler(int irq, void *regs, void *arg);
 #endif
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"

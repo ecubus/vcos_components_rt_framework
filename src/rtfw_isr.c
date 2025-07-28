@@ -22,7 +22,7 @@
 #include "rtfw_context_internal.h"
 
 #if (CONFIG_ARCH_IRQ_NESTING_LIMIT > 1) && !defined(CONFIG_ARCH_HAVE_IRQ_PRIO_MASK_CONTEXT)
-static inline_function irqlevel_t os_isr_irq_prio_mask_save(uint32 irq_nesting, const os_ctx_cfg_t *pre_context)
+static inline_function irqlevel_t os_pre_isr_prio_mask_save(uint32 irq_nesting, const os_ctx_cfg_t *pre_context)
 {
 	irqlevel_t irq_prio_mask = 0U;
 
@@ -43,17 +43,15 @@ static inline_function void os_isr_irq_prio_mask_restore(uint32 irq_prio_mask)
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 #ifdef CONFIG_IRQ_USE_ARCH_DISPATCH
-FUNC(uintptr_t, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg)
+FUNC(uintptr_t, OS_CODE) rtfw_irq_handler(int irq, void *regs, void *arg)
 #else
-FUNC(int, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg)
+FUNC(int, OS_CODE) rtfw_irq_handler(int irq, void *regs, void *arg)
 #endif
 {
-	UNUSED(irq);
+	irqlevel_t irq_state;
+	uint8_t irq_nesting;
 	const os_isr_cfg_t *isr_cfg = (os_isr_cfg_t *)arg;
 	const os_ctx_cfg_t *this_context = NULL_PTR;
-#if (CONFIG_ARCH_IRQ_NESTING_LIMIT > 1) || defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION)
-	const os_ctx_cfg_t *pre_context = os_context_get_contexthdl();
-#endif
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
 	const struct mpu_access_right_s *pre_access_right = NULL_PTR;
 	const struct mpu_access_right_s *this_access_right = NULL_PTR;
@@ -61,24 +59,34 @@ FUNC(int, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg)
 
 #ifdef CONFIG_IRQ_USE_ARCH_DISPATCH
 	up_irq_dispatch_enter(regs);
-#else
-	UNUSED(regs);
 #endif
+
+#if (CONFIG_ARCH_IRQ_NESTING_LIMIT > 1) || defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION)
+	const os_ctx_cfg_t *pre_context = os_context_get_contexthdl();
+#endif
+
+	UNUSED(irq);
+	UNUSED(regs);
+	UNUSED(irq_state);
+	UNUSED(irq_nesting);
 
 #if (CONFIG_ARCH_IRQ_NESTING_LIMIT > 1)
-#ifndef CONFIG_ARCH_HAVE_IRQ_PRIO_MASK_CONTEXT
-	irqlevel_t irq_prio_mask = 0U;
-#endif
-	uint8_t irq_nesting = up_get_irq_nesting();
-
+	irq_nesting = up_get_irq_nesting();
 	if (irq_nesting < CONFIG_ARCH_IRQ_NESTING_LIMIT) {
+#ifdef CONFIG_RT_FRAMEWORK_INT_LEVEL
 #ifndef CONFIG_ARCH_HAVE_IRQ_PRIO_MASK_CONTEXT
-		irq_prio_mask = os_isr_irq_prio_mask_save(irq_nesting, pre_context);
+		irq_state = os_pre_isr_prio_mask_save(irq_nesting, pre_context);
 #endif
 		up_set_irq_mask_level(up_get_irq_running_level());
+#endif
 		up_irq_enable();
 	}
+#else
+#if defined(CONFIG_RT_FRAMEWORK_CAT0_INT_IS_IRQ) && defined(CONFIG_RT_FRAMEWORK_INT_LEVEL)
+	irq_state = up_kernel_int_save();
+	up_irq_enable();
 #endif
+#endif /* CONFIG_ARCH_IRQ_NESTING_LIMIT */
 	this_context = OS_ISR_GET_CONTEXT_REF(isr_cfg);
 
 	os_context_set_contexthdl(this_context);
@@ -111,13 +119,20 @@ FUNC(int, OS_CODE) rtfw_isr_handler(int irq, void *regs, void *arg)
 	if (irq_nesting < CONFIG_ARCH_IRQ_NESTING_LIMIT) {
 		up_irq_disable();
 #ifndef CONFIG_ARCH_HAVE_IRQ_PRIO_MASK_CONTEXT
-		os_isr_irq_prio_mask_restore(irq_prio_mask);
+		os_isr_irq_prio_mask_restore(irq_state);
 #endif
 	}
 	if (irq_nesting > 1) {
 		os_context_set_contexthdl(pre_context);
 	}
+#else
+#if defined(CONFIG_RT_FRAMEWORK_CAT0_INT_IS_IRQ) && defined(CONFIG_RT_FRAMEWORK_INT_LEVEL)
+	up_irq_disable();
+#ifndef CONFIG_ARCH_HAVE_IRQ_PRIO_MASK_CONTEXT
+	up_kernel_int_restore(irq_state);
 #endif
+#endif /* CONFIG_RT_FRAMEWORK_CAT0_INT_IS_IRQ */
+#endif /* CONFIG_ARCH_IRQ_NESTING_LIMIT */
 
 #ifdef CONFIG_IRQ_USE_ARCH_DISPATCH
 	regs = up_irq_dispatch_exit(regs);
@@ -154,7 +169,7 @@ FUNC(void, OS_CODE) rtfw_isr_init(const os_isr_cfg_t *const os_isr_cfg_table[], 
 		isrInst->top_of_stack = NULL_PTR;
 		os_context_init_context_instance(ctx_cfg);
 #ifndef CONFIG_IRQ_USE_ARCH_DISPATCH
-		irq_attach((int)(arch_ctx_cfg->irq), rtfw_isr_handler, (void *)isr_cfg);
+		irq_attach((int)(arch_ctx_cfg->irq), rtfw_irq_handler, (void *)isr_cfg);
 #endif
 		up_init_irq((int)(arch_ctx_cfg->vector_num), (int)(arch_ctx_cfg->level));
 		if (isr_cfg->is_enabled_on_init) {

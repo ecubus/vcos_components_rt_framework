@@ -31,11 +31,13 @@
 IFX_INTERRUPT_INTERNAL(rtfw_isr_##isr_id, core, level) {\
                                                             const os_isr_cfg_t *isr_cfg = (os_isr_cfg_t *)arg;\
                                                             __mtcr(TX3XX_CPU_PSW, __mfcr(TX3XX_CPU_PSW) | CPU_PSW_GW_MASK);\
-                                                            __dsync();\
                                                             __isync();\
+                                                            tricore_set_isp();\
                                                             const os_ctx_cfg_t *pre_context = os_context_get_contexthdl();\
                                                             os_context_set_contexthdl(OS_ISR_GET_CONTEXT_REF(isr_cfg));\
+                                                            (void)up_increase_irq_nesting();\
                                                             isr_cfg->context.arch_ctx_cfg.entry_addr(NULL_PTR);\
+                                                            (void)up_decrease_irq_nesting();\
                                                             os_context_set_contexthdl(pre_context);\
                                                             }
 
@@ -43,18 +45,20 @@ IFX_INTERRUPT_INTERNAL(rtfw_isr_##isr_id, core, level) {\
 IFX_INTERRUPT_INTERNAL(rtfw_isr_##isr_id, core, level) {\
                                                             const os_isr_cfg_t *isr_cfg = (os_isr_cfg_t *)arg;\
                                                             __mtcr(TX3XX_CPU_PSW, __mfcr(TX3XX_CPU_PSW) | CPU_PSW_GW_MASK);\
-                                                            __dsync();\
                                                             __isync();\
+                                                            tricore_set_isp();\
                                                             const os_ctx_cfg_t *pre_context = os_context_get_contexthdl();\
                                                             os_context_set_contexthdl(OS_ISR_GET_CONTEXT_REF(isr_cfg));\
+                                                            (void)up_increase_irq_nesting();\
                                                             isr_cfg->context.arch_ctx_cfg.entry_addr(NULL_PTR);\
+                                                            (void)up_decrease_irq_nesting();\
                                                             os_context_set_contexthdl(pre_context);\
                                                             }
 
 #define DEFINE_CAT2_INTERRUPT_INTERNAL(core, level, isr_id, arg) \
 IFX_INTERRUPT_INTERNAL(rtfw_isr_##isr_id, core, level) {\
                                                             uintptr_t *regs = (uintptr_t *)__mfcr(TC3XX_CPU_PCXI);\
-                                                            regs = (uintptr_t *)rtfw_isr_handler(0,regs,(void *)(arg));\
+                                                            regs = (uintptr_t *)rtfw_irq_handler(0,regs,(void *)(arg));\
                                                             __mtcr(TC3XX_CPU_PCXI, (uintptr_t)regs);\
                                                             __isync();\
                                                             }

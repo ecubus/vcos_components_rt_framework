@@ -149,6 +149,10 @@ FUNC(StatusType, OS_CODE) ChainTask(TaskType task_id)
 	}
 #endif
 
+	if (LIKELY(status == OS_STATUS_OK)) {
+		status = os_terminate_task();
+	}
+
 	REPORT_SERVICE_ERROR(OSServiceId_ChainTask, status, 1, (uintptr_t)task_id);
 	return (StatusType)status;
 }
