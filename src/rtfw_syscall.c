@@ -32,6 +32,9 @@
 #if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
 #include "rtfw_counter.h"
 #endif
+#if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
+#include "rtfw_ioc.h"
+#endif
 
 /* global Function Implementation */
 #define OS_START_SEC_CODE
@@ -270,6 +273,74 @@ FUNC(void, OS_CODE) rtfw_syscall_handler(void *syscall_args, uint32_t *regs)
 								  syscall->syscall_param[OS_SYSCALLPARAMINDEX_4].param_va_list);
 			break;
 #endif /* CONFIG_RT_FRAMEWORK_ERROR */
+#if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
+		case OS_SYSCALLID_IOC08SEND:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_08_send(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type,
+							   syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint8_t);
+			break;
+		case OS_SYSCALLID_IOC08RECEIVE:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_08_receive(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type,
+								  syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint8_ref_t);
+			break;
+		case OS_SYSCALLID_IOC08EMPTYQUEUE:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_08_empty_queue(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type);
+			break;
+		case OS_SYSCALLID_IOC16SEND:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_16_send(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type,
+							   syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint16_t);
+			break;
+		case OS_SYSCALLID_IOC16RECEIVE:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_16_receive(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type,
+								  syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint16_ref_t);
+			break;
+		case OS_SYSCALLID_IOC16EMPTYQUEUE:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_16_empty_queue(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type);
+			break;
+		case OS_SYSCALLID_IOC32SEND:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_32_send(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type,
+							   syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint32_t);
+			break;
+		case OS_SYSCALLID_IOC32RECEIVE:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_32_receive(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type,
+								  syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint32_ref_t);
+			break;
+		case OS_SYSCALLID_IOC32EMPTYQUEUE:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_32_empty_queue(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type);
+			break;
+		case OS_SYSCALLID_IOCREFSEND:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_ref_send(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type,
+								syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_const_void_ref_type);
+			break;
+		case OS_SYSCALLID_IOCREFRECEIVE:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_ref_receive(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type,
+								   syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_void_ref_type);
+			break;
+		case OS_SYSCALLID_IOCREFEMPTYQUEUE:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_ref_empty_queue(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type);
+			break;
+		case OS_SYSCALLID_IOCWRITE:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_write(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type,
+							 syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_const_void_ref_type);
+			break;
+		case OS_SYSCALLID_IOCREAD:
+			syscall->syscall_return_value.return_os_status =
+				os_ioc_read(syscall->syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type,
+							syscall->syscall_param[OS_SYSCALLPARAMINDEX_2].param_void_ref_type);
+			break;
+#endif /* CONFIG_RT_FRAMEWORK_IOC */
 		default:
 			/* do nothing */
 			break;

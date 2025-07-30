@@ -64,6 +64,12 @@ struct os_ipicall_set_event_param {
 	os_event_mask_t mask;
 };
 
+#if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
+struct os_ipicall_hook_call_callback_param {
+	HookType hook_id;
+};
+#endif
+
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
 struct os_ipicall_start_schtbl_rel_param {
 	ScheduleTableType schedtable_id;
@@ -127,11 +133,15 @@ struct os_ipicall_test_param {
 	uint32 test_value;
 };
 #endif
+
 union os_ipicall_param_e {
 	os_ipicall_activate_task_param_t avtivate_task_param;
 	os_ipicall_get_event_param_t get_event_param;
 	os_ipicall_set_event_param_t set_event_param;
 	os_ipicall_get_app_state_param_t get_app_state_param;
+#if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
+	os_ipicall_hook_call_callback_param_t hook_call_callback_param;
+#endif
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
 	os_ipicall_start_schtbl_rel_param_t start_schtbl_rel_param;
 	os_ipicall_start_schtbl_abs_param_t start_schtbl_abs_param;
@@ -237,6 +247,10 @@ extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_schedule_table_app_id(uint32 
 extern FUNC(Os_StatusType, OS_CODE) os_ipicall_clear_schedule_table_app_id(uint32 target_core, ScheduleTableType schedtable_id,
                                                                           ApplicationIDType app_id);
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1) */
+#if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_hook_call_callback(uint32 target_core, HookType hook_id);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_hook_call_callback(os_ipicall_data_t *param);
+#endif
 extern FUNC(void, OS_CODE) os_ipicall_init(const os_ipicall_cfg_t *const os_ipicall_cfg_table[], OsObjIndexType count);
 extern FUNC(Os_StatusType, OS_CODE) os_ipicall_activate_task(uint32 target_core, TaskType task_id);
 extern FUNC(Os_StatusType, OS_CODE) os_ipicall_activate_task_asyn(uint32 target_core, TaskType task_id);

@@ -1,0 +1,106 @@
+/*
+ * Copyright (c) 2025 Li Auto Inc. and its affiliates
+ * Licensed under the Apache License, Version 2.0(the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Description: Os Ioc
+ * AutoGenerate Code, DO NOT EDIT!!!
+ * {{get_generation_time()}}
+ * {{get_project_name()}}
+ * {{get_vcos_version()}}
+ */
+
+#ifndef RT_FRAMEWORK_GEN_IOC_H
+#define RT_FRAMEWORK_GEN_IOC_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/* Including File */
+#include "Os_Types.h"
+{%- set ioc_config, ioc_headers = get_ioc_cfg() %}
+/* User file includes */
+{%- if ioc_headers %}
+    {%- for header in ioc_headers %}
+#include "{{header}}"
+    {%- endfor %}
+{%- endif %}
+
+/* Global Macro Definition */
+
+/* Global Function Declaration */
+{%- for ioc_name in ioc_config %}
+    {%- if "OsIocDataProperties" in ioc_config[ioc_name] %}
+        {%- set dataType = ioc_config[ioc_name]["OsIocDataProperties"]["datatype"] %}
+        {%- set baseDataType = get_ioc_base_datatype(dataType) %}
+    {%- else: %}
+        {%- set dataType = "uint8" %}
+        {%- set baseDataType = "uint8" %}
+    {%- endif %}
+    {%- if "OsIocBufferLength" in ioc_config[ioc_name]%}
+        {%- set queuelen = ioc_config[ioc_name]["OsIocBufferLength"] %}
+    {%- else: %}
+        {%- set queuelen = 0 %}
+    {%- endif %}
+    {%- if queuelen == 0 : %}
+        {%- if baseDataType in ["uint8", "sint8", "boolean","uint16", "sint16", "uint32", "sint32", "float32", "uint64", "sint64","float64"] : %}
+extern Std_ReturnType IocWrite_{{ioc_name}} ( {{dataType}} Arg0 );
+        {%- else: %}
+extern Std_ReturnType IocWrite_{{ioc_name}} ( {{dataType}} *Arg0 );
+        {%- endif %}
+extern Std_ReturnType IocRead_{{ioc_name}} ( {{dataType}} *Arg0 );
+    {%- else: %}
+        {%- for index in range(get_ioc_sender_cnt(ioc_name)) %}
+            {%- set sender_id = ioc_config[ioc_name]["OsIocSenderProperties"][index]["OsIocSenderId"] %}
+                {%- if baseDataType in ["uint8", "sint8","boolean"] :%}
+extern Std_ReturnType IocSend_{{ioc_name}}_{{sender_id}} ( {{dataType}} Arg0 );
+                {%- elif baseDataType in ["uint16", "sint16"]:%}
+extern Std_ReturnType IocSend_{{ioc_name}}_{{sender_id}} ( {{dataType}} Arg0 );
+                {%- elif baseDataType in ["uint32", "sint32", "float32"]:%}
+extern Std_ReturnType IocSend_{{ioc_name}}_{{sender_id}} ( {{dataType}} Arg0 );
+                {%- elif baseDataType in ["uint64","sint64", "float64"]:%}
+extern Std_ReturnType IocSend_{{ioc_name}}_{{sender_id}} ( {{dataType}} Arg0 );
+                {%- else:%}
+extern Std_ReturnType IocSend_{{ioc_name}}_{{sender_id}} ( {{dataType}}* Arg0 );
+                {%- endif %}
+        {%- endfor %}
+
+        {%- if baseDataType in ["uint8", "sint8","boolean"] :%}
+extern Std_ReturnType IocReceive_{{ioc_name}} ( {{dataType}}* Arg0 );
+        {%- elif baseDataType in ["uint16", "sint16"]:%}
+extern Std_ReturnType IocReceive_{{ioc_name}} ( {{dataType}}* Arg0 );
+        {%- elif baseDataType in ["uint32", "sint32", "float32"]:%}
+extern Std_ReturnType IocReceive_{{ioc_name}} ( {{dataType}}* Arg0 );
+        {%- elif baseDataType in ["uint64","sint64", "float64"]:%}
+extern Std_ReturnType IocReceive_{{ioc_name}} ( {{dataType}}* Arg0 );
+        {%- else:%}
+extern Std_ReturnType IocReceive_{{ioc_name}} ( {{dataType}}* Arg0 );
+        {%- endif %}
+    {%- endif %}
+
+{%- endfor %}
+
+/* Global Type & Structure Definition */
+
+/* Global Variable Declaration */
+
+/* Global Function Implementation */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  /* RT_FRAMEWORK_GEN_IOC_H */

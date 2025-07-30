@@ -74,7 +74,8 @@ def prepare_os_base_config(sys_config:dict, config_dict:dict):
         "os_ui": input_ui_dict,
         "sys_cfg": sys_config,
         "os_core": core_dict,
-        "config_dict": config_dict
+        "config_dict": config_dict,
+        "ioc_data_dict": config_dict.get("rte",{}).get("implementation_datatypes",{})
     }
     return config
 
@@ -150,6 +151,21 @@ def generate_dynamic_code(sys_config: dict, config_dict: dict):
 
     template = env_ui.get_template("isr_cfg.h.jinja2")
     render_os_template(template, output_dir, "isr_cfg.h", config)
+
+    # ################################################## #
+    #    IOC                                             #
+    # ################################################## #
+    template = env_ui.get_template("ioc.c.jinja2")
+    render_os_template(template, output_dir, "ioc.c", config)
+
+    template = env_ui.get_template("ioc.h.jinja2")
+    render_os_template(template, output_dir, "ioc.h", config)
+
+    template = env_ui.get_template("ioc_cfg.c.jinja2")
+    render_os_template(template, output_dir, "ioc_cfg.c", config)
+
+    template = env_ui.get_template("ioc_cfg.h.jinja2")
+    render_os_template(template, output_dir, "ioc_cfg.h", config)
 
     # ################################################## #
     #    SPINLOCK                                        #

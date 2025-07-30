@@ -248,6 +248,36 @@ FUNC(void, OS_CODE) os_spinlock_init(void)
 	}
 }
 
+FUNC(Os_StatusType, OS_CODE) os_get_raw_spinlock(const os_spin_id_t spin_id)
+{
+	os_spin_inst_t *lock_inst;
+	const os_spinlock_cfg_t *spin_cfg;
+
+	spin_cfg = os_spinlock_cfg_ref_table[spin_id];
+	lock_inst = spin_cfg->obj_desc;
+
+	spin_suspend_lock_method(spin_cfg->method);
+
+	__spin_lock(&(lock_inst->spin));
+
+	return OS_STATUS_OK;
+}
+
+FUNC(Os_StatusType, OS_CODE) os_release_raw_spinlock(const os_spin_id_t spin_id)
+{
+	os_spin_inst_t *lock_inst;
+	const os_spinlock_cfg_t *spin_cfg;
+
+	spin_cfg = os_spinlock_cfg_ref_table[spin_id];
+	lock_inst = spin_cfg->obj_desc;
+
+	__spin_unlock(&(lock_inst->spin));
+
+	spin_remove_lock_method(spin_cfg->method);
+
+	return OS_STATUS_OK;
+}
+
 FUNC(Os_StatusType, OS_CODE) os_get_spinlock(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;

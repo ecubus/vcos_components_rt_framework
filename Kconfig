@@ -134,6 +134,12 @@ config RT_FRAMEWORK_IPICALL_TEST
 	---help---
 		Enable RT_FRAMEWORK_IPICALL_TEST
 
+config RT_FRAMEWORK_IOC
+	bool "RT_FRAMEWORK_IOC"
+	default n
+	---help---
+		Enable RT_FRAMEWORK_IOC
+
 config RT_FRAMEWORK_SPINLOCK
 	bool "RT_FRAMEWORK_SPINLOCK"
 	default n
@@ -253,5 +259,35 @@ config RT_FRAMEWORK_HAVE_TRAP_HANDLER
 	default n
 	---help---
 		Enable RT_FRAMEWORK_HAVE_TRAP_HANDLER
+
+config RT_FRAMEWORK_SHARE_TASK_TEMP_STACK_BUF_SZ
+	int "Share task temporary stack buffer size"
+	default 0
+	---help---
+		Defines the size of the temporary stack buffer used by
+		shared tasks.
+
+config RT_FRAMEWORK_SHARE_TASK_TEMP_STACK_BUF_SZ_ENABLE
+	bool
+	default n if RT_FRAMEWORK_SHARE_TASK_TEMP_STACK_BUF_SZ = 0
+	default y
+	---help---
+		Enable RT_FRAMEWORK_SHARE_TASK_TEMP_STACK_BUF_SZ
+
+config RT_FRAMEWORK_TEMP_TLS_AND_ARGV_BUF_SZ
+	int "Share task temporary TLS and argv buffer size"
+	default 80
+	---help---
+		Defines the size of the temporary TLS and argv buffer used by
+		shared tasks.
+
+config RT_FRAMEWORK_SHARE_TASK_STACK
+	bool "RT_FRAMEWORK_SHARE_TASK_STACK"
+	depends on RR_DISABLED
+	depends on !SCHED_THREAD_LOCAL
+	depends on RT_FRAMEWORK_SHARE_TASK_TEMP_STACK_BUF_SZ_ENABLE
+	default n
+	---help---
+		Enable RT_FRAMEWORK_SHARE_TASK_STACK
 
 endif # RT_FRAMEWORK

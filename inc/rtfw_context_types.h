@@ -48,28 +48,30 @@ extern "C"
 # define OS_TASK_CONTEXT_ID              ((os_context_id_t)1 <<  0)
 /*! Call context ID for Category 2 ISRs. */
 # define OS_ISR2_CONTEXT_ID              ((os_context_id_t)1 <<  1)
-/*! Call context ID for Error Hooks. */
+/*! Call context ID for Error Hooks.    */
 # define OS_ERRORHOOK_CONTEXT_ID         ((os_context_id_t)1 <<  2)
-/*! Call context ID for PreTask Hooks. */
+/*! Call context ID for PreTask Hooks.  */
 # define OS_PRETASKHOOK_CONTEXT_ID       ((os_context_id_t)1 <<  3)
 /*! Call context ID for PostTask Hooks. */
 # define OS_POSTTASKHOOK_CONTEXT_ID      ((os_context_id_t)1 <<  4)
-/*! Call context ID for Startup Hooks. */
+/*! Call context ID for Startup Hooks.  */
 # define OS_STARTUPHOOK_CONTEXT_ID       ((os_context_id_t)1 <<  5)
 /*! Call context ID for Shutdown Hooks. */
 # define OS_SHUTDOWNHOOK_CONTEXT_ID      ((os_context_id_t)1 <<  6)
+/*! Call context ID for Callback Hooks. */
+# define OS_IOCCALLBACKHOOK_CONTEXT_ID   ((os_context_id_t)1 <<  7)
 /*! Call context ID for Alarm Callbacks. */
-# define OS_ALARMCALLBACK_CONTEXT_ID     ((os_context_id_t)1 <<  7)
-/*! Call context ID for Protection Hooks. */
-# define OS_PROTECTIONHOOK_CONTEXT_ID    ((os_context_id_t)1 <<  8)
+# define OS_ALARMCALLBACK_CONTEXT_ID     ((os_context_id_t)1 <<  8)
+/*! Call context ID for Protection Hooks.*/
+# define OS_PROTECTIONHOOK_CONTEXT_ID    ((os_context_id_t)1 <<  9)
 /*! Call context ID for Pre-Start Tasks. */
-# define OS_PRESTARTTASK_CONTEXT_ID      ((os_context_id_t)1 <<  9)
+# define OS_PRESTARTTASK_CONTEXT_ID      ((os_context_id_t)1 << 10)
 /*! Call context ID for Timing Protection ISR. */
-# define OS_TPISR_CONTEXT_ID             ((os_context_id_t)1 << 10)
+# define OS_TPISR_CONTEXT_ID             ((os_context_id_t)1 << 11)
 /*! Call context ID for Category 1 ISRs. */
-# define OS_ISR1_CONTEXT_ID              ((os_context_id_t)1 << 11)
+# define OS_ISR1_CONTEXT_ID              ((os_context_id_t)1 << 12)
 /*! Call context ID for Category 0 ISRs. */
-# define OS_ISR0_CONTEXT_ID              ((os_context_id_t)1 << 12)
+# define OS_ISR0_CONTEXT_ID              ((os_context_id_t)1 << 13)
 
 /*! Any Category2 ISR (allows easy check whether the current context is a ISR function) */
 # define OS_CONTEXT_ISR               ((os_context_id_t)(OS_ISR2_CONTEXT_ID      | \
@@ -89,6 +91,7 @@ extern "C"
 								OS_POSTTASKHOOK_CONTEXT_ID  |   \
 								OS_STARTUPHOOK_CONTEXT_ID   |   \
 								OS_SHUTDOWNHOOK_CONTEXT_ID  |   \
+								OS_IOCCALLBACKHOOK_CONTEXT_ID  |   \
 								OS_ALARMCALLBACK_CONTEXT_ID |   \
 								OS_PROTECTIONHOOK_CONTEXT_ID))
 
@@ -100,6 +103,7 @@ extern "C"
 								OS_POSTTASKHOOK_CONTEXT_ID  |   \
 								OS_STARTUPHOOK_CONTEXT_ID   |   \
 								OS_SHUTDOWNHOOK_CONTEXT_ID  |   \
+								OS_IOCCALLBACKHOOK_CONTEXT_ID  |   \
 								OS_PRESTARTTASK_CONTEXT_ID  |   \
 								OS_ALARMCALLBACK_CONTEXT_ID  ))
 

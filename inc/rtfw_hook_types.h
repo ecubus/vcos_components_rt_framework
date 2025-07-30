@@ -20,14 +20,21 @@
 extern "C" {
 #endif
 
-#define OS_ERRORHOOK_HOOKNESTINGMASK ((os_context_id_t)(OS_STARTUPHOOK_CONTEXT_ID))
+#define OS_ERRORHOOK_HOOKNESTINGMASK                                                                                   \
+	((os_context_id_t)((OS_STARTUPHOOK_CONTEXT_ID) | (OS_IOCCALLBACKHOOK_CONTEXT_ID)))
 
-#define OS_PROTECTIONHOOK_HOOKNESTINGMASK ((os_context_id_t)((OS_ERRORHOOK_CONTEXT_ID) | (OS_STARTUPHOOK_CONTEXT_ID)))
+#define OS_PROTECTIONHOOK_HOOKNESTINGMASK                                                                              \
+	((os_context_id_t)((OS_ERRORHOOK_CONTEXT_ID) | (OS_STARTUPHOOK_CONTEXT_ID) | (OS_IOCCALLBACKHOOK_CONTEXT_ID)))
 
 #define OS_STARTUPHOOK_HOOKNESTINGMASK ((os_context_id_t)0)
 
 #define OS_SHUTDOWNHOOK_HOOKNESTINGMASK                                                                                \
-	((os_context_id_t)((OS_ERRORHOOK_CONTEXT_ID) | (OS_PROTECTIONHOOK_CONTEXT_ID) | (OS_STARTUPHOOK_CONTEXT_ID)))
+	((os_context_id_t)((OS_ERRORHOOK_CONTEXT_ID) | (OS_PROTECTIONHOOK_CONTEXT_ID) |                                    \
+					 (OS_STARTUPHOOK_CONTEXT_ID) | (OS_IOCCALLBACKHOOK_CONTEXT_ID)))
+
+#define OS_IOCCALLBACKHOOK_HOOKNESTINGMASK                                                                             \
+	((os_context_id_t)((OS_ERRORHOOK_CONTEXT_ID) | (OS_PROTECTIONHOOK_CONTEXT_ID) |                                    \
+					 (OS_STARTUPHOOK_CONTEXT_ID) | (OS_SHUTDOWNHOOK_CONTEXT_ID)))
 
 struct os_hook_inst_s;
 typedef struct os_hook_inst_s os_hook_inst_t;

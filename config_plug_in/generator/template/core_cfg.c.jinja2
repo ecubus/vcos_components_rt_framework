@@ -42,9 +42,15 @@
 #include "rtfw_hook.h"
 #include "hook_cfg.h"
 #endif /* CONFIG_RT_FRAMEWORK_HOOK */
+#if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
+#include "rtfw_ioc.h"
+#include "ioc_cfg.h"
+#endif /* CONFIG_RT_FRAMEWORK_IOC */
 
 {%- set core_config = get_core_configs() %}
+{%- set core_ioc = get_ioc_cnt_by_core() %}
 {%- set hw2log = get_hw2log_map() %}
+
 #define OS_START_SEC_CONST
 #include "rtfw_memmap.h"
 
@@ -81,6 +87,15 @@ DeclareCore(OS_CONST_SECTION, {{app_cfg[bsw_app_name]["AppInstSection"]}}, {{cor
     /* .app_ref  = */        os_core{{core_num}}_apps_cfg_ref_table,
     /* .app_count  = */      &os_core{{core_num}}_apps_cfg_ref_table_size,
 #endif
+#if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
+    {%- if core_ioc.get(core_val["core_id"], 0) > 0 %}
+    /* .ioc_refs = */        os_core{{core_num}}_ioc_cfg_ref_table,
+    /* .ioc_count = */       &os_core{{core_num}}_ioc_cfg_ref_table_size,
+    {%- else %}
+    /* .ioc_refs = */        NULL_PTR,
+    /* .ioc_count = */       NULL_PTR,
+    {%- endif %}
+#endif /* CONFIG_RT_FRAMEWORK_IOC */
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
     /* .ipicall_refs = */     os_core{{core_num}}_ipicalls_cfg_ref_table,
     /* .ipicall_count = */    &os_core{{core_num}}_ipicalls_cfg_ref_table_size,

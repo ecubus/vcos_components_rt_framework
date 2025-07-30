@@ -246,6 +246,7 @@ FUNC(protection_return_t, OS_CODE) os_hook_call_callback(const os_hook_cfg_t *ho
 		case OS_ERRORHOOK_CONTEXT_ID:
 			((status_hook_callback_t)hook_call_back)(hook_status);
 			break;
+		case OS_IOCCALLBACKHOOK_CONTEXT_ID:
 		case OS_STARTUPHOOK_CONTEXT_ID:
 			((void_hook_callback_t)hook_call_back)();
 			break;
@@ -269,6 +270,47 @@ FUNC(Os_StatusType, OS_CODE) os_hook_call_void_hook(HookType hook_id)
 	os_hook_call(hook_cfg);
 
 	return OS_STATUS_OK;
+}
+
+FUNC(Os_StatusType, OS_CODE) os_hook_call_ioc_callback_invoke(const os_hook_cfg_t *hook_cfg)
+{
+	if ((hook_cfg == NULL) || (OS_HOOK_GET_INSTANCE_REF(hook_cfg) == NULL_PTR)) {
+		return OS_STATUS_PARAM_POINTER_1;
+	}
+
+#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+	const os_ctx_cfg_t *hook_context = OS_HOOK_GET_CONTEXT_REF(hook_cfg);
+
+	if (os_app_check_is_accessible(OS_CONTEXT_GET_APPONRWECFG_REF(hook_context))!= OS_STATUS_OK) {
+		return OS_STATUS_NOTACCESSIBLE_1;
+	}
+#endif
+	os_hook_call(hook_cfg);
+
+	return OS_STATUS_OK;
+}
+
+FUNC(Os_StatusType, OS_CODE) os_hook_call_ioc_callback(const os_hook_cfg_t *hook_cfg)
+{
+	Os_StatusType status = OS_STATUS_OK;
+
+	if ((hook_cfg == NULL) || (OS_HOOK_GET_INSTANCE_REF(hook_cfg) == NULL_PTR)) {
+		return OS_STATUS_PARAM_POINTER_1;
+	}
+
+	CoreIdType hook_core_id = OS_HOOK_GET_OWNER_COREID(hook_cfg);
+
+	if (hook_core_id == os_get_core_id()) {
+		status = os_hook_call_ioc_callback_invoke(hook_cfg);
+	} else {
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
+		return os_ipicall_hook_call_callback((uint32)hook_core_id, OS_HOOK_GET_HOOKID(hook_cfg));
+#else
+		return OS_STATUS_ID_1;
+#endif /* CONFIG_RT_FRAMEWORK_IPICALL */
+	}
+
+	return status;
 }
 
 FUNC(Os_StatusType, OS_CODE) os_hook_call_status_hook(HookType hook_id, StatusType error)

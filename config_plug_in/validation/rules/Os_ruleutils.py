@@ -121,6 +121,42 @@ class OsRuleutils():
                 if task_name in OsAppTaskRef_list:
                     app_name = k
         return app_name
+    
+    def get_ioc_datatype(self, types_path)->list:
+        """
+        查找获取所有的Ioc支持的datatype类型, 返回列表
+        参数：
+            types_path: Os_Types.h路径
+        返回值：
+            ioc_datatype_list
+        """
+        ioc_datatype_list, os_types_list = [], []
+        basic_datatype_list = (['boolean', 'char', 'double', 'float', 'float32', 'float64', 'int', 'long', 'long double', 'long int', 'long long', 'long long int', 'short', 'short int', 'signed', 'signed char', 
+                           'signed int', 'signed long', 'signed long int', 'signed long long', 'signed long long int', 'signed short', 'signed short int', 'sint8', 'sint8_least', 'sint16', 'sint16_least', 
+                           'sint32', 'sint32_least', 'sint64', 'uint8', 'uint8_least', 'uint16', 'uint16_least', 'uint32', 'uint32_least', 'uint64', 'unsigned', 'unsigned char', 'unsigned int', 'unsigned long', 'unsigned long int', 
+                           'unsigned long long', 'unsigned long long int', 'unsigned short', 'unsigned short int'])
+
+        # 正则匹配Os_Types.h文件，获取所有typedef的自定义类型
+        try:
+            with open(types_path,'r') as f:
+                content = f.read()
+            pattern = r'\s*typedef.*(\b\w+[^)}]);'
+            pattern2 =r'typedef(?:.|\n)*?}\s*(\w+)\W*;'
+            os_types_list = re.findall(pattern, content)
+            os_types_list2 = re.findall(pattern2, content)
+            set1 = set(os_types_list)
+            set2 = set(os_types_list2)
+            union_set = set1.union(set2)
+            os_types_list = list(union_set)
+        except FileNotFoundError as e:
+            print(f"File not found: {str(e)}")
+        except Exception as e:
+            print(f"An error occurred: {str(e)}")
+
+        ioc_datatype_list.extend(basic_datatype_list)
+        if os_types_list:
+           ioc_datatype_list.extend(os_types_list)
+        return ioc_datatype_list
 
     def get_module_property_value(self, module_type, module_name, property_name, ecuc_os_dict):
         """

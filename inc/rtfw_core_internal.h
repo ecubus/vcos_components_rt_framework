@@ -41,10 +41,14 @@ extern "C" {
 
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
 #include "rtfw_hook_internal.h"
-#endif /* CONFIG_RT_FRAMEWORK_IPICALL */
+#endif /* CONFIG_RT_FRAMEWORK_HOOK */
 
 #if defined(CONFIG_RT_FRAMEWORK_ERROR) && (CONFIG_RT_FRAMEWORK_ERROR == 1)
 #include "rtfw_error_internal.h"
+#endif
+
+#if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
+#include "rtfw_ioc_internal.h"
 #endif
 
 #if defined (CONFIG_RT_FRAMEWORK_HAVE_TRAP_HANDLER) && (CONFIG_RT_FRAMEWORK_HAVE_TRAP_HANDLER == 1)
@@ -55,7 +59,7 @@ extern "C" {
 
 /* 获取 os_core_cfg_t 中的信息 */
 #define OS_CORE_GET_CORE_INSTANCE_REF(core_ref) ((core_ref)->instance)
-#define OS_CORE_GET_COREID(core_ref) ((core_ref)->core_id)
+#define OS_CORE_GET_COREID(core_ref) (((os_core_cfg_t *)core_ref)->core_id)
 #define OS_CORE_GET_PHYSICAL_COREID(core_ref) ((core_ref)->physical_id)
 
 #define OS_CORE_GET_STARTUP_HOOK(core_ref) ((core_ref)->startup_hook)
@@ -107,6 +111,10 @@ struct os_core_cfg_s {
 	const os_app_cfg_t *const *app_refs; /*! Application reference. */
 	const OsObjIndexType *app_count; /*! Number of tasks. */
 #endif
+#if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
+	const os_ioc_cfg_t *const *ioc_refs;
+	const OsObjIndexType *ioc_count;
+#endif /* CONFIG_RT_FRAMEWORK_IOC */
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 	const os_ipicall_cfg_t *const *ipicall_refs; /*! Ipicall reference. */
 	const OsObjIndexType *ipicall_count; /*! Number of IpiCalls. */

@@ -31,9 +31,17 @@ extern "C"
 
 /* global Macro Definition */
 {% set os_task_config = get_task_cfg() %}
+{%- set task_stack_sharing_info, task_stack_sharing_ref = get_task_stack_sharing() %}
+{%- for core_id , combs in task_stack_sharing_info.items() %}
+    {%- for comb, comb_value in combs.items() %}
+#define {{ ("Core%s_%s_Cfg_Stack_Size" % (core_id, comb)) | upper }} ({{comb_value["ShareStackSize"]}}U)
+    {% endfor %}
+{%- endfor %}
 
 {%- for os_task, value in os_task_config.items() %}
+{% if os_task not in task_stack_sharing_ref.keys() %}
 #define {{os_task.upper()}}_CFG_STACK_SIZE         ({{value["TaskStackSize"]}}U)
+{% endif %}
 #define {{os_task.upper()}}_CFG_PRIORITY           ({{value["TaskPriority"]}}U)
 {% endfor %}
 /* global Enumeration Definition */

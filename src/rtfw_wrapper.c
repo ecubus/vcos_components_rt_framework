@@ -35,6 +35,9 @@
 #if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
 #include "rtfw_counter.h"
 #endif
+#if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
+#include "rtfw_ioc.h"
+#endif
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 static inline_function bool syscall_is_required(void)
@@ -684,6 +687,7 @@ FUNC(StatusType, OS_CODE) GetSpinlock(SpinlockIdType spinlock_id)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_GETSPINLOCK;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock = spinlock_id;
 
@@ -707,6 +711,7 @@ FUNC(StatusType, OS_CODE) ReleaseSpinlock(SpinlockIdType spinlock_id)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_RELEASESPINLOCK;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock = spinlock_id;
 
@@ -729,6 +734,7 @@ FUNC(StatusType, OS_CODE) TryToGetSpinlock(SpinlockIdType spinlock_id, TryToGetS
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_TRYTOGETSPINLOCK;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock = spinlock_id;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_try_to_get_spinlock_ref = success;
@@ -753,6 +759,7 @@ FUNC(StatusType, OS_CODE) GetSpinlockRead(SpinlockIdType spinlock_id)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_GETSPINLOCKREAD;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock = spinlock_id;
 
@@ -776,6 +783,7 @@ FUNC(StatusType, OS_CODE) GetSpinlockWrite(SpinlockIdType spinlock_id)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_GETSPINLOCKWRITE;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock = spinlock_id;
 
@@ -799,6 +807,7 @@ FUNC(StatusType, OS_CODE) ReleaseSpinlockRead(SpinlockIdType spinlock_id)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_RELEASESPINLOCKREAD;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock = spinlock_id;
 
@@ -822,6 +831,7 @@ FUNC(StatusType, OS_CODE) ReleaseSpinlockWrite(SpinlockIdType spinlock_id)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_RELEASESPINLOCKWRITE;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock = spinlock_id;
 
@@ -845,6 +855,7 @@ FUNC(StatusType, OS_CODE) TryToGetSpinlockRead(SpinlockIdType spinlock_id, TryTo
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_TRYTOGETSPINLOCKREAD;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock = spinlock_id;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_try_to_get_spinlock_ref = success;
@@ -868,6 +879,7 @@ FUNC(StatusType, OS_CODE) TryToGetSpinlockWrite(SpinlockIdType spinlock_id, TryT
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_TRYTOGETSPINLOCKWRITE;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_spinlock = spinlock_id;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_try_to_get_spinlock_ref = success;
@@ -892,6 +904,7 @@ FUNC(void, OS_CODE) DisableAllInterrupts(void)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_DISABLEALLINTERRUPTS;
 		up_syscall(&syscall);
 	}
@@ -907,6 +920,7 @@ FUNC(void, OS_CODE) EnableAllInterrupts(void)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_ENABLEALLINTERRUPTS;
 		up_syscall(&syscall);
 	}
@@ -922,6 +936,7 @@ FUNC(void, OS_CODE) SuspendAllInterrupts(void)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_SUSPENDALLINTERRUPTS;
 		up_syscall(&syscall);
 	}
@@ -937,6 +952,7 @@ FUNC(void, OS_CODE) ResumeAllInterrupts(void)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_RESUMEALLINTERRUPTS;
 		up_syscall(&syscall);
 	}
@@ -952,6 +968,7 @@ FUNC(void, OS_CODE) SuspendOSInterrupts(void)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_SUSPENDOSINTERRUPTS;
 		up_syscall(&syscall);
 	}
@@ -967,6 +984,7 @@ FUNC(void, OS_CODE) ResumeOSInterrupts(void)
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
+
 		syscall.syscall_id = OS_SYSCALLID_RESUMEOSINTERRUPTS;
 		up_syscall(&syscall);
 	}
@@ -1123,6 +1141,354 @@ FUNC(void, OS_CODE) service_error_report(OSServiceIdType service_id, Os_StatusTy
 	}
 #endif
 	va_end(args);
+}
+#endif
+
+#if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
+FUNC(StatusType, OS_CODE) Ioc08Send(IocIdType ioc_id, uint8 data)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_08_send(ioc_id, data);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOC08SEND;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint8_t = data;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocSend, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) Ioc08Receive(IocIdType ioc_id, uint8 *data)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_08_receive(ioc_id, data);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOC08RECEIVE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint8_ref_t = data;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocReceive, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) Ioc08EmptyQueue(IocIdType ioc_id)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_08_empty_queue(ioc_id);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOC08EMPTYQUEUE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocEmptyQueue, status, 1, (uintptr_t)ioc_id);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) Ioc16Send(IocIdType ioc_id, uint16 data)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_16_send(ioc_id, data);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOC16SEND;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint16_t = data;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocSend, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) Ioc16Receive(IocIdType ioc_id, uint16 *data)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_16_receive(ioc_id, data);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOC16RECEIVE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint16_ref_t = data;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocReceive, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) Ioc16EmptyQueue(IocIdType ioc_id)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_16_empty_queue(ioc_id);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOC16EMPTYQUEUE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocEmptyQueue, status, 1, (uintptr_t)ioc_id);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) Ioc32Send(IocIdType ioc_id, uint32 data)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_32_send(ioc_id, data);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOC32SEND;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint32_t = data;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocSend, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) Ioc32Receive(IocIdType ioc_id, uint32 *data)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_32_receive(ioc_id, data);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOC32RECEIVE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint32_ref_t = data;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocReceive, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) Ioc32EmptyQueue(IocIdType ioc_id)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_32_empty_queue(ioc_id);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOC32EMPTYQUEUE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocEmptyQueue, status, 1, (uintptr_t)ioc_id);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) IocRefSend(IocIdType ioc_id, void const *data)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_ref_send(ioc_id, data);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOCREFSEND;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_const_void_ref_type = data;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocSend, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) IocRefReceive(IocIdType ioc_id, void *data)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_ref_receive(ioc_id, data);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOCREFRECEIVE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_void_ref_type = data;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocReceive, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) IocRefEmptyQueue(IocIdType ioc_id)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_ref_empty_queue(ioc_id);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOCREFEMPTYQUEUE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocEmptyQueue, status, 1, (uintptr_t)ioc_id);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) IocWrite(IocIdType ioc_id, void const *data)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_write(ioc_id, data);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOCWRITE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_const_void_ref_type = data;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocWrite, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) IocRead(IocIdType ioc_id, void *data)
+{
+	Os_StatusType status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (syscall_is_required() == FALSE) {
+#endif
+		status = os_ioc_read(ioc_id, data);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_IOCREAD;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_void_ref_type = data;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+	REPORT_SERVICE_ERROR(OSServiceId_IocRead, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
+	return (StatusType)status;
 }
 #endif
 

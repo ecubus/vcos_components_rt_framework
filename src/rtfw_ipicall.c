@@ -37,23 +37,24 @@
 #define OS_IPICALL_GETEVENT ((os_ipicall_service_id_t)3)
 #define OS_IPICALL_SETEVENT ((os_ipicall_service_id_t)4)
 #define OS_IPICALL_SETEVENTASYN ((os_ipicall_service_id_t)5)
-#define OS_IPICALL_START_SCHEDULE_TABLE_REL ((os_ipicall_service_id_t)6)
-#define OS_IPICALL_START_SCHEDULE_TABLE_ABS ((os_ipicall_service_id_t)7)
-#define OS_IPICALL_STOP_SCHEDULE_TABLE ((os_ipicall_service_id_t)8)
-#define OS_IPICALL_GET_SCHEDULE_TABLE_STATUS ((os_ipicall_service_id_t)9)
-#define OS_IPICALL_NEXT_SCHEDULE_TABLE ((os_ipicall_service_id_t)10)
-#define OS_IPICALL_NEXT_SCHEDULE_TABLE_FROM_STOP ((os_ipicall_service_id_t)11)
-#define OS_IPICALL_START_SCHEDULE_TABLE_SYN ((os_ipicall_service_id_t)12)
-#define OS_IPICALL_SYNC_SCHEDULE_TABLE ((os_ipicall_service_id_t)13)
-#define OS_IPICALL_SET_SCHEDULE_TABLE_ASYNC ((os_ipicall_service_id_t)14)
-#define OS_IPICALL_DEVIATE_SCHEDULE_TABLE ((os_ipicall_service_id_t)15)
-#define OS_IPICALL_SET_SCHEDULE_TABLE_APP_ID ((os_ipicall_service_id_t)16)
-#define OS_IPICALL_CLEAR_SCHEDULE_TABLE_APP_ID ((os_ipicall_service_id_t)17)
+#define OS_IPICALL_HOOK_CALL_CALLBACK ((os_ipicall_service_id_t)6)
+#define OS_IPICALL_START_SCHEDULE_TABLE_REL ((os_ipicall_service_id_t)7)
+#define OS_IPICALL_START_SCHEDULE_TABLE_ABS ((os_ipicall_service_id_t)8)
+#define OS_IPICALL_STOP_SCHEDULE_TABLE ((os_ipicall_service_id_t)9)
+#define OS_IPICALL_GET_SCHEDULE_TABLE_STATUS ((os_ipicall_service_id_t)10)
+#define OS_IPICALL_NEXT_SCHEDULE_TABLE ((os_ipicall_service_id_t)11)
+#define OS_IPICALL_NEXT_SCHEDULE_TABLE_FROM_STOP ((os_ipicall_service_id_t)12)
+#define OS_IPICALL_START_SCHEDULE_TABLE_SYN ((os_ipicall_service_id_t)13)
+#define OS_IPICALL_SYNC_SCHEDULE_TABLE ((os_ipicall_service_id_t)14)
+#define OS_IPICALL_SET_SCHEDULE_TABLE_ASYNC ((os_ipicall_service_id_t)15)
+#define OS_IPICALL_DEVIATE_SCHEDULE_TABLE ((os_ipicall_service_id_t)16)
+#define OS_IPICALL_SET_SCHEDULE_TABLE_APP_ID ((os_ipicall_service_id_t)17)
+#define OS_IPICALL_CLEAR_SCHEDULE_TABLE_APP_ID ((os_ipicall_service_id_t)18)
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL_TEST) && (CONFIG_RT_FRAMEWORK_IPICALL_TEST == 1)
-#define OS_IPICALL_IPC_TEST_FUNCTION ((os_ipicall_service_id_t)18)
-#define OS_IPICALL_SERVICE_MAX ((os_ipicall_service_id_t)19)
+#define OS_IPICALL_IPC_TEST_FUNCTION ((os_ipicall_service_id_t)19)
+#define OS_IPICALL_SERVICE_MAX ((os_ipicall_service_id_t)20)
 #else
-#define OS_IPICALL_SERVICE_MAX ((os_ipicall_service_id_t)18)
+#define OS_IPICALL_SERVICE_MAX ((os_ipicall_service_id_t)19)
 #endif
 
 #define OS_START_SEC_CONST
@@ -67,6 +68,9 @@ os_ipicall_service_table[OS_IPICALL_SERVICE_MAX] = {
 	[OS_IPICALL_GETEVENT] = &os_ipicall_recv_get_event,
 	[OS_IPICALL_SETEVENT] = &os_ipicall_recv_set_event,
 	[OS_IPICALL_SETEVENTASYN] = &os_ipicall_recv_set_event_asyn,
+#if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
+	[OS_IPICALL_HOOK_CALL_CALLBACK] = &os_ipicall_recv_hook_call_callback,
+#endif
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
 	[OS_IPICALL_START_SCHEDULE_TABLE_REL] = &os_ipicall_recv_start_scheduletable_rel,
 	[OS_IPICALL_START_SCHEDULE_TABLE_ABS] = &os_ipicall_recv_start_scheduletable_abs,
@@ -503,6 +507,16 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_event_asyn(os_ipicall_data_t *p
 				 param->send_element.in_param.set_event_param.mask);
 }
 
+#if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
+FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_hook_call_callback(os_ipicall_data_t *param)
+{
+	HookType hook_id = param->send_element.in_param.hook_call_callback_param.hook_id;
+	const os_hook_cfg_t *hook_cfg = os_hook_cfg_ref_table[hook_id];
+
+	return os_hook_call_ioc_callback_invoke(hook_cfg);
+}
+#endif
+
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
 FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_start_scheduletable_rel(os_ipicall_data_t *param)
 {
@@ -827,6 +841,20 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_ipc_test_function(uint32 target_core, ui
 	param.ret_element.return_status = OS_STATUS_NOT_OK;
 
 	return os_ipicall_send(target_core, &param);
+}
+#endif
+
+#if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
+/*! HookCallCallback */
+FUNC(Os_StatusType, OS_CODE) os_ipicall_hook_call_callback(uint32 target_core, HookType hook_id)
+{
+	os_ipicall_data_t param;
+
+	param.send_element.service = OS_IPICALL_HOOK_CALL_CALLBACK;
+	param.send_element.in_param.hook_call_callback_param.hook_id = hook_id;
+	param.ret_element.return_status = OS_STATUS_NOT_OK;
+
+	return os_ipicall_send_async(target_core, &param);
 }
 #endif
 

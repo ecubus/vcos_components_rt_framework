@@ -49,7 +49,9 @@ extern "C" {
 #define OS_TASK_GET_TASKID(task_cfg) ((task_cfg)->task_id)
 #define OS_TASK_GET_AUTOSTARTMODE(task_cfg) ((task_cfg)->autostart_mode)
 #define OS_TASK_GET_ACTIVATIONLIMIT(task_cfg) ((task_cfg)->activation_limit)
-
+#if defined(CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK == 1)
+#define OS_TASK_GET_TASK_SHARE_STACK_REF(task_cfg) ((task_cfg)->task_share_stack)
+#endif
 /* 通过 os_task_cfg_t(task_cfg) 获取 os_ctx_cfg_t(ContextRef) 的内部信息 */
 #define OS_TASK_GET_INSTANCE_REF(task_cfg) ((os_task_inst_t *)((task_cfg)->context.instance))
 #define OS_TASK_GET_OBJNAME(task_cfg) ((task_cfg)->context.instance_name)
@@ -100,6 +102,10 @@ struct os_task_cfg_s {
 	OsTaskPrioType base_priority; /*! The configured priority of a task. */
 
 	os_task_event_t *event_hdl;
+
+#if defined(CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK == 1)
+	const task_share_stack_info_t * const task_share_stack;
+#endif
 	/* enum */
 
 	/* 16 bit */

@@ -31,9 +31,10 @@ class OsRule:
         "OsCounter": ["003003","014003","016011"],
         "OsEvent": ["003004","001002","014017"],
         "OsIsr": ["011003","014004", "013008"],
+        "OsIoc": ["001003","003005","003006","011001", "011002", "013011"],
         "OsScheduleTable": ["001007","002002","012003","013010","016003","014005","016004","016007"],
         "OsSpinlock": ["003002", "016001"],
-        "OsTask": ["013004","014006","014008","014009","014010","014015","014016","014018"],
+        "OsTask": ["013004","014006","014008","014009","014010","014015","014016","014018","014020","014021","014022","014023"],
         "OsMemoryProtection": ["016008","016009","016010", "016012"],
     }
 
@@ -44,14 +45,15 @@ class OsRule:
         self._validation_errors: Dict = {}
         self._component_logs: Dict = {}
 
-    def _validate_component_group(self, validate_marks: list, ecuc_os_dict: Dict, validation_cfg: Dict, component_name: str) -> None:
+    def _validate_component_group(self, validate_marks: list, ecuc_os_dict: Dict, validation_cfg: Dict, component_name: str, system_path: str) -> None:
         """
         执行单个组件组的验证
         Args:
             validate_marks: 验证标记列表
             ecuc_os_dict: OS配置字典
             validation_cfg: 验证配置
-            component_name: 组件名称（如OsScheduleTable）
+            component_name: 组件名称(如OsScheduleTable)
+            system_path: 验证执行路径
         """
         if validation_cfg.get(component_name, {}).get("skip", False):
             return
@@ -62,7 +64,7 @@ class OsRule:
                 validate_rule_package = importlib.import_module(module_path, __package__)
                 validate_rule_class = getattr(validate_rule_package, f'Os{validate_mark}Rule')
 
-                os_rule_obj = validate_rule_class(self.logs, ecuc_os_dict, validation_cfg)
+                os_rule_obj = validate_rule_class(self.logs, ecuc_os_dict, validation_cfg, system_path)
                 os_rule_obj.validation_run()
 
             except Exception as e:
@@ -83,6 +85,7 @@ class OsRule:
             Dict: 验证日志字典
         """
         sys_info = validation_data.sys_info_class
+        system_path = sys_info.system_path
         bsw_ecuc_cfg_class_dict = validation_data.bsw_ecuc_dict
         ecuc_os_dict = bsw_ecuc_cfg_class_dict['Os']['ArPackages']['ActiveEcuC']['Os']
         validation_cfg = (
@@ -92,7 +95,7 @@ class OsRule:
         )
         for component_name, validate_marks in self.validate_rule_groups.items():
             try:
-                self._validate_component_group(validate_marks, ecuc_os_dict, validation_cfg, component_name)
+                self._validate_component_group(validate_marks, ecuc_os_dict, validation_cfg, component_name, system_path)
             except Exception as e:
                 validate_code = validate_marks[0] if validate_marks else "UNKNOWN"
                 ExceptionRuleLog.set_rule_exception_log(

@@ -31,14 +31,18 @@ extern "C"
 
 /* Including File */
 
-/* global Macro Definition */
+/* Global Macro Definition */
 
-/* global Enumeration Definition */
+/* Global Enumeration Definition */
 {%- set os_spinlock_config = get_spinlock_cfg() %}
+{%- set os_ioc_spinlock_id_set = get_ioc_spinlock_id_set() %}
 {%- set osmempool_spinlockid_set = get_osmempool_spinlock_id_set_ui() %}
 typedef enum {
 {%- for spinlock in os_spinlock_config %}
     {{spinlock.upper()}},
+{%- endfor %}
+{%- for spinlock_id in os_ioc_spinlock_id_set %}
+    {{spinlock_id.upper()}},
 {%- endfor %}
 {%- for spinlock_id in osmempool_spinlockid_set %}
     {{spinlock_id.upper()}},
@@ -47,13 +51,13 @@ typedef enum {
     OS_SPINLOCK_NONE
 } OS_SPINLOCKID_DEF;
 
-/* global type & Structure Definition */
+/* Global type & Structure Definition */
 
-/* global Variable Declaration */
+/* Global Variable Declaration */
 
-/* global Function Declaration */
+/* Global Function Declaration */
 
-/* global Function Implementation */
+/* Global Function Implementation */
 
 #ifdef __cplusplus
 }

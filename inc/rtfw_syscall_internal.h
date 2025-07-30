@@ -83,6 +83,22 @@ typedef enum {
 #if defined(CONFIG_RT_FRAMEWORK_ERROR) && (CONFIG_RT_FRAMEWORK_ERROR == 1)
 	OS_SYSCALLID_SERVICEERRORREPORT,
 #endif /* CONFIG_RT_FRAMEWORK_ERROR */
+#if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
+	OS_SYSCALLID_IOC08SEND,
+	OS_SYSCALLID_IOC08RECEIVE,
+	OS_SYSCALLID_IOC08EMPTYQUEUE,
+	OS_SYSCALLID_IOC16SEND,
+	OS_SYSCALLID_IOC16RECEIVE,
+	OS_SYSCALLID_IOC16EMPTYQUEUE,
+	OS_SYSCALLID_IOC32SEND,
+	OS_SYSCALLID_IOC32RECEIVE,
+	OS_SYSCALLID_IOC32EMPTYQUEUE,
+	OS_SYSCALLID_IOCREFSEND,
+	OS_SYSCALLID_IOCREFRECEIVE,
+	OS_SYSCALLID_IOCREFEMPTYQUEUE,
+	OS_SYSCALLID_IOCWRITE,
+	OS_SYSCALLID_IOCREAD,
+#endif /* CONFIG_RT_FRAMEWORK_IOC */
 	OS_SYSCALLID_COUNT
 } os_syscall_t;
 
@@ -122,7 +138,15 @@ typedef union {
 #if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
 	CounterType param_counter_type;
 #endif /* CONFIG_RT_FRAMEWORK_COUNTER */
+	IocIdType param_ioc_type;
+	uint8 param_uint8_t;
+	uint8 *param_uint8_ref_t;
+	uint16 param_uint16_t;
+	uint16 *param_uint16_ref_t;
 	uint32 param_uint32_t;
+	uint32 *param_uint32_ref_t;
+	void *param_void_ref_type;
+	void const *param_const_void_ref_type;
 	va_list param_va_list;
 } os_syscall_param_t;
 

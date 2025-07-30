@@ -41,6 +41,9 @@
 #if defined(CONFIG_RT_FRAMEWORK_ERROR) && (CONFIG_RT_FRAMEWORK_ERROR == 1)
 #include "rtfw_error.h"
 #endif
+#if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
+#include "rtfw_ioc.h"
+#endif
 
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
@@ -80,6 +83,12 @@ FUNC(void, OS_CODE) StartOS(void)
 		os_spinlock_init();
 	}
 #endif /* CONFIG_RT_FRAMEWORK_SPINLOCK */
+
+#if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
+	if ((core->ioc_refs != NULL_PTR) && (core->ioc_count != NULL_PTR)) {
+		os_ioc_init(core->ioc_refs, *(core->ioc_count));
+	}
+#endif /* CONFIG_RT_FRAMEWORK_IOC */
 
 #if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
 	if ((core->resource_refs != NULL_PTR) && (core->resource_count != NULL_PTR)) {

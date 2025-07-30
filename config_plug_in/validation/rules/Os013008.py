@@ -23,10 +23,11 @@ class Os013008Rule(BasicRule):
     ruleset_name = "Os013008"
     validation_result = False
 
-    def __init__(self, logs, ecuc_os_dict, validation_cfg) -> None:
+    def __init__(self, logs, ecuc_os_dict, validation_cfg, system_path) -> None:
         super().__init__()
         self.logs = logs
         self.ecuc_os_dict = ecuc_os_dict
+        self.system_path = system_path
         self.validation_cfg = validation_cfg
         self.validation_code = self.__class__.ruleset_name
         self.validation_summary = "OsIsrCategory and OsIsrInterruptPriority not match."

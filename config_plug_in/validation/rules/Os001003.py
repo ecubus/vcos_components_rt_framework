@@ -19,14 +19,15 @@ from durable.engine import *
 from .Os_ruleutils import OsRuleutils
 
 class Os001003Rule(BasicRule):
-    """Application/Task/Counter/Event/Resource/Isr/spinlock/ScheduleTable不允许重名"""
+    """Application/Task/Counter/Event/Resource/Isr/IOC/spinlock/ScheduleTable不允许重名"""
     ruleset_name = "Os001003"
     validation_result = False
 
-    def __init__(self, logs, ecuc_os_dict, validation_cfg) -> None:
+    def __init__(self, logs, ecuc_os_dict, validation_cfg, system_path) -> None:
         super().__init__()
         self.logs = logs
         self.ecuc_os_dict = ecuc_os_dict
+        self.system_path = system_path
         self.validation_cfg = validation_cfg
         self.validation_code = self.__class__.ruleset_name
         self.validation_summary = "No repeat of subcontainer name of Application/Task/Counter/Event/Resource/Isr/spinlock/ScheduleTable"
@@ -51,6 +52,7 @@ class Os001003Rule(BasicRule):
         event_name_dict = list(OsRuleutils().get_module_cfg("OsEvent",self.ecuc_os_dict).keys())
         resource_name_dict = list(OsRuleutils().get_module_cfg("OsResource",self.ecuc_os_dict).keys())
         isr_name_dict = list(OsRuleutils().get_module_cfg("OsIsr",self.ecuc_os_dict).keys())
+        ioc_name_dict = list(OsRuleutils().get_module_cfg("OsIoc",self.ecuc_os_dict).keys())
         spinlock_name_dict = list(OsRuleutils().get_module_cfg("OsSpinlock",self.ecuc_os_dict).keys())
         schedtable_name_dict = list(OsRuleutils().get_module_cfg("OsScheduleTable",self.ecuc_os_dict).keys())
         validation_data = {}
@@ -61,6 +63,7 @@ class Os001003Rule(BasicRule):
         validation_data.update({"event": event_name_dict})
         validation_data.update({"resource": resource_name_dict})
         validation_data.update({"isr": isr_name_dict})
+        validation_data.update({"ioc": ioc_name_dict})
         validation_data.update({"spinlock": spinlock_name_dict})
         validation_data.update({"schedtable": schedtable_name_dict})
         try:

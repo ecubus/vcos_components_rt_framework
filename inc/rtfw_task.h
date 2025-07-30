@@ -37,6 +37,19 @@ extern "C" {
 	RTFW_LINK_ENTRY_DECLARE(section_var, os_obj, os_task_inst_t, task_id);                \
 	RTFW_LINK_ENTRY_DECLARE(section_const, os_task, const os_task_cfg_t, task_id)
 
+#if defined(CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK == 1)
+#define DeclareTaskShareStackOwner(section_var, comb_id) \
+		RTFW_LINK_ENTRY_DECLARE(section_var, os_task_share_stack_owner, struct tcb_s*, comb_id)
+
+#define DeclareTaskShareStackCFG(section_const, section_var, task_id) \
+		RTFW_LINK_ENTRY_DECLARE(section_var, os_task_temp_stack, task_temp_buffer_t, task_id); \
+		RTFW_LINK_ENTRY_DECLARE(section_const, os_task_share_stack_cfg, const task_share_stack_info_t, task_id)
+
+#define TASKTEMPSTACKVAR(task_id) RTFW_LINK_ENTRY_NAME(os_task_temp_stack, task_id)
+#define TASKSHARESTACKOWNERVAR(comb_id) RTFW_LINK_ENTRY_NAME(os_task_share_stack_owner, comb_id)
+#define TASKSHARESTACKCFGVAR(task_id) RTFW_LINK_ENTRY_NAME(os_task_share_stack_cfg, task_id)
+#endif
+
 #define TASKCFGVAR(task_id) RTFW_LINK_ENTRY_NAME(os_task, task_id)
 #define TASKOBJVAR(task_id) RTFW_LINK_ENTRY_NAME(os_obj, task_id)
 #define TASKEVENTOBJVAR(task_id) RTFW_LINK_ENTRY_NAME(os_obj_eventhdl, task_id)

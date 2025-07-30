@@ -151,7 +151,7 @@ DeclareHook(OS_CONST_SECTION, {{app_cfg[bsw_app_name]["AppInstSection"]}}, {{hoo
     },
     /* .hook_id = */                            {{hook_cfg["hook_id"]}},
     /* .nesting_mask = */                       {{hook_cfg["nesting_mask"]}},
-    /* .callback = */                           (void_hook_callback_t)os_{{hook_cfg['app_hook_name'].lower()}},
+    /* .callback = */                           (void_hook_callback_t){{hook_cfg['callback']}},
 };
         {%- endfor %}
 

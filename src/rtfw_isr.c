@@ -52,6 +52,9 @@ FUNC(int, OS_CODE) rtfw_irq_handler(int irq, void *regs, void *arg)
 	uint8_t irq_nesting;
 	const os_isr_cfg_t *isr_cfg = (os_isr_cfg_t *)arg;
 	const os_ctx_cfg_t *this_context = NULL_PTR;
+#if (CONFIG_ARCH_IRQ_NESTING_LIMIT > 1) || defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION)
+	const os_ctx_cfg_t *pre_context = os_context_get_contexthdl();
+#endif
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
 	const struct mpu_access_right_s *pre_access_right = NULL_PTR;
 	const struct mpu_access_right_s *this_access_right = NULL_PTR;
@@ -59,10 +62,6 @@ FUNC(int, OS_CODE) rtfw_irq_handler(int irq, void *regs, void *arg)
 
 #ifdef CONFIG_IRQ_USE_ARCH_DISPATCH
 	up_irq_dispatch_enter(regs);
-#endif
-
-#if (CONFIG_ARCH_IRQ_NESTING_LIMIT > 1) || defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION)
-	const os_ctx_cfg_t *pre_context = os_context_get_contexthdl();
 #endif
 
 	UNUSED(irq);

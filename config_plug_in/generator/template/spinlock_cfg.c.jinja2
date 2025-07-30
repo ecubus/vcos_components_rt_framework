@@ -37,8 +37,9 @@
 
 /* Local type & Structure Definition */
 
-/* global Variable Definition */
+/* Global Variable Definition */
 {%- set osmempool_spinlockid_set = get_osmempool_spinlock_id_set_ui() %}
+{%- set os_ioc_spinlock_id_set = get_ioc_spinlock_id_set() %}
 {%- set spinlock_cfg = get_spinlock_cfg() %}
 {%- for spin_id, spin_val in spinlock_cfg.items() %}
     {%- set sid_u = spin_id.upper() %}
@@ -65,7 +66,20 @@ DeclareSpinlock(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{osmempool_spinlock_id
     /* .access_app_mask  = */     (RTFW_APPID2MASK(0) | (~RTFW_APPID2MASK(0))),
 #endif
     /* .check  = */               SPINLOCKCHECK_DISABLED,
-    /* .spin_id = */          {{osmempool_spinlock_id | upper}},
+    /* .spin_id = */              {{osmempool_spinlock_id | upper}},
+    /* .order  = */               0,
+};
+{%- endfor %}
+
+{% for os_ioc_spinlock_id in os_ioc_spinlock_id_set %}
+DeclareSpinlock(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{os_ioc_spinlock_id}}) = {
+    /* .obj_des = */              &SPINLOCKOBJVAR({{os_ioc_spinlock_id}}),
+    /* .method  = */              LOCK_CAT2_INTERRUPTS,
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
+    /* .access_app_mask  = */     (RTFW_APPID2MASK(0) | (~RTFW_APPID2MASK(0))),
+#endif
+    /* .check  = */               SPINLOCKCHECK_DISABLED,
+    /* .spin_id  = */             {{os_ioc_spinlock_id.upper()}},
     /* .order  = */               0,
 };
 {%- endfor %}
@@ -77,6 +91,9 @@ DeclareRtfwRefTable(OS_CONST_SECTION, spinlock, OS_SPINLOCK_CNT) = {
 {% for osmempool_spinlock_id in osmempool_spinlockid_set %}
     &SPINLOCKCFGVAR({{osmempool_spinlock_id | upper}}),
 {%- endfor %}
+{% for os_ioc_spinlock_id in os_ioc_spinlock_id_set %}
+    &SPINLOCKCFGVAR({{os_ioc_spinlock_id.upper()}}),
+{%- endfor %}
 };
 
 #endif /* (CONFIG_RT_FRAMEWORK_SPINLOCK == 1) */
@@ -87,5 +104,5 @@ DeclareRtfwRefTable(OS_CONST_SECTION, spinlock, OS_SPINLOCK_CNT) = {
 
 /* Local Function Implementation */
 
-/* global Function Implementation */
+/* Global Function Implementation */
 

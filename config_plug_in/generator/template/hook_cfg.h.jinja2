@@ -48,9 +48,9 @@ extern void os_startuphook(void);
 {%- for app_hook_cfg in all_apps_hook_cfg.values() %}
     {%- for app_hook_name, hook_cfg in app_hook_cfg.items() %}
         {%- if "errorhook" in app_hook_name or 'shutdownhook' in app_hook_name %}
-extern void os_{{hook_cfg['app_hook_name'].lower()}}(StatusType Error);
+extern void {{hook_cfg['callback']}}(StatusType Error);
         {%- else %}
-extern void os_{{hook_cfg['app_hook_name'].lower()}}(void);
+extern void {{hook_cfg['callback']}}(void);
         {%- endif %}
     {%- endfor %}
 {%- endfor %}

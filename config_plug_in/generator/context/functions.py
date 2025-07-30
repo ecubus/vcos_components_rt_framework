@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ############################################################################
-
+import os, sys, math, re
 from components.rt_framework.config_plug_in.generator import utils
 from func_module.generator.common.common import FunctionBase
 from func_module.generator.common.user_code_extract import UserCodeExtract
@@ -20,7 +20,7 @@ from components.memory.mempool.config_plug_in.generator.utils import get_os_memp
 from jinja2 import pass_context
 from decimal import Decimal
 from collections import defaultdict
-
+from func_module.health_monitor.logger import logger
 
 class Function(FunctionBase):
     """
@@ -123,6 +123,47 @@ class Function(FunctionBase):
 
     @staticmethod
     @pass_context
+    @utils.cache_once(_cache)
+    def get_task_stack_sharing(context):
+        core_cfg = Function.get_os_module_list(context, "/Os/OsCore")
+        task_cfg = Function.get_task_cfg(context)
+
+        task_stack_sharing_info = {} #以core为key 获取到所有共栈信息
+        task_stack_sharing_ref ={} #以taskname 为key 获取共栈信息
+        os_app_config = Function.get_app_cfg(context)
+        
+        for core_name, value in core_cfg.items():
+            """ 找到core ref 的bsw app ,从bsw app 找到对应的 coreid """
+            if "DefinitionRef" in value:
+                bsw_app_name = utils.get_last_item(value["OsCoreBswApplicationRef"]["ValueRef"])
+                core_number = os_app_config[bsw_app_name]["CoreNumber"]
+                for subkey, subvalue in value.items():
+                    if "OsShareStackTaskComb" in subvalue:
+                        for task_dir in subvalue["OsShareStackTaskComb"]["ValueRef"]:
+                            if "/ActiveEcuC/Os/" in task_dir:
+                                task_name = task_dir.split('/')[-1]
+                                comb_name = subkey
+                                task_stack_sharing_ref[task_name] = comb_name
+                                stack_size = task_cfg[task_name]["TaskStackSize"]
+                                #更新ext_sharing_info
+                                task_lsit = [task_name]
+
+                                if core_number not in task_stack_sharing_info.keys():
+                                    task_stack_sharing_info[core_number] = {}
+                                    task_stack_sharing_info[core_number][comb_name] = {}
+                                    task_stack_sharing_info[core_number][comb_name]["CombTasklist"] = task_lsit
+                                    task_stack_sharing_info[core_number][comb_name]["ShareStackSize"] = stack_size
+                                elif comb_name not in task_stack_sharing_info[core_number].keys():
+                                    task_stack_sharing_info[core_number][comb_name] = {}
+                                    task_stack_sharing_info[core_number][comb_name]["CombTasklist"] = task_lsit
+                                    task_stack_sharing_info[core_number][comb_name]["ShareStackSize"] = stack_size
+                                else:
+                                    task_stack_sharing_info[core_number][comb_name]["CombTasklist"].append(task_name)
+                                    if stack_size > task_stack_sharing_info[core_number][comb_name]["ShareStackSize"]:
+                                        task_stack_sharing_info[core_number][comb_name]["ShareStackSize"] = stack_size
+        return task_stack_sharing_info, task_stack_sharing_ref
+    @staticmethod
+    @pass_context
     def get_bsw_app_from_coreid(context, coreid):
         app_cfg = Function.get_app_cfg(context)
         for cfg in app_cfg.values():
@@ -223,6 +264,263 @@ class Function(FunctionBase):
             all_isr_cfg[name] = isr_cfg
 
         return all_isr_cfg
+
+    @staticmethod
+    @pass_context
+    def get_ioc_list(context):
+        ioc_list = {}
+        for name, value in context["os_ui"].items():
+            if "DefinitionRef" in value and "/Os/OsIoc" in value["DefinitionRef"]:
+                for ioc_communcation, ioc_communcation_value in value.items():
+                    if "DefinitionRef" in ioc_communcation_value and "/Os/OsIoc/OsIocCommunication" in ioc_communcation_value[
+                            "DefinitionRef"]:
+                        ioc_list[ioc_communcation] = ioc_communcation_value
+        return ioc_list
+
+    @staticmethod
+    @pass_context
+    def get_ioc_base_datatype(context, typeref):
+        if typeref in context["ioc_data_dict"]:
+            if context["ioc_data_dict"][typeref]["category"] == "TYPE_REFERENCE":
+                if context["ioc_data_dict"][typeref]["basetype"] in [
+                        "uint8", "sint8", "boolean", "uint16", "sint16", "uint32", "sint32", "float32", "uint64",
+                        "sint64", "float64"
+                ]:
+                    return context["ioc_data_dict"][typeref]["basetype"]
+                else:
+                    return typeref
+            else:
+                return typeref
+        else:
+            return typeref
+
+    @staticmethod
+    @pass_context
+    def get_ioc_headers(context):
+        ioc_include_headers = []
+        for name, value in context["os_ui"].items():
+            if "DefinitionRef" in value and "/Os/OsIoc" in value["DefinitionRef"]:
+                for param_key, param_value in value.items():
+                    if isinstance(param_value, dict) and "DefinitionRef" in param_value:
+                        if "/Os/OsIoc/OsIocIncludeHeader" in param_value["DefinitionRef"]:
+                            header_value = param_value.get("Value", "")
+                            if header_value:
+                                ioc_include_headers.extend([h for h in header_value if h is not None and h != ""])
+        return ioc_include_headers
+
+    @staticmethod
+    @pass_context
+    @utils.cache_once(_cache)
+    def get_ioc_cfg(context):
+        all_ioc_cfg = {}
+        all_ioc_headers = []
+
+        ioc_list = Function.get_ioc_list(context)
+        all_ioc_headers = Function.get_ioc_headers(context)
+
+        for ioc_name, ioc_value in ioc_list.items():
+            ioc_content = {}
+            OsIocDataProperties = {}
+            OsIocSenderProperties = []
+            OsIocReceiverProperties = []
+            ioc_content.update({"OsIocBufferLength": ioc_value["OsIocBufferLength"]["Value"]})
+            if isinstance(ioc_value, dict) and len(ioc_value.keys()) > 2:
+                for OsIocData_key, OsIocData_value in ioc_value.items():
+                    OsIocSenderProperties_content = {}
+                    OsIocReceiverProperties_content = {}
+                    OsIocDataProperties_content = {}
+                    OsIocSendingOsApplicationRef_list = []
+                    OsIocReceivingOsApplicationRef_list = []
+                    OsIocInitValue = 0
+                    OsIocSenderId = 0
+                    datatype,OsIocDataType,OsIocDataTypeRef = "uint8","","uint8"
+                    OsIocFunctionImplementationKind = "FUNCTION"
+                    if "DefinitionRef" in OsIocData_value and "Os/OsIoc/OsIocCommunication/OsIocDataProperties" in OsIocData_value[
+                            "DefinitionRef"]:
+                        OsIocDataProperties_content.update(
+                            {"OsIocDataPropertyIndex": OsIocData_value["OsIocDataPropertyIndex"]["Value"]})
+                        if "OsIocInitValue" in OsIocData_value and OsIocData_value["OsIocInitValue"][
+                                "Value"] is not None:
+                            OsIocInitValue = OsIocData_value["OsIocInitValue"]["Value"]
+                        OsIocDataProperties_content.update({"OsIocInitValue": OsIocInitValue})
+                        if "OsIocDataType" in OsIocData_value and OsIocData_value["OsIocDataType"][
+                                "Value"] is not None:
+                            OsIocDataType = OsIocData_value["OsIocDataType"]["Value"]
+                        OsIocDataProperties_content.update({"OsIocDataType": OsIocDataType})
+                        if "OsIocDataTypeRef" in OsIocData_value and OsIocData_value["OsIocDataTypeRef"][
+                                "ValueRef"] is not None:
+                            if utils.get_last_item(OsIocData_value["OsIocDataTypeRef"]["ValueRef"]):
+                                OsIocDataTypeRef = utils.get_last_item(
+                                    OsIocData_value["OsIocDataTypeRef"]["ValueRef"])
+                        OsIocDataProperties_content.update({"OsIocDataTypeRef": [OsIocDataTypeRef]})
+                        #insert datatype for OsIocDataProperties,datatype is used for jinja2
+                        datatype = OsIocDataType if OsIocDataType else (OsIocDataTypeRef if OsIocDataTypeRef else "uint8")
+                        OsIocDataProperties_content.update({"datatype": datatype})
+                        OsIocDataProperties_content.update({"OsIocData_Atomic": True if OsIocData_value["OsIocDataType Is Atomic"]["Value"] else False})
+                        OsIocDataProperties.update({"OsIocDataProperties": OsIocDataProperties_content})
+                    if "DefinitionRef" in OsIocData_value and "Os/OsIoc/OsIocCommunication/OsIocSenderProperties" in OsIocData_value[
+                            "DefinitionRef"]:
+                        if "OsIocFunctionImplementationKind" in OsIocData_value and OsIocData_value[
+                                "OsIocFunctionImplementationKind"]["Value"] is not None:
+                            OsIocFunctionImplementationKind = OsIocData_value["OsIocFunctionImplementationKind"][
+                                "Value"]
+                        OsIocSenderProperties_content.update(
+                            {"OsIocFunctionImplementationKind": OsIocFunctionImplementationKind})
+                        if "OsIocSenderId" in OsIocData_value and OsIocData_value["OsIocSenderId"]["Value"] is not None:
+                            OsIocSenderId = OsIocData_value["OsIocSenderId"]["Value"]
+                        OsIocSenderProperties_content.update({"OsIocSenderId": OsIocSenderId})
+                        if "OsIocSendingOsApplicationRef" in OsIocData_value and OsIocData_value[
+                                "OsIocSendingOsApplicationRef"]["ValueRef"] and isinstance(
+                                    OsIocData_value["OsIocSendingOsApplicationRef"]["ValueRef"], list):
+                            for OsIocSendingOsApplicationRef_i in OsIocData_value["OsIocSendingOsApplicationRef"][
+                                    "ValueRef"]:
+                                OsIocSendingOsApplicationRef_list.append(
+                                    utils.get_last_item(OsIocSendingOsApplicationRef_i))
+                        elif "OsIocSendingOsApplicationRef" in OsIocData_value and OsIocData_value[
+                                "OsIocSendingOsApplicationRef"]["ValueRef"]:
+                            OsIocSendingOsApplicationRef_list.append(
+                                utils.get_last_item(OsIocData_value["OsIocSendingOsApplicationRef"]["ValueRef"]))
+                        OsIocSenderProperties_content.update(
+                            {"OsIocSendingOsApplicationRef": OsIocSendingOsApplicationRef_list})
+                        OsIocSenderProperties.append(OsIocSenderProperties_content)
+                    if "DefinitionRef" in OsIocData_value and "Os/OsIoc/OsIocCommunication/OsIocReceiverProperties" in OsIocData_value[
+                            "DefinitionRef"]:
+                        OsIocReceiverProperties_content.update({
+                            "OsIocFunctionImplementationKind":
+                                OsIocData_value["OsIocFunctionImplementationKind"]["Value"]
+                        })
+                        if "OsIocReceiverPullCB" in OsIocData_value:
+                            OsIocReceiverProperties_content.update(
+                                {"OsIocReceiverPullCB": OsIocData_value["OsIocReceiverPullCB"]["Value"]})
+                        if "OsIocCallback Hook Stack" in OsIocData_value:
+                            OsIocReceiverProperties_content.update(
+                                {"OsIocCallback Hook Stack": OsIocData_value["OsIocCallback Hook Stack"]["Value"]})
+                        if "OsIocReceivingOsApplicationRef" in OsIocData_value and isinstance(
+                                OsIocData_value["OsIocReceivingOsApplicationRef"]["ValueRef"], list):
+                            for OsIocReceivingOsApplicationRef_i in OsIocData_value["OsIocReceivingOsApplicationRef"][
+                                    "ValueRef"]:
+                                OsIocReceivingOsApplicationRef_list.append(
+                                    utils.get_last_item(OsIocReceivingOsApplicationRef_i))
+                        elif "OsIocReceivingOsApplicationRef" in OsIocData_value:
+                            OsIocReceivingOsApplicationRef_list.append(
+                                utils.get_last_item(OsIocData_value["OsIocReceivingOsApplicationRef"]["ValueRef"]))
+                        OsIocReceiverProperties_content.update(
+                            {"OsIocReceivingOsApplicationRef": OsIocReceivingOsApplicationRef_list})
+                        OsIocReceiverProperties.append(OsIocReceiverProperties_content)
+            ioc_content.update(OsIocDataProperties)
+            ioc_content.update({"OsIocSenderProperties": OsIocSenderProperties})
+            ioc_content.update({"OsIocReceiverProperties": OsIocReceiverProperties})
+
+            send_apps = Function.get_ioc_send_app_set(context, ioc_content)
+            send_core_set = Function.get_ioc_core_set(context, send_apps)
+            recv_apps = Function.get_ioc_receive_app_set(context, ioc_content)
+            recv_core_set = Function.get_ioc_core_set(context, recv_apps)
+            all_core_set = send_core_set.union(recv_core_set)
+            ioc_content["CoreNumber"] = sorted(all_core_set)
+
+            all_ioc_cfg[ioc_name] = ioc_content
+        all_ioc_cfg = utils.sort_dict_by_key(all_ioc_cfg)
+
+        return all_ioc_cfg, all_ioc_headers
+
+    @staticmethod
+    @pass_context
+    def get_ioc_set_cnt(context, set):
+        return len(set)
+
+    @staticmethod
+    @pass_context
+    def get_ioc_sender_cnt(context, ioc_name):
+        ioc_config, _ = Function.get_ioc_cfg(context)
+        return len(ioc_config[ioc_name]["OsIocSenderProperties"])
+
+    @staticmethod
+    @pass_context
+    def get_ioc_callback_cnt(context):
+        ioc_config, _ = Function.get_ioc_cfg(context)
+        callback_cnt = 0
+
+        for ioc_name, ioc_val in ioc_config.items():
+            for receiver_prop in ioc_val.get("OsIocReceiverProperties", []):
+                if "OsIocReceiverPullCB" in receiver_prop:
+                    callback_name = receiver_prop["OsIocReceiverPullCB"]
+                    if callback_name is not None:
+                        callback_cnt += 1
+
+        return callback_cnt
+
+    @staticmethod
+    @pass_context
+    def get_ioc_core_set(context, app_set):
+        core_id_set = set()
+        app_cfg = Function.get_app_cfg(context)
+        core_cfg = Function.get_core_configs(context)
+
+        for app in app_set:
+            core_num = str(app_cfg[app]["CoreNumber"])
+            core_key = f"Os_Core{core_num}"
+
+            if core_key in core_cfg:
+                core_id_set.add(core_cfg[core_key]["core_id"])
+            else:
+                core_id_set.add(f"OS_CORE{core_num}")
+
+        return core_id_set
+
+    @staticmethod
+    @pass_context
+    @utils.cache_once(_cache)
+    def get_ioc_cnt_by_core(context):
+        ioc_cfg, _ = Function.get_ioc_cfg(context)
+
+        ioc_core_map = {}
+        for cfg in ioc_cfg.values():
+            for core in cfg["CoreNumber"]:
+                ioc_core_map[core] = ioc_core_map.get(core, 0) + 1
+
+        return ioc_core_map
+
+    @staticmethod
+    @pass_context
+    def get_ioc_unique_core_cnt(context, send_core_set, receive_core_set):
+        all_core_set = set()
+        all_core_set = all_core_set.union(send_core_set)
+        all_core_set = all_core_set.union(receive_core_set)
+        return len(all_core_set)
+
+    @staticmethod
+    @pass_context
+    def get_ioc_send_app_set(context, ioc_config):
+        app_list = []
+        for index in range(len(ioc_config["OsIocSenderProperties"])):
+            if "OsIocSendingOsApplicationRef" in ioc_config["OsIocSenderProperties"][index] and ioc_config[
+                "OsIocSenderProperties"][index]["OsIocSendingOsApplicationRef"] is not None and isinstance(
+                        ioc_config["OsIocSenderProperties"][index]["OsIocSendingOsApplicationRef"], list):
+                for app in ioc_config["OsIocSenderProperties"][index]["OsIocSendingOsApplicationRef"]:
+                    app_list.append(utils.get_last_item(app))
+            elif "OsIocSendingOsApplicationRef" in ioc_config["OsIocSenderProperties"][index] and ioc_config[
+                "OsIocSenderProperties"][index]["OsIocSendingOsApplicationRef"] is not None:
+                app_list.append(
+                    utils.get_last_item(
+                        ioc_config["OsIocSenderProperties"][index]["OsIocSendingOsApplicationRef"]))
+        app_list = [x for x in app_list if x != '']
+        return set(app_list)
+
+    @staticmethod
+    @pass_context
+    def get_ioc_receive_app_set(context, ioc_config):
+        app_list = []
+        for receiver in ioc_config["OsIocReceiverProperties"]:
+            receiver_app = receiver.get("OsIocReceivingOsApplicationRef")
+            if not receiver_app:
+                continue
+            if isinstance(receiver_app, list):
+                app_list.extend(receiver_app)
+            else:
+                app_list.append(receiver_app)
+
+        app_list = [x for x in app_list if x != '']
+        return set(app_list)
 
     @staticmethod
     def solve_spinlock_order(spinlock_cfg):
@@ -978,6 +1276,7 @@ class Function(FunctionBase):
     def get_app_hook_cfg(context):
         all_apps_hook_cfg = {}
         app_cfg = Function.get_app_cfg(context)
+        ioc_cfg, _ = Function.get_ioc_cfg(context)
         os_hook_cfg, _ = Function.get_os_hook_cfg(context)
         app_hook_key_map = {"AppErrorHook": "errorhook",
                             "AppStartupHook": "startuphook",
@@ -1000,8 +1299,28 @@ class Function(FunctionBase):
                         'hook_name': os_hook_name,
                         'stack_size': os_hook_cfg[os_hook_name]['stack_size'],
                         'stack_name': (f'OS_CORE{app_val["CoreNumber"]}_{app_name}_{hook_type}_STACK_SECTION').upper(),
-                        'nesting_mask': os_hook_cfg[os_hook_name]['nesting_mask']
+                        'nesting_mask': os_hook_cfg[os_hook_name]['nesting_mask'],
+                        'callback': f"os_{(f'{app_name}_{hook_type}').lower()}"
                     }
+
+            # IOC Pull Callback Hooks that belonging to receive app
+            for ioc_name, ioc_val in ioc_cfg.items():
+                for receiver_prop in ioc_val.get("OsIocReceiverProperties", []):
+                    if "OsIocReceiverPullCB" in receiver_prop:
+                        os_hook_name = receiver_prop["OsIocReceiverPullCB"]
+                        os_hook_stack = receiver_prop["OsIocCallback Hook Stack"]
+                        if os_hook_name is not None and os_hook_name != '':
+                            if app_name in receiver_prop.get("OsIocReceivingOsApplicationRef", []):
+                                app_hook_cfg[os_hook_name] = {
+                                    'app_hook_name': os_hook_name,
+                                    'hook_type': "ioccallbackhook",
+                                    'hook_id': (f'OS_CORE{app_val["CoreNumber"]}_{app_name}_{os_hook_name}_CALLBACKHOOK_ID').upper(),
+                                    'hook_name': "OS_IOCCALLBACKHOOK",
+                                    'stack_size': os_hook_stack,
+                                    'stack_name': (f'OS_CORE{app_val["CoreNumber"]}_{app_name}_{os_hook_name}_CALLBACKHOOK_SECTION').upper(),
+                                    'nesting_mask': "OS_IOCCALLBACKHOOK_HOOKNESTINGMASK",
+                                    'callback': f"{os_hook_name.lower()}"
+                                }
             all_apps_hook_cfg[app_name] = app_hook_cfg
 
         return all_apps_hook_cfg
@@ -1013,7 +1332,6 @@ class Function(FunctionBase):
         hook_callout_path = utils.get_dict_path(context, ['sys_cfg', 'path', 'bswcallout_path'])
         bsw_callout_code = user_code_extract.bsw_callout_user_code(hook_callout_path)
         return bsw_callout_code.get('hook_user_callout', {})
-
 
     @staticmethod
     @pass_context
@@ -1034,6 +1352,8 @@ class Function(FunctionBase):
     @pass_context
     def get_enable_hook_cfg_marcos(context):
         hook_cfg, hook_cnt = Function.get_os_hook_cfg(context)
+        hook_cnt += Function.get_ioc_callback_cnt(context)
+
         ret = []
         if hook_cfg['os_errorhook']['enabled'] == True:
             ret.append('CONFIG_RT_FRAMEWORK_ERROR_HOOK=y')
@@ -1103,6 +1423,42 @@ class Function(FunctionBase):
                 osmempool_spinlockid_list.append("OS_SPINLOCK_MEMPOOL_" + pool_name + "_ID")
         return osmempool_spinlockid_list
 
+    @staticmethod
+    @pass_context
+    @utils.cache_once(_cache)
+    def get_ioc_spinlock_id_set(context):
+        spinlock_id_list = list()
+        ioc_config, _ = Function.get_ioc_cfg(context)
+        for ioc_name in ioc_config:
+            send_app_set = Function.get_ioc_send_app_set(context, ioc_config[ioc_name])
+            send_core_set = Function.get_ioc_core_set(context, send_app_set)
+            receive_app_set = Function.get_ioc_receive_app_set(context, ioc_config[ioc_name])
+            receive_core_set = Function.get_ioc_core_set(context, receive_app_set)
+            queuelen = ioc_config[ioc_name]["OsIocBufferLength"]
+            dataType = ""
+            dataType = ioc_config[ioc_name]["OsIocDataProperties"]["datatype"]
+            dataType_atomicity = ioc_config[ioc_name]["OsIocDataProperties"]["OsIocData_Atomic"]
+            baseDataType = Function.get_ioc_base_datatype(context, dataType)
+            if (queuelen == 0):
+                all_core_cnt = Function.get_ioc_unique_core_cnt(context, send_core_set, receive_core_set)
+                if all_core_cnt >= 2:
+                    if baseDataType not in [
+                            "uint8", "sint8", "boolean", "uint16", "sint16", "uint32", "sint32", "float32"
+                    ] and dataType_atomicity == False:
+                        spinlock_id = "OS_IOC_SPINLOCK_" + ioc_name.upper() + "_ID"
+                        spinlock_id_list.append(spinlock_id)
+            else:
+                send_core_cnt = len(send_core_set)
+                if (send_core_cnt >= 2):
+                    spinlock_id = "OS_IOC_SEND_SPINLOCK_" + ioc_name.upper() + "_ID"
+                    spinlock_id_list.append(spinlock_id)
+                else:
+                    pass
+                receive_core_cnt = len(receive_core_set)
+                if (receive_core_cnt >= 2):
+                    spinlock_id = "OS_IOC_RECEIVE_SPINLOCK_" + ioc_name.upper() + "_ID"
+                    spinlock_id_list.append(spinlock_id)
+        return sorted(list(set(spinlock_id_list)))
 
     @staticmethod
     @pass_context
@@ -1137,11 +1493,19 @@ class Function(FunctionBase):
             rtfw_config.append("CONFIG_RT_FRAMEWORK_IPICALL=y")
         ########################################################
 
+        # CONFIG_RT_FRAMEWORK_IOC
+        ########################################################
+        ioc_cfg, _ = Function.get_ioc_cfg(context)
+        if ioc_cfg:
+            rtfw_config.append("CONFIG_RT_FRAMEWORK_IOC=y")
+        ########################################################
+
         # CONFIG_RT_FRAMEWORK_SPINLOCK
         ########################################################
         spinlock_cfg = Function.get_spinlock_cfg(context)
+        osioc_spinlock_id_set = Function.get_ioc_spinlock_id_set(context)
         osmempool_spinlockid_set = Function.get_osmempool_spinlock_id_set_ui(context)
-        spinlock_is_configured = (spinlock_cfg or osmempool_spinlockid_set)
+        spinlock_is_configured = (spinlock_cfg or osioc_spinlock_id_set or osmempool_spinlockid_set)
 
         core_cnt = Function.get_core_cnt(context)
 
@@ -1188,6 +1552,13 @@ class Function(FunctionBase):
         # CONFIG_RT_FRAMEWORK_INT_LEVEL
         ########################################################
         rtfw_config += Function.get_int_level_cfg_marcos(context)
+        ########################################################
+        
+        # CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK
+        ########################################################
+        task_stack_sharing_info, task_stack_sharing_ref = Function.get_task_stack_sharing(context)
+        if task_stack_sharing_ref:
+            rtfw_config.append("CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK=y")
         ########################################################
 
         # CONFIG_RT_FRAMEWORK_ISOLATE

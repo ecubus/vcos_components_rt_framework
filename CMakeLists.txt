@@ -51,6 +51,12 @@ if(CONFIG_RT_FRAMEWORK)
     list(APPEND CSRCS ${GENDATA_DIR}/Os/ipicall_cfg.c)
   endif()
 
+  if (CONFIG_RT_FRAMEWORK_IOC)
+    list(APPEND CSRCS src/rtfw_ioc.c)
+    list(APPEND CSRCS ${GENDATA_DIR}/Os/ioc.c)
+    list(APPEND CSRCS ${GENDATA_DIR}/Os/ioc_cfg.c)
+  endif()
+
   if (CONFIG_RT_FRAMEWORK_SCHTBL)
     list(APPEND CSRCS src/rtfw_schedtable.c)
     list(APPEND CSRCS ${GENDATA_DIR}/Os/schedtable_cfg.c)
@@ -88,6 +94,7 @@ if(CONFIG_RT_FRAMEWORK)
   endif()
 
   set(INCLUDE_DIRS ${NUTTX_DIR}/sched
+                   ${GENDATA_DIR}/Rte
                    ${CMAKE_CURRENT_LIST_DIR}/src
                    ${CMAKE_CURRENT_LIST_DIR}/inc
                    ${NUTTX_APPS_DIR}/components/include

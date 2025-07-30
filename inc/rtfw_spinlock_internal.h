@@ -88,6 +88,38 @@ DeclareRtfwRefTable_H(spinlock) /*! Reference to OS spinlocks cfg table */
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 FUNC(void, OS_CODE) os_spinlock_init(void);
+/*! \brief         get_spinlock() actual Implementation
+ *  \details       None
+ *
+ *  \param[in]      spin_id      The value refers to the spinlock instance that shall be locked.
+ *  \param[out]     None
+ *
+ *  \return         Status of execution result
+ *                  E_OK:           [STANDARD:] No error
+ *
+ *  \context        TASK|ISR2
+ *
+ *  \reentrant      TRUE
+ *
+ *  \synchronous    TRUE
+ */
+FUNC(Os_StatusType, OS_CODE) os_get_raw_spinlock(const os_spin_id_t spin_id);
+/*!  \brief         release_spinlock() actual Implementation
+ *  \details        None
+ *
+ *  \param[in]      spin_id      The value refers to the spinlock instance that shall be locked.
+ *  \param[out]     None
+ *
+ *  \return         Status of execution result
+ *                  E_OK:           [STANDARD:] No error
+ *
+ *  \context        TASK|ISR2
+ *
+ *  \reentrant      TRUE
+ *
+ *  \synchronous    TRUE
+ */
+FUNC(Os_StatusType, OS_CODE) os_release_raw_spinlock(const os_spin_id_t spin_id);
 /*! \brief         get_spinlock() Implementation
  *  \details       None
  *
@@ -111,7 +143,7 @@ FUNC(void, OS_CODE) os_spinlock_init(void);
  *  \reentrant      TRUE
  *
  *  \synchronous    TRUE
-  */
+ */
 FUNC(Os_StatusType, OS_CODE) os_get_spinlock(const os_spin_id_t spin_id);
 /*!  \brief         release_spinlock() Implementation
  *  \details        None
@@ -178,7 +210,7 @@ FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock(const os_spin_id_t spin_id, 
  *  \reentrant      TRUE
  *
  *  \synchronous    TRUE
-  */
+ */
 FUNC(Os_StatusType, OS_CODE) os_get_spinlock_read(const os_spin_id_t spin_id);
 /*! \brief         get_spinlock_write() Implementation
  *  \details       None
@@ -200,7 +232,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_spinlock_read(const os_spin_id_t spin_id);
  *  \reentrant      TRUE
  *
  *  \synchronous    TRUE
-  */
+ */
 FUNC(Os_StatusType, OS_CODE) os_get_spinlock_write(const os_spin_id_t spin_id);
 /*!  \brief         release_spinlock_read() Implementation
  *  \details        None

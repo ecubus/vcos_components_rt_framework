@@ -444,6 +444,54 @@
                       <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsApplication</DESTINATION-REF>
                     </ECUC-REFERENCE-DEF>
                   </REFERENCES>
+                  <SUB-CONTAINERS>
+                    <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:a4398b2c-bbfb-46ba-ba80-ad1b01b6198e">
+                      <SHORT-NAME>OsTaskShareStack</SHORT-NAME>
+                      <DESC>
+                        <L-2 L="EN">This container contains the information for configuring extended task shared stack combinations.</L-2>
+                        <L-2 L="ZH">概述：OsTaskShareStack 配置项用于扩展任务共栈组合。</L-2>
+                        <L-2 L="ZH">注意：Round Robin 调度需要关闭。</L-2>
+                      </DESC>
+                      <INTRODUCTION>
+                        <P>
+                          <L-1 L="EN">This container contains the information for configuring extended task shared stack combinations. </L-1>
+                        </P>
+                      </INTRODUCTION>
+                      <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00371</RELATED-TRACE-ITEM-REF>
+                      <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                      <UPPER-MULTIPLICITY-INFINITE>true</UPPER-MULTIPLICITY-INFINITE>
+                      <REFERENCES>
+                        <ECUC-REFERENCE-DEF UUID="ECUC:15f81a79-8f99-47ee-8f83-2c673da1d766">
+                          <SHORT-NAME>OsShareStackTaskComb</SHORT-NAME>
+                          <DESC>
+                          <L-2 L="EN">Reference to task which share stack.</L-2>
+                          <L-2 L="ZH">概述：OsCounterAccessingApplication配置项指定了哪些AUTOSAR应用程序可以访问操作系统的计数器。这是为了确保系统的安全性和隔离性，防止未授权的访问。</L-2>
+                          <L-2 L="ZH">注意：1. 一个共栈组合内至少有两个任务。 2. 任务类型必须为扩展类型，且必须为同核 3. 共栈任务的优先级必须相同。4.一个任务不能同时出现在多个共栈组合内。</L-2>
+                          </DESC>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00031</RELATED-TRACE-ITEM-REF>
+                          <LOWER-MULTIPLICITY>2</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>255</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <MULTIPLICITY-CONFIG-CLASSES>
+                          <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                            <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                            <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                          </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          </MULTIPLICITY-CONFIG-CLASSES>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <VALUE-CONFIG-CLASSES>
+                          <ECUC-VALUE-CONFIGURATION-CLASS>
+                            <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                            <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                          </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsTask</DESTINATION-REF>
+                        </ECUC-REFERENCE-DEF>
+                      </REFERENCES>
+                    </ECUC-PARAM-CONF-CONTAINER-DEF>
+                  </SUB-CONTAINERS>
                 </ECUC-PARAM-CONF-CONTAINER-DEF>
                 <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:027f4979-a1d4-4ba0-a615-19a5a8081073">
                   <SHORT-NAME>OsCounter</SHORT-NAME>
@@ -756,6 +804,608 @@
                       <MIN>0</MIN>
                     </ECUC-INTEGER-PARAM-DEF>
                   </PARAMETERS>
+                </ECUC-PARAM-CONF-CONTAINER-DEF>
+                <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:8b83effd-234a-4731-8213-0b637df7eefc">
+                  <SHORT-NAME>OsIoc</SHORT-NAME>
+                    <PARAMETERS>
+                      <ECUC-STRING-PARAM-DEF UUID="ECUC:91b95a6a-0103-41a5-a50b-4ec526119bb2">
+                        <SHORT-NAME>OsIocIncludeHeader</SHORT-NAME>
+                        <DESC>
+                          <L-2 L="EN">This parameter is used to specify header files to be included in thhe generated IOC header file. It could be necessary to provide user specific datatypes to the IOC module. Insert complete filenames including extension (e.g. MyHeader.h).</L-2>
+                          <L-2 L="ZH">概述：此参数用于指定需要包含在生成的IOC头文件中的头文件。IOC模块提供用户可自定义的的数据类型。请填写完整的包含扩展名的文件名（例如：MyHeader.h）。</L-2>
+                          <L-2 L="ZH">注意：在配置时，应确保该头文件在项目构建路径中是可访问的，否则编译器将无法找到并包含它，导致编译错误。</L-2>
+                        </DESC>
+                        <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01000</RELATED-TRACE-ITEM-REF>
+                        <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                        <UPPER-MULTIPLICITY-INFINITE>true</UPPER-MULTIPLICITY-INFINITE>
+                        <SCOPE>LOCAL</SCOPE>
+                        <MULTIPLICITY-CONFIG-CLASSES>
+                          <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                            <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                            <CONFIG-VARIANT>VARIANT-LINK-TIME</CONFIG-VARIANT>
+                          </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                            <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                            <CONFIG-VARIANT>VARIANT-POST-BUILD</CONFIG-VARIANT>
+                          </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                            <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                            <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                          </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                        </MULTIPLICITY-CONFIG-CLASSES>
+                        <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                        <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                        <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                        <VALUE-CONFIG-CLASSES>
+                          <ECUC-VALUE-CONFIGURATION-CLASS>
+                            <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                            <CONFIG-VARIANT>VARIANT-LINK-TIME</CONFIG-VARIANT>
+                          </ECUC-VALUE-CONFIGURATION-CLASS>
+                          <ECUC-VALUE-CONFIGURATION-CLASS>
+                            <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                            <CONFIG-VARIANT>VARIANT-POST-BUILD</CONFIG-VARIANT>
+                          </ECUC-VALUE-CONFIGURATION-CLASS>
+                          <ECUC-VALUE-CONFIGURATION-CLASS>
+                            <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                            <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                          </ECUC-VALUE-CONFIGURATION-CLASS>
+                        </VALUE-CONFIG-CLASSES>
+                        <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                        <ECUC-STRING-PARAM-DEF-VARIANTS>
+                          <ECUC-STRING-PARAM-DEF-CONDITIONAL>
+                            <MAX-LENGTH>63</MAX-LENGTH>
+                            <MIN-LENGTH>1</MIN-LENGTH>
+                          </ECUC-STRING-PARAM-DEF-CONDITIONAL>
+                        </ECUC-STRING-PARAM-DEF-VARIANTS>
+                      </ECUC-STRING-PARAM-DEF>
+                    </PARAMETERS>
+                  <DESC>
+                    <L-2 L="EN">Configuration of the IOC (Inter-OS-Application Communicator).</L-2>
+                    <L-2 L="ZH">概述：IOC（Inter-OS-Application Communicator）用于在不同 OS-Application 间传递 Sender-Receiver 信号，实现高效、类型安全的进程内通信。</L-2>
+                    <L-2 L="ZH">注意：配置 IOC 时应明确通信模式（1:1、N:1、N:M）、队列深度与锁模式；在根据数据大小设置是否为原子类型以减少关中断时间和自旋锁开销。</L-2>
+                  </DESC>
+                  <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01000</RELATED-TRACE-ITEM-REF>
+                  <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                  <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                  <SUB-CONTAINERS>
+                    <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:aba13287-7385-453e-9e67-fbdbe8c9f86f">
+                      <SHORT-NAME>OsIocCommunication</SHORT-NAME>
+                      <DESC>
+                        <L-2 L="EN">Representation of a 1:1 or N:1 or N:M (unqueued only) communication between software parts located in different OS-Applications that are bound to the same or to different cores.</L-2>
+                        <L-2 L="ZH">概述：OsIocCommunication 用于描述位于不同 OS-Application 的软件部件之间的通信通道，可配置为 1:1、N:1 以及 N:M（仅支持非队列模式）。</L-2>
+                        <L-2 L="ZH">注意：当通道为 N:M 时必须采用非队列，且 OsIocDataTypeRef 的多重性必须为 1；跨核通信应确保缓冲区位于各核共享内存并选择合适的锁模式以避免竞争和一致性问题。</L-2>
+                      </DESC>
+                      <INTRODUCTION>
+                        <P>
+                          <L-1 L="EN">The name shall begin with the name of the sending software service and be followed by a unique identifier delivered by the sending software service. In the case of RTE as user attention shall be paid on the fact that uniqueness for identifier names has to be reached over ports, data elements, object instances and maybe additional identification properties (E.g. Case 1:N mapping to 1:1).
+
+                                        Example:
+                                        - &lt;NameSpace&gt;_UniqueID</L-1>
+                          <L-1 L="ZH">概述：该通信对象的名称应以发送方软件服务名称开头，并追加发送方提供的唯一标识符；推荐格式为 &lt;NameSpace&gt;_UniqueID。</L-1>
+                          <L-1 L="ZH">注意：若通信由 RTE 生成，需确保该标识符在端口、数据元素、对象实例及其他可能的附加属性之间保持全局唯一，特别是在 1:N 映射拆分为多个 1:1 通道的场景下。</L-1>
+                        </P>
+                      </INTRODUCTION>
+                      <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01003</RELATED-TRACE-ITEM-REF>
+                      <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                      <UPPER-MULTIPLICITY>65535</UPPER-MULTIPLICITY>
+                      <PARAMETERS>
+                        <ECUC-INTEGER-PARAM-DEF UUID="ECUC:c70d8576-6d52-46f7-b8ff-17c313e635ea">
+                          <SHORT-NAME>OsIocBufferLength</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">This attribute defines the size of the IOC internal queue to be allocated for a queued communication.</L-2>
+                            <L-2 L="ZH">概述：OsIocBufferLength 用于队列模式通信在 IOC 内部分配的 FIFO 深度，决定一次可缓存的消息条数。</L-2>
+                            <L-2 L="ZH">注意：队列长度应依据发送频率与接收任务的最坏执行周期进行评估；在非队列模式下不得设置该属性，若配置为 0 则自动转为非队列模式。</L-2>
+                          </DESC>
+                          <INTRODUCTION>
+                            <P>
+                              <L-1 L="EN">This configuration information shall allow the optimization of the needed memory for communications requiring buffers within the RTE and within the IOC.</L-1>
+                              <L-1 L="ZH">概述：通过合理设置缓冲区深度，可在 RTE 与 IOC 内部实现内存占用的优化，使其既满足无丢帧要求，又避免过度分配静态 RAM。</L-1>
+                              <L-1 L="ZH">注意：若同一 ECU 上存在多条高频率信号，应分别评估并调整各自的 BufferLength，以防因共享 SRAM 紧张导致系统启动失败或运行期 RAM 溢出。</L-1>
+                            </P>
+                          </INTRODUCTION>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01001</RELATED-TRACE-ITEM-REF>
+                          <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                          <SCOPE>LOCAL</SCOPE>
+                          <MULTIPLICITY-CONFIG-CLASSES>
+                            <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                          </MULTIPLICITY-CONFIG-CLASSES>
+                          <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                          <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                          <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                          <VALUE-CONFIG-CLASSES>
+                            <ECUC-VALUE-CONFIGURATION-CLASS>
+                              <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                              <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                            </ECUC-VALUE-CONFIGURATION-CLASS>
+                          </VALUE-CONFIG-CLASSES>
+                          <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                          <DEFAULT-VALUE>0</DEFAULT-VALUE>
+                          <MAX>255</MAX>
+                          <MIN>0</MIN>
+                        </ECUC-INTEGER-PARAM-DEF>
+                      </PARAMETERS>
+                      <SUB-CONTAINERS>
+                        <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:5c503fab-e8a7-4dce-84b9-6d58467b7611">
+                          <SHORT-NAME>OsIocDataProperties</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">Data properties of the data to be transferred on the IOC communication channel.</L-2>
+                            <L-2 L="ZH">概述：OsIocDataProperties 用于描述通过 IOC 通道传输的数据项特征，包括数据类型引用、初始值及内存映射位置等。</L-2>
+                            <L-2 L="ZH">注意：通信为 N:1 或 N:M 时，仅允许一个数据类型引用，否则配置无效。</L-2>
+                          </DESC>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01023</RELATED-TRACE-ITEM-REF>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY-INFINITE>1</UPPER-MULTIPLICITY-INFINITE>
+                          <PARAMETERS>
+                            <ECUC-INTEGER-PARAM-DEF UUID="ECUC:ac4396f5-cb92-4713-b285-e5f8ea079275">
+                              <SHORT-NAME>OsIocDataPropertyIndex</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">This parameter is used to define in which order the data is send, e.g. whether IocSendGroup(A,B) or IocSendGroup(B,A) shall be used.</L-2>
+                                <L-2 L="ZH">概述：OsIocDataPropertyIndex 指定多数据项组传输时的发送顺序索引，用于生成 IocSendGroup/IocReceiveGroup 参数排列。</L-2>
+                                <L-2 L="ZH">注意：发送方与接收方的 Index 值必须一一对应，否则会导致数据错位；索引应从 0 开始递增，且在同一通信内不可重复。</L-2>
+                              </DESC>
+                              <ADMIN-DATA>
+                                <SDGS>
+                                  <SDG GID="VCOS:CfgUnrealized">
+                                    <SD GID="VCOS:CfgLock">true</SD>
+                                  </SDG>
+                                </SDGS>
+                              </ADMIN-DATA>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01035</RELATED-TRACE-ITEM-REF>
+                              <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>LOCAL</SCOPE>
+                              <MULTIPLICITY-CONFIG-CLASSES>
+                                <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              </MULTIPLICITY-CONFIG-CLASSES>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                              <MAX>255</MAX>
+                              <MIN>0</MIN>
+                            </ECUC-INTEGER-PARAM-DEF>
+                            <ECUC-STRING-PARAM-DEF UUID="ECUC:8986f06e-9232-4f20-aec6-a8dcd936d1e8">
+                              <SHORT-NAME>OsIocInitValue</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">Initial Value for the data to be transferred on the IOC communication channel.</L-2>
+                                <L-2 L="ZH">概述：OsIocInitValue 用于设定 IOC 缓冲区在系统上电或通道初始化时的数据初始内容。</L-2>
+                                <L-2 L="ZH">注意：仅对非队列通道或在接收方首次读取前生效；若未配置，则缓冲区内容由生成器清零或保持上电随机值。</L-2>
+                              </DESC>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01024</RELATED-TRACE-ITEM-REF>
+                              <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>LOCAL</SCOPE>
+                              <MULTIPLICITY-CONFIG-CLASSES>
+                                <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              </MULTIPLICITY-CONFIG-CLASSES>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                              <ECUC-STRING-PARAM-DEF-VARIANTS>
+                                <ECUC-STRING-PARAM-DEF-CONDITIONAL/>
+                              </ECUC-STRING-PARAM-DEF-VARIANTS>
+                            </ECUC-STRING-PARAM-DEF>
+                            <ECUC-STRING-PARAM-DEF UUID="ECUC:8986f06e-9232-4f20-aec6-a8dcd936d1e9">
+                              <SHORT-NAME>OsIocDataType</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">Currently this parameter is used instead of OsIocDataTypeRef to specify the data type.These types are recognised as primitive.All integer and float based types defined by AUTOSAR in StdTypes and PlatformTypes.Additionally, also the public integer based types and enumerations defined in Os_Types.h are recognised.</L-2>
+                                <L-2 L="ZH">概述：该参数可通过直接写入原生整型 / 浮点 / 枚举类型名称来快速指定数据类型，而无需在 ARXML 中创建 IMPLEMENTATION-DATA-TYPE。</L-2>
+                                <L-2 L="ZH">注意：此方法适用于 AUTOSAR StdTypes、PlatformTypes 及 Os_Types.h 中公开的整型和枚举类型。</L-2>
+                              </DESC>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01025</RELATED-TRACE-ITEM-REF>
+                              <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>LOCAL</SCOPE>
+                              <MULTIPLICITY-CONFIG-CLASSES>
+                                <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              </MULTIPLICITY-CONFIG-CLASSES>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                              <ECUC-STRING-PARAM-DEF-VARIANTS>
+                                <ECUC-STRING-PARAM-DEF-CONDITIONAL/>
+                              </ECUC-STRING-PARAM-DEF-VARIANTS>
+                            </ECUC-STRING-PARAM-DEF>
+                            <ECUC-BOOLEAN-PARAM-DEF UUID="ECUC:f8b750d8-dc6e-418a-aa7b-c3c4bfe17b01">
+                              <SHORT-NAME>OsIocDataType Is Atomic</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">Specifies if the type in OsIocDataType is an atomic data type or not.</L-2>
+                                <L-2 L="ZH">概述：OsIocDataType Is Atomic 标明该数据是否能通过单条原子拷贝指令传输。</L-2>
+                                <L-2 L="ZH">注意：当置为 TRUE，IOC 生成器将省略锁或关中断操作，提高实时性。</L-2>
+                              </DESC>
+                              <INTRODUCTION>
+                                <P>
+                                  <L-1 L="EN">If it is an atomic data type, meaning it could be copied with one copy instruction and locks are unnecessary.</L-1>
+                                  <L-1 L="ZH">概述：当标记为原子类型且满足对齐要求时，数据可由 CPU 以一次 Load/Store 完成复制，无需进入临界区。</L-1>
+                                </P>
+                              </INTRODUCTION>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE"/>
+                              <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>ECU</SCOPE>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                              <DEFAULT-VALUE>false</DEFAULT-VALUE>
+                            </ECUC-BOOLEAN-PARAM-DEF>
+                          </PARAMETERS>
+                          <REFERENCES>
+                            <ECUC-FOREIGN-REFERENCE-DEF UUID="ECUC:37e02eb6-462c-41c1-9ca8-05f8ffd1c014">
+                              <SHORT-NAME>OsIocDataTypeRef</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">This is the type of the data to be transferred on the IOC communication channel. This attribute is necessary to generate the parameter type of the Ioc functions. Additionally this information should be used to compute the data size for necessary data copy operations within the Ioc module.</L-2>
+                                <L-2 L="ZH">概述：OsIocDataTypeRef 引用具体的 IMPLEMENTATION-DATA-TYPE，用于生成 Ioc API 形参类型。</L-2>
+                                <L-2 L="ZH">注意：若同一通道配置了多个 DataTypeRef，生成器将派生 IocSendGroup/IocReceiveGroup；N:1 与 N:M 通道仅允许单一 DataTypeRef。</L-2>
+                              </DESC>
+                              <INTRODUCTION>
+                                <P>
+                                  <L-1 L="EN">If more than one attribute is defined, the IOC generator should generate an IocXxxGroup function (Xxx= CHOICE [Send, Receive, Write, Read]).
+
+                                                        N:1 or N:M communication (Multiplicity of OsIocSenderProperties &gt; 1) is only allowed for multiplicity of OsIocDataTypeRef = 1</L-1>
+                                  <L-1 L="ZH">概述：当存在多个数据项时，生成器会生成 IocXxxGroup 接口一次性打包传输。</L-1>
+                                  <L-1 L="ZH">注意：若 OsIocSenderProperties 的多重性 &gt;1，则 OsIocDataTypeRef 的多重性必须为 1，否则配置非法。</L-1>
+                                </P>
+                              </INTRODUCTION>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01005</RELATED-TRACE-ITEM-REF>
+                              <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>LOCAL</SCOPE>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <DESTINATION-TYPE>IMPLEMENTATION-DATA-TYPE</DESTINATION-TYPE>
+                            </ECUC-FOREIGN-REFERENCE-DEF>
+                          </REFERENCES>
+                        </ECUC-PARAM-CONF-CONTAINER-DEF>
+                        <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:7748837c-c78f-4d1d-be0a-96a61a7b5d03">
+                          <SHORT-NAME>OsIocReceiverProperties</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">Representation of receiver properties for one communication. For each OsIocCommunication one (1:1) or many receivers (N:M) have to be defined.  This container should be instantiated within an OsIocCommunication.</L-2>
+                            <L-2 L="ZH">概述：OsIocReceiverProperties 描述单个接收方的实现选项、回调和所属 OS-Application。</L-2>
+                            <L-2 L="ZH">注意：1:1 场景仅配置一个接收方；N:M 场景需为每个接收方分别实例化该容器。</L-2>
+                          </DESC>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01017</RELATED-TRACE-ITEM-REF>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>65536</UPPER-MULTIPLICITY>
+                          <PARAMETERS>
+                            <ECUC-ENUMERATION-PARAM-DEF UUID="ECUC:7d3d9611-afaf-921c-4cc6-9a6878ace501">
+                              <SHORT-NAME>OsIocFunctionImplementationKind</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">This parameter is used to select whether this communication is implemented as a macro or as a function.</L-2>
+                                <L-2 L="ZH">概述：OsIocFunctionImplementationKind 指定生成宏实现（MACRO）或函数实现（FUNCTION）。</L-2>
+                              </DESC>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01037</RELATED-TRACE-ITEM-REF>
+                              <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>LOCAL</SCOPE>
+                              <MULTIPLICITY-CONFIG-CLASSES>
+                                <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              </MULTIPLICITY-CONFIG-CLASSES>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                              <DEFAULT-VALUE>DO_NOT_CARE</DEFAULT-VALUE>
+                              <LITERALS>
+                                <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:fe6bfef1-2414-ddf1-df71-cc84030cd400">
+                                  <SHORT-NAME>DO_NOT_CARE</SHORT-NAME>
+                                  <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                </ECUC-ENUMERATION-LITERAL-DEF>
+                                <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:046f25a6-b147-d431-f68a-ad5dc5dfef5b">
+                                  <SHORT-NAME>FUNCTION</SHORT-NAME>
+                                  <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                </ECUC-ENUMERATION-LITERAL-DEF>
+                                <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:a7ef48c1-5e60-d7e4-0c56-8745d85c34dc">
+                                  <SHORT-NAME>MACRO</SHORT-NAME>
+                                  <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                </ECUC-ENUMERATION-LITERAL-DEF>
+                              </LITERALS>
+                            </ECUC-ENUMERATION-PARAM-DEF>
+                            <ECUC-FUNCTION-NAME-DEF UUID="ECUC:6a5d33f7-6833-492a-a7df-60cbc722edd6">
+                              <SHORT-NAME>OsIocReceiverPullCB</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">This attribute defines the name of a callback function that the IOC shall call on the receiving core for each data reception.</L-2>
+                                <L-2 L="ZH">概述：OsIocReceiverPullCB 指定接收核在数据就绪时由 IOC 触发的回调函数名。</L-2>
+                                <L-2 L="ZH">注意：若缺省，则 IOC 不会进行通知；命名格式建议 &lt;Module&gt;_ReceiverPullCB_&lt;IocId&gt;。</L-2>
+                              </DESC>
+                              <ADMIN-DATA>
+                                <SDGS>
+                                  <SDG GID="VCOS:StringLength">
+                                    <SD GID="VCOS:MinLength">0</SD>
+                                    <SD GID="VCOS:MaxLength">63</SD>
+                                  </SDG>
+                                </SDGS>
+                              </ADMIN-DATA>
+                              <INTRODUCTION>
+                                <P>
+                                  <L-1 L="EN">In case of non existence of this attribute no ReceiverPullCB notification shall be applied by the IOC. The name of the function shall begin with the name of the receiving module, followed with a callback name and followed by the IocId.
+
+                                                        Example: void RTE_ReceiverPullCB_RTE25 (void).
+
+                                                        If this attribute does not exist, it means that no ReceiverPullCB shall be called (No notification from IOC is required). If this attribute exists the IOC shall call the callback function on the receiving core.</L-1>
+                                  <L-1 L="ZH">概述：若未配置该属性，则采用轮询方式由应用主动调用 IocReceive；若配置，IOC 在发送成功后于接收侧触发回调。</L-1>
+                                </P>
+                              </INTRODUCTION>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01010</RELATED-TRACE-ITEM-REF>
+                              <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>LOCAL</SCOPE>
+                              <MULTIPLICITY-CONFIG-CLASSES>
+                                <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              </MULTIPLICITY-CONFIG-CLASSES>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                              <ECUC-FUNCTION-NAME-DEF-VARIANTS>
+                                <ECUC-FUNCTION-NAME-DEF-CONDITIONAL/>
+                              </ECUC-FUNCTION-NAME-DEF-VARIANTS>
+                            </ECUC-FUNCTION-NAME-DEF>
+                            <ECUC-INTEGER-PARAM-DEF UUID="ECUC:99e0E42c-921b-44bc-bd7c-022e8sbe7d41">
+                              <SHORT-NAME>OsIocCallback Hook Stack</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">IocCallback Hook Stack value is defined by the value of this attribute.</L-2>
+                                <L-2 L="ZH">概述：IOC发送回调函数的Hook栈大小。</L-2>
+                                <L-2 L="ZH">注意：栈大小需根据回调函数的复杂度合理配置，避免栈溢出。</L-2>
+                              </DESC>
+                              <INTRODUCTION>
+                                <P>
+                                  <L-1 L="EN">This parameter only necessary when OsIocReceiverPullCB is filled.</L-1>
+                                  <L-1 L="ZH">概述：仅当OsIocReceiverPullCB配置时需要填充Hook栈大小。</L-1>
+                                </P>
+                              </INTRODUCTION>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01016</RELATED-TRACE-ITEM-REF>
+                              <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>ECU</SCOPE>
+                              <MULTIPLICITY-CONFIG-CLASSES>
+                                <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              </MULTIPLICITY-CONFIG-CLASSES>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                              <MAX>65535</MAX>
+                              <MIN>0</MIN>
+                            </ECUC-INTEGER-PARAM-DEF>
+                          </PARAMETERS>
+                          <REFERENCES>
+                            <ECUC-REFERENCE-DEF UUID="ECUC:4f6d8b5f-01eb-47c6-a977-9ac5a00359fd">
+                              <SHORT-NAME>OsIocReceivingOsApplicationRef</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">This attribute is a reference to the receiving OsApplication instance defined in the configuration file of the OS.</L-2>
+                                <L-2 L="ZH">概述：OsIocReceivingOsApplicationRef 引用接收方所在的 OsApplication，用于生成器判断保护域与核心分布。</L-2>
+                                <L-2 L="ZH">注意：生成器通过该引用决定是否插入 MPU 切换、跨核中断及错误返回路径。</L-2>
+                              </DESC>
+                              <INTRODUCTION>
+                                <P>
+                                  <L-1 L="EN">This information allows for the generator to get additional information necessary for the code generation like:
+                                                        * The protection properties of the communicating OsApplications to find out which protections have to be crossed
+                                                        * The core identifiers to find out if an intra or an inter core communication has to be realized
+                                                        * Interrupt details in case of cross core notification to realize over IRQs</L-1>
+                                  <L-1 L="ZH">概述：生成器据此获取保护属性、核心 ID 及跨核通知中断号，以生成正确的锁与内存映射代码。</L-1>
+                                </P>
+                              </INTRODUCTION>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01012</RELATED-TRACE-ITEM-REF>
+                              <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>LOCAL</SCOPE>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsApplication</DESTINATION-REF>
+                            </ECUC-REFERENCE-DEF>
+                          </REFERENCES>
+                        </ECUC-PARAM-CONF-CONTAINER-DEF>
+                        <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:19574439-317b-4c79-839b-e2e1db7db6ee">
+                          <SHORT-NAME>OsIocSenderProperties</SHORT-NAME>
+                          <DESC>
+                            <L-2 L="EN">Representation of sender properties for one communication. For each OsIocCommunication one (1:1) or many senders (N:1 or N:M) have to be defined. Multiplicity &gt; 1 (N:1 or N:M communication) is only allowed for Multiplicity of OsIocDataTypeRef = 1.</L-2>
+                            <L-2 L="ZH">概述：OsIocSenderProperties 描述发送方特性；当存在多个发送方 (N:1 或 N:M) 时需重复实例化。</L-2>
+                            <L-2 L="ZH">注意：若 Multiplicity&gt;1，OsIocDataTypeRef 必须唯一以简化缓冲复用。</L-2>
+                          </DESC>
+                          <INTRODUCTION>
+                            <P>
+                              <L-1 L="EN">This container should be instantiated within an OsIocCommunication.</L-1>
+                              <L-1 L="ZH">概述：该容器应作为 OsIocCommunication 的子元素配置，用于描述每一个发送源。</L-1>
+                            </P>
+                          </INTRODUCTION>
+                          <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01015</RELATED-TRACE-ITEM-REF>
+                          <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                          <UPPER-MULTIPLICITY>65536</UPPER-MULTIPLICITY>
+                          <PARAMETERS>
+                            <ECUC-ENUMERATION-PARAM-DEF UUID="ECUC:1f4c56ce-199b-9178-1257-e6a439af3eec">
+                              <SHORT-NAME>OsIocFunctionImplementationKind</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">This parameter is used to select whether this communication is implemented as a macro or as a function.</L-2>
+                                <L-2 L="ZH">概述：同接收方，指定发送端 API 采用宏或函数实现。</L-2>
+                                <L-2 L="ZH">注意：选择 MACRO 时需确保调用点上下文一致，避免宏展开导致副作用。</L-2>
+                              </DESC>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01036</RELATED-TRACE-ITEM-REF>
+                              <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>LOCAL</SCOPE>
+                              <MULTIPLICITY-CONFIG-CLASSES>
+                                <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              </MULTIPLICITY-CONFIG-CLASSES>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                              <DEFAULT-VALUE>DO_NOT_CARE</DEFAULT-VALUE>
+                              <LITERALS>
+                                <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:a07abfad-8e00-dd4d-a503-18bfc40f2deb">
+                                  <SHORT-NAME>DO_NOT_CARE</SHORT-NAME>
+                                  <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                </ECUC-ENUMERATION-LITERAL-DEF>
+                                <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:a67de663-1b33-d38d-bc1b-f99986e24946">
+                                  <SHORT-NAME>FUNCTION</SHORT-NAME>
+                                  <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                </ECUC-ENUMERATION-LITERAL-DEF>
+                                <ECUC-ENUMERATION-LITERAL-DEF UUID="ECUC:49fe097d-c84c-d740-d1e7-d381995e8ec7">
+                                  <SHORT-NAME>MACRO</SHORT-NAME>
+                                  <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                                </ECUC-ENUMERATION-LITERAL-DEF>
+                              </LITERALS>
+                            </ECUC-ENUMERATION-PARAM-DEF>
+                            <ECUC-INTEGER-PARAM-DEF UUID="ECUC:37e0ea2c-99bb-44bc-bd7c-022e8bfe7d41">
+                              <SHORT-NAME>OsIocSenderId</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">Representation of a sender in a N:1 or N:M communication to distinguish between senders.</L-2>
+                                <L-2 L="ZH">概述：OsIocSenderId 为 N:1 / N:M 通道中区分不同发送方的 8 位标识。</L-2>
+                                <L-2 L="ZH">注意：在 1:1 通道中不应配置该元素。</L-2>
+                              </DESC>
+                              <INTRODUCTION>
+                                <P>
+                                  <L-1 L="EN">This parameter does not exist in 1:1 communication.</L-1>
+                                  <L-1 L="ZH">概述：仅当发送方数量大于 1 时才需要配置 SenderId；其值应在通道内唯一。</L-1>
+                                </P>
+                              </INTRODUCTION>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01016</RELATED-TRACE-ITEM-REF>
+                              <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>ECU</SCOPE>
+                              <MULTIPLICITY-CONFIG-CLASSES>
+                                <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              </MULTIPLICITY-CONFIG-CLASSES>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                              <MAX>255</MAX>
+                              <MIN>0</MIN>
+                            </ECUC-INTEGER-PARAM-DEF>
+                          </PARAMETERS>
+                          <REFERENCES>
+                            <ECUC-REFERENCE-DEF UUID="ECUC:45c166df-7068-47de-84b7-75ed075aab39">
+                              <SHORT-NAME>OsIocSendingOsApplicationRef</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">This attribute is a reference to the sending OS-Application instance defined in the configuration file of the OS.</L-2>
+                                <L-2 L="ZH">概述：OsIocSendingOsApplicationRef 指向发送方所属 OsApplication，供生成器确定保护域及核心信息。</L-2>
+                                <L-2 L="ZH">注意：跨保护域或跨核发送时，生成器会据此插入自旋锁、MPU或跨核中断封装逻辑。</L-2>
+                              </DESC>
+                              <INTRODUCTION>
+                                <P>
+                                  <L-1 L="EN">This information shall allows the generator to get additional information necessary for the code generation like:
+                                                        * The protection properties of the communicating OS-Applications to find out which protection boundaries have to be crossed.
+                                                        * The core identifiers to find out if an intra or an inter core communication has to be realized
+                                                        * Interrupt details in case of cross core notification to realize over IRQs</L-1>
+                                  <L-1 L="ZH">概述：生成器通过该引用推断保护边界、CPU 核及中断路由，为发送方生成合适的互斥与通知代码和内存映射。</L-1>
+                                </P>
+                              </INTRODUCTION>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01014</RELATED-TRACE-ITEM-REF>
+                              <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>LOCAL</SCOPE>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <DESTINATION-REF DEST="ECUC-PARAM-CONF-CONTAINER-DEF">/AUTOSAR/EcucDefs/Os/OsApplication</DESTINATION-REF>
+                            </ECUC-REFERENCE-DEF>
+                          </REFERENCES>
+                        </ECUC-PARAM-CONF-CONTAINER-DEF>
+                      </SUB-CONTAINERS>
+                    </ECUC-PARAM-CONF-CONTAINER-DEF>
+                  </SUB-CONTAINERS>
                 </ECUC-PARAM-CONF-CONTAINER-DEF>
                 <ECUC-PARAM-CONF-CONTAINER-DEF UUID="ECUC:7d5716e3-c20e-4559-ba9c-2d90f50cfd28">
                   <SHORT-NAME>OsIsr</SHORT-NAME>

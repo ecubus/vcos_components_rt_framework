@@ -30,6 +30,14 @@ typedef struct os_task_inst_s os_task_inst_t;
 struct os_task_cfg_s;
 typedef struct os_task_cfg_s os_task_cfg_t;
 
+#if defined(CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK == 1)
+struct task_temp_buffer_s;
+typedef struct task_temp_buffer_s task_temp_buffer_t;
+
+struct task_share_stack_s;
+typedef struct task_share_stack_s task_share_stack_info_t;
+#endif
+
 #ifdef __cplusplus
 }
 #endif
