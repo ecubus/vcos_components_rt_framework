@@ -58,7 +58,7 @@ DeclareSpinlock(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{sid_u}}) = {
 {%- endfor %}
 
 
-{% for osmempool_spinlock_id in osmempool_spinlockid_set %}
+{%- for osmempool_spinlock_id in osmempool_spinlockid_set %}
 DeclareSpinlock(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{osmempool_spinlock_id | upper}}) = {
     /* .obj_des = */              &SPINLOCKOBJVAR({{osmempool_spinlock_id | upper}}),
     /* .method  = */              LOCK_CAT2_INTERRUPTS,
@@ -71,10 +71,10 @@ DeclareSpinlock(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{osmempool_spinlock_id
 };
 {%- endfor %}
 
-{% for os_ioc_spinlock_id in os_ioc_spinlock_id_set %}
+{%- for os_ioc_spinlock_id in os_ioc_spinlock_id_set %}
 DeclareSpinlock(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{os_ioc_spinlock_id}}) = {
     /* .obj_des = */              &SPINLOCKOBJVAR({{os_ioc_spinlock_id}}),
-    /* .method  = */              LOCK_CAT2_INTERRUPTS,
+    /* .method  = */              LOCK_NOTHING,
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
     /* .access_app_mask  = */     (RTFW_APPID2MASK(0) | (~RTFW_APPID2MASK(0))),
 #endif
@@ -88,10 +88,10 @@ DeclareRtfwRefTable(OS_CONST_SECTION, spinlock, OS_SPINLOCK_CNT) = {
 {%- for spinlock in spinlock_cfg %}
     &SPINLOCKCFGVAR({{spinlock.upper()}}),
 {%- endfor %}
-{% for osmempool_spinlock_id in osmempool_spinlockid_set %}
+{%- for osmempool_spinlock_id in osmempool_spinlockid_set %}
     &SPINLOCKCFGVAR({{osmempool_spinlock_id | upper}}),
 {%- endfor %}
-{% for os_ioc_spinlock_id in os_ioc_spinlock_id_set %}
+{%- for os_ioc_spinlock_id in os_ioc_spinlock_id_set %}
     &SPINLOCKCFGVAR({{os_ioc_spinlock_id.upper()}}),
 {%- endfor %}
 };

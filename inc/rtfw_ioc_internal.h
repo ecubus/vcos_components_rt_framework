@@ -17,8 +17,7 @@
 #define RT_FRAMEWORK_INC_OS_IOC_INTERNAL_H
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /* Including File */
@@ -32,13 +31,12 @@ extern "C"
 	((uint32)(((uint32)(Status)) << (sizeof(Std_ReturnType) * 8u)) | (uint32)0xFF)
 
 /* Global Enumeration Definition */
-typedef enum
-{
+typedef enum {
 	/*! Lock nothing. */
 	OS_IOCLOCKMODE_NONE,
 	/*! Lock interrupts. */
 	OS_IOCLOCKMODE_INTERRUPTS,
-#if (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_SPINLOCK
 	/*! Lock spinlocks. */
 	OS_IOCLOCKMODE_SPINLOCKS,
 	/*! Lock interrupts and spinlocks. */
@@ -47,8 +45,7 @@ typedef enum
 } os_ioc_lock_mode_type;
 
 /*! An IOC channel's state. */
-typedef enum
-{
+typedef enum {
 	/*! The channel may not be used. */
 	OS_IOCCHANNELSTATE_DISABLED,
 	/*! The channel may be used. */
@@ -56,43 +53,40 @@ typedef enum
 } os_ioc_channel_state_type;
 
 /*! Class type specifier */
-typedef enum
-{
-	ioc_08_receive_class,         /*!< Sub class is os_ioc_08_receive         */
-	ioc_08_send_class,            /*!< Sub class is os_ioc_08_send            */
-	ioc_16_receive_class,         /*!< Sub class is os_ioc_16_receive         */
-	ioc_16_send_class,            /*!< Sub class is os_ioc_16_send            */
-	ioc_32_receive_class,         /*!< Sub class is os_ioc_32_receive         */
-	ioc_32_send_class,            /*!< Sub class is os_ioc_32_send            */
-	ioc_ref_receive_class,        /*!< Sub class is os_ioc_ref_receive        */
-	ioc_ref_send_class,           /*!< Sub class is os_ioc_ref_send           */
-	ioc_read_class,               /*!< Sub class is os_ioc_read               */
-	ioc_write_class               /*!< Sub class is os_ioc_write              */
+typedef enum {
+	ioc_08_receive_class, /*!< Sub class is os_ioc_08_receive         */
+	ioc_08_send_class, /*!< Sub class is os_ioc_08_send            */
+	ioc_16_receive_class, /*!< Sub class is os_ioc_16_receive         */
+	ioc_16_send_class, /*!< Sub class is os_ioc_16_send            */
+	ioc_32_receive_class, /*!< Sub class is os_ioc_32_receive         */
+	ioc_32_send_class, /*!< Sub class is os_ioc_32_send            */
+	ioc_ref_receive_class, /*!< Sub class is os_ioc_ref_receive        */
+	ioc_ref_send_class, /*!< Sub class is os_ioc_ref_send           */
+	ioc_read_class, /*!< Sub class is os_ioc_read               */
+	ioc_write_class /*!< Sub class is os_ioc_write              */
 } os_ioc_sub_class_type;
 
-typedef enum
-{
-	OS_FIFOWRITERESULT_OK,                   /*!< Writing to the queue succeeded. */
-	OS_FIFOWRITERESULT_BUFFEROVERFLOW        /*!< Writing to the queue failed, because it is full. */
+typedef enum {
+	OS_FIFOWRITERESULT_OK, /*!< Writing to the queue succeeded. */
+	OS_FIFOWRITERESULT_BUFFEROVERFLOW /*!< Writing to the queue failed, because it is full. */
 } os_fifo_write_result_type;
 
 /*! Internal return types for receive functions (more error codes than the API functions) */
-typedef enum
-{
+typedef enum {
 	/*! No error. */
-	OS_IOC_E_INTERNAL_OK                  = E_OK,
+	OS_IOC_E_INTERNAL_OK = E_OK,
 	/*! The calling application is not the owner application of the send/receive function. */
-	OS_IOC_E_INTERNAL_NOK                 = E_NOT_OK,
+	OS_IOC_E_INTERNAL_NOK = E_NOT_OK,
 	/*! Queue is empty, return value is empty. */
-	OS_IOC_E_INTERNAL_NO_DATA             = E_OS_IOC_NO_DATA,
+	OS_IOC_E_INTERNAL_NO_DATA = E_OS_IOC_NO_DATA,
 	/*! Queue overflow detected, data lost, receive successful. */
-	OS_IOC_E_INTERNAL_LOST_DATA           = E_OS_IOC_LOST_DATA,
+	OS_IOC_E_INTERNAL_LOST_DATA = E_OS_IOC_LOST_DATA,
 	/*! Queue overflow detected, data lost and queue is currently empty, receive successful. */
-	OS_IOC_E_INTERNAL_LOST_AND_NO_DATA    = (E_OS_IOC_NO_DATA | E_OS_IOC_LOST_DATA),
+	OS_IOC_E_INTERNAL_LOST_AND_NO_DATA = (E_OS_IOC_NO_DATA | E_OS_IOC_LOST_DATA),
 	/*! Channel is inactive because of an earlier detected internal error. */
-	OS_IOC_E_INTERNAL_CHANNEL_CLOSED      = OS_IOC_EXTENDED_STATUS_TYPE(1u),
+	OS_IOC_E_INTERNAL_CHANNEL_CLOSED = OS_IOC_EXTENDED_STATUS_TYPE(1u),
 	/*! Channel shall be closed because of internal error (e.g. read/write-index out of range). */
-	OS_IOC_E_INTERNAL_CLOSE_CHANNEL       = OS_IOC_EXTENDED_STATUS_TYPE(2u)
+	OS_IOC_E_INTERNAL_CLOSE_CHANNEL = OS_IOC_EXTENDED_STATUS_TYPE(2u)
 } os_ioc_internal_return_type;
 
 /* Global Type & Structure Definition */
@@ -102,14 +96,14 @@ typedef uint8 os_fifo_idx_type;
 typedef os_spin_id_t os_spin_cfg_ref_t;
 typedef os_hook_cfg_t os_ioc_call_back_ref_t;
 
-typedef void (* os_ioc_copy_cbk) (void const *source, void *target);
-typedef void (* os_ioc_init_cbk) (void *data);
-typedef void (* os_fifo_ref_write_cbk) (void *buffer, uint8 idx, void const *data);
-typedef void (* os_fifo_ref_read_cbk) (void const *buffer, uint8 idx, void *data_ref);
+typedef void (*os_ioc_copy_cbk)(void const *source, void *target);
+typedef void (*os_ioc_init_cbk)(void *data);
+typedef void (*os_fifo_ref_write_cbk)(void *buffer, uint8 idx, void const *data);
+typedef void (*os_fifo_ref_read_cbk)(void const *buffer, uint8 idx, void *data_ref);
 
 struct os_ioc_callbacks_config_s {
 	uint32 callback_count;
-	const os_ioc_call_back_ref_t * const *callback_refs;
+	const os_ioc_call_back_ref_t *const *callback_refs;
 };
 
 struct os_ioc_inst_s {
@@ -121,10 +115,10 @@ struct os_ioc_cfg_s {
 	IocIdType ioc_id;
 	os_ioc_sub_class_type sub_class;
 	os_ioc_lock_mode_type lock_mode;
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
 	uint32 accessing_appl_mask;
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
-#if (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_SPINLOCK
 	os_spin_cfg_ref_t spin_id;
 #endif
 };
@@ -264,26 +258,26 @@ struct os_ioc_read_cfg_s {
 };
 
 /* Global Variable Definition */
-DeclareRtfwRefTable_H(ioc)  /*! Reference to OS iocchannels configuration table  */
+DeclareRtfwRefTable_H(ioc) /*! Reference to OS iocchannels configuration table  */
 
 /* Global Function Declaration */
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 extern void os_ioc_init(const os_ioc_cfg_t *const os_ioc_cfg_table[], OsObjIndexType size);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_08_send (IocIdType ioc_id, uint8 data);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_08_receive (IocIdType ioc_id, uint8 *data);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_08_empty_queue (IocIdType ioc_id);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_16_send (IocIdType ioc_id, uint16 data);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_16_receive (IocIdType ioc_id, uint16 *data);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_16_empty_queue (IocIdType ioc_id);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_32_send (IocIdType ioc_id, uint32 data);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_32_receive (IocIdType ioc_id, uint32 *data);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_32_empty_queue (IocIdType ioc_id);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_ref_send (IocIdType ioc_id, void const *data);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_ref_receive (IocIdType ioc_id, void *data);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_ref_empty_queue (IocIdType ioc_id);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_write (IocIdType ioc_id, void const *data);
-extern FUNC(Os_StatusType, OS_CODE) os_ioc_read (IocIdType ioc_id, void *data);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_08_send(IocIdType ioc_id, uint8 data);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_08_receive(IocIdType ioc_id, uint8 *data);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_08_empty_queue(IocIdType ioc_id);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_16_send(IocIdType ioc_id, uint16 data);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_16_receive(IocIdType ioc_id, uint16 *data);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_16_empty_queue(IocIdType ioc_id);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_32_send(IocIdType ioc_id, uint32 data);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_32_receive(IocIdType ioc_id, uint32 *data);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_32_empty_queue(IocIdType ioc_id);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_ref_send(IocIdType ioc_id, void const *data);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_ref_receive(IocIdType ioc_id, void *data);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_ref_empty_queue(IocIdType ioc_id);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_write(IocIdType ioc_id, void const *data);
+extern FUNC(Os_StatusType, OS_CODE) os_ioc_read(IocIdType ioc_id, void *data);
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"
 

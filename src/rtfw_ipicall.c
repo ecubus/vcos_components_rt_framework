@@ -37,7 +37,7 @@
 #define OS_IPICALL_GETEVENT ((os_ipicall_service_id_t)3)
 #define OS_IPICALL_SETEVENT ((os_ipicall_service_id_t)4)
 #define OS_IPICALL_SETEVENTASYN ((os_ipicall_service_id_t)5)
-#define OS_IPICALL_HOOK_CALL_CALLBACK ((os_ipicall_service_id_t)6)
+#define OS_IPICALL_HOOK_CALL_VOID_HOOK ((os_ipicall_service_id_t)6)
 #define OS_IPICALL_START_SCHEDULE_TABLE_REL ((os_ipicall_service_id_t)7)
 #define OS_IPICALL_START_SCHEDULE_TABLE_ABS ((os_ipicall_service_id_t)8)
 #define OS_IPICALL_STOP_SCHEDULE_TABLE ((os_ipicall_service_id_t)9)
@@ -69,7 +69,7 @@ os_ipicall_service_table[OS_IPICALL_SERVICE_MAX] = {
 	[OS_IPICALL_SETEVENT] = &os_ipicall_recv_set_event,
 	[OS_IPICALL_SETEVENTASYN] = &os_ipicall_recv_set_event_asyn,
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-	[OS_IPICALL_HOOK_CALL_CALLBACK] = &os_ipicall_recv_hook_call_callback,
+	[OS_IPICALL_HOOK_CALL_VOID_HOOK] = &os_ipicall_recv_hook_call_void_hook,
 #endif
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
 	[OS_IPICALL_START_SCHEDULE_TABLE_REL] = &os_ipicall_recv_start_scheduletable_rel,
@@ -96,6 +96,7 @@ os_ipicall_service_table[OS_IPICALL_SERVICE_MAX] = {
 static inline os_ipicall_index_t next_buffer_index(os_ipicall_index_t current_index)
 {
 	os_ipicall_index_t next_index = current_index + 1U;
+
 	if (next_index >= (os_ipicall_index_t)QUEUE_DEPTH) {
 		next_index = 0U;
 	}
@@ -432,7 +433,7 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task(os_ipicall_data_t *pa
 	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
 	int ret;
 
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
 	const os_ctx_cfg_t *task_context = OS_TASK_GET_CONTEXT_REF(task_cfg);
 
 	if (UNLIKELY(os_app_check_is_accessible(OS_CONTEXT_GET_APPONRWECFG_REF(task_context)) != OS_STATUS_OK)) {
@@ -454,7 +455,7 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task_asyn(os_ipicall_data_
 	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
 	int ret;
 
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
 	const os_ctx_cfg_t *task_context = OS_TASK_GET_CONTEXT_REF(task_cfg);
 
 	if (UNLIKELY(os_app_check_is_accessible(OS_CONTEXT_GET_APPONRWECFG_REF(task_context)) != OS_STATUS_OK)) {
@@ -508,12 +509,9 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_event_asyn(os_ipicall_data_t *p
 }
 
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_hook_call_callback(os_ipicall_data_t *param)
+FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_hook_call_void_hook(os_ipicall_data_t *param)
 {
-	HookType hook_id = param->send_element.in_param.hook_call_callback_param.hook_id;
-	const os_hook_cfg_t *hook_cfg = os_hook_cfg_ref_table[hook_id];
-
-	return os_hook_call_ioc_callback_invoke(hook_cfg);
+	return os_hook_call_void_hook(param->send_element.in_param.hook_call_void_hook_param.hook_id);
 }
 #endif
 
@@ -846,12 +844,12 @@ FUNC(Os_StatusType, OS_CODE) os_ipicall_ipc_test_function(uint32 target_core, ui
 
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
 /*! HookCallCallback */
-FUNC(Os_StatusType, OS_CODE) os_ipicall_hook_call_callback(uint32 target_core, HookType hook_id)
+FUNC(Os_StatusType, OS_CODE) os_ipicall_hook_call_void_hook(uint32 target_core, HookType hook_id)
 {
 	os_ipicall_data_t param;
 
-	param.send_element.service = OS_IPICALL_HOOK_CALL_CALLBACK;
-	param.send_element.in_param.hook_call_callback_param.hook_id = hook_id;
+	param.send_element.service = OS_IPICALL_HOOK_CALL_VOID_HOOK;
+	param.send_element.in_param.hook_call_void_hook_param.hook_id = hook_id;
 	param.ret_element.return_status = OS_STATUS_NOT_OK;
 
 	return os_ipicall_send_async(target_core, &param);

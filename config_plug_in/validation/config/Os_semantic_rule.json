@@ -18,6 +18,25 @@
         ],
         "manual_solve_list": []
     },
+    "OS011004": {
+        "rule_name": "OS011004",
+        "rule_type": "repeatability_check",
+        "rule_summary": "Repeatablity check of OsIocReceiverId.",
+        "rule_message": "/AUTOSAR/EcucDefs/Os/OsIoc/OsIocCommunication/OsIocReceiverProperties/OsIocReceiverId should be unique.",
+        "rule_ruleset": {
+            "mod_path": "/AUTOSAR/EcucDefs/Os/OsIoc/OsIocCommunication/OsIocReceiverProperties/OsIocReceiverId",
+            "base_path": "/AUTOSAR/EcucDefs/Os/OsIoc/OsIocCommunication"
+        },
+        "auto_solve_list": [
+            {
+                "solve_info": "Repopulate /AUTOSAR/EcucDefs/Os/OsIoc/OsIocCommunication/OsIocReceiverProperties/OsIocReceiverId values automatically.",
+                "solve_type": "Repopulate_value",
+                "parameter": "/AUTOSAR/EcucDefs/Os/OsIoc/OsIocCommunication",
+                "value": ""
+            }
+        ],
+        "manual_solve_list": []
+    },
     "OS012003": {
         "rule_name": "OS012003",
         "rule_type": "same_container_linkage_check",

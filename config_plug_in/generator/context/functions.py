@@ -131,7 +131,7 @@ class Function(FunctionBase):
         task_stack_sharing_info = {} #以core为key 获取到所有共栈信息
         task_stack_sharing_ref ={} #以taskname 为key 获取共栈信息
         os_app_config = Function.get_app_cfg(context)
-        
+
         for core_name, value in core_cfg.items():
             """ 找到core ref 的bsw app ,从bsw app 找到对应的 coreid """
             if "DefinitionRef" in value:
@@ -333,6 +333,7 @@ class Function(FunctionBase):
                     OsIocReceivingOsApplicationRef_list = []
                     OsIocInitValue = 0
                     OsIocSenderId = 0
+                    OsIocReceiverId = 0
                     datatype,OsIocDataType,OsIocDataTypeRef = "uint8","","uint8"
                     OsIocFunctionImplementationKind = "FUNCTION"
                     if "DefinitionRef" in OsIocData_value and "Os/OsIoc/OsIocCommunication/OsIocDataProperties" in OsIocData_value[
@@ -395,6 +396,9 @@ class Function(FunctionBase):
                         if "OsIocCallback Hook Stack" in OsIocData_value:
                             OsIocReceiverProperties_content.update(
                                 {"OsIocCallback Hook Stack": OsIocData_value["OsIocCallback Hook Stack"]["Value"]})
+                        if "OsIocReceiverId" in OsIocData_value and OsIocData_value["OsIocReceiverId"]["Value"] is not None:
+                            OsIocReceiverId = OsIocData_value["OsIocReceiverId"]["Value"]
+                        OsIocReceiverProperties_content.update({"OsIocReceiverId": OsIocReceiverId})
                         if "OsIocReceivingOsApplicationRef" in OsIocData_value and isinstance(
                                 OsIocData_value["OsIocReceivingOsApplicationRef"]["ValueRef"], list):
                             for OsIocReceivingOsApplicationRef_i in OsIocData_value["OsIocReceivingOsApplicationRef"][
@@ -433,6 +437,12 @@ class Function(FunctionBase):
     def get_ioc_sender_cnt(context, ioc_name):
         ioc_config, _ = Function.get_ioc_cfg(context)
         return len(ioc_config[ioc_name]["OsIocSenderProperties"])
+
+    @staticmethod
+    @pass_context
+    def get_ioc_receiver_cnt(context, ioc_name):
+        ioc_config, _ = Function.get_ioc_cfg(context)
+        return len(ioc_config[ioc_name]["OsIocReceiverProperties"])
 
     @staticmethod
     @pass_context
@@ -1553,7 +1563,7 @@ class Function(FunctionBase):
         ########################################################
         rtfw_config += Function.get_int_level_cfg_marcos(context)
         ########################################################
-        
+
         # CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK
         ########################################################
         task_stack_sharing_info, task_stack_sharing_ref = Function.get_task_stack_sharing(context)
@@ -1565,7 +1575,7 @@ class Function(FunctionBase):
         ########################################################
         # isolate is a standalone configuration module not controled in rt_framework
         ########################################################
-        
+
         # CONFIG_RT_FRAMEWORK_TOOLCHAIN
         ########################################################
         rtfw_config += Function.select_compiler(context)

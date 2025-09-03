@@ -65,7 +65,7 @@ struct os_ipicall_set_event_param {
 };
 
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-struct os_ipicall_hook_call_callback_param {
+struct os_ipicall_hook_call_void_hook_param {
 	HookType hook_id;
 };
 #endif
@@ -140,7 +140,7 @@ union os_ipicall_param_e {
 	os_ipicall_set_event_param_t set_event_param;
 	os_ipicall_get_app_state_param_t get_app_state_param;
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-	os_ipicall_hook_call_callback_param_t hook_call_callback_param;
+	os_ipicall_hook_call_void_hook_param_t hook_call_void_hook_param;
 #endif
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
 	os_ipicall_start_schtbl_rel_param_t start_schtbl_rel_param;
@@ -248,8 +248,8 @@ extern FUNC(Os_StatusType, OS_CODE) os_ipicall_clear_schedule_table_app_id(uint3
                                                                           ApplicationIDType app_id);
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1) */
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_hook_call_callback(uint32 target_core, HookType hook_id);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_hook_call_callback(os_ipicall_data_t *param);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_hook_call_void_hook(uint32 target_core, HookType hook_id);
+extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_hook_call_void_hook(os_ipicall_data_t *param);
 #endif
 extern FUNC(void, OS_CODE) os_ipicall_init(const os_ipicall_cfg_t *const os_ipicall_cfg_table[], OsObjIndexType count);
 extern FUNC(Os_StatusType, OS_CODE) os_ipicall_activate_task(uint32 target_core, TaskType task_id);

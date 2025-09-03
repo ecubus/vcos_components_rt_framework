@@ -97,4 +97,4 @@ typedef struct os_ioc_read_cfg_s os_ioc_read_cfg_t;
 }
 #endif
 
-#endif  /* RT_FRAMEWORK_INC_OS_IOC_TYPES_H */
+#endif /* RT_FRAMEWORK_INC_OS_IOC_TYPES_H */

@@ -1239,6 +1239,42 @@
                               <MAX>65535</MAX>
                               <MIN>0</MIN>
                             </ECUC-INTEGER-PARAM-DEF>
+                            <ECUC-INTEGER-PARAM-DEF UUID="ECUC:37e0ea2c-99bb-44bc-bd7c-022e8bfe7d41">
+                              <SHORT-NAME>OsIocReceiverId</SHORT-NAME>
+                              <DESC>
+                                <L-2 L="EN">Representation of a receiver in a N:M communication to distinguish between receivers.</L-2>
+                                <L-2 L="ZH">概述：OsIocReceiverId 为 N:M 通道中区分不同发送方的 8 位标识。</L-2>
+                                <L-2 L="ZH">注意：仅在 N:M 通道中配置该元素。</L-2>
+                              </DESC>
+                              <INTRODUCTION>
+                                <P>
+                                  <L-1 L="EN">This parameter does not exist in 1:1 or N:1 communication.</L-1>
+                                  <L-1 L="ZH">概述：仅当发送方数量大于 1，且接受方数量大于 1 时才需要配置ReceiverId，其值应在通道内唯一。</L-1>
+                                </P>
+                              </INTRODUCTION>
+                              <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_01016</RELATED-TRACE-ITEM-REF>
+                              <LOWER-MULTIPLICITY>0</LOWER-MULTIPLICITY>
+                              <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
+                              <SCOPE>ECU</SCOPE>
+                              <MULTIPLICITY-CONFIG-CLASSES>
+                                <ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-MULTIPLICITY-CONFIGURATION-CLASS>
+                              </MULTIPLICITY-CONFIG-CLASSES>
+                              <ORIGIN>AUTOSAR_ECUC</ORIGIN>
+                              <POST-BUILD-VARIANT-MULTIPLICITY>false</POST-BUILD-VARIANT-MULTIPLICITY>
+                              <POST-BUILD-VARIANT-VALUE>false</POST-BUILD-VARIANT-VALUE>
+                              <VALUE-CONFIG-CLASSES>
+                                <ECUC-VALUE-CONFIGURATION-CLASS>
+                                  <CONFIG-CLASS>PRE-COMPILE</CONFIG-CLASS>
+                                  <CONFIG-VARIANT>VARIANT-PRE-COMPILE</CONFIG-VARIANT>
+                                </ECUC-VALUE-CONFIGURATION-CLASS>
+                              </VALUE-CONFIG-CLASSES>
+                              <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
+                              <MAX>255</MAX>
+                              <MIN>0</MIN>
+                            </ECUC-INTEGER-PARAM-DEF>
                           </PARAMETERS>
                           <REFERENCES>
                             <ECUC-REFERENCE-DEF UUID="ECUC:4f6d8b5f-01eb-47c6-a977-9ac5a00359fd">

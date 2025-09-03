@@ -132,10 +132,10 @@ DeclareIocWrite(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
         /*.ioc_id = */               OS_IOC_WRITE_{{ioc_name.upper()}}_ID,
         /*.sub_class = */            ioc_write_class,
         /*.lock_mode = */            {{read_write_lockmode}},
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
         /*.accessing_appl_mask = */   {{send_app_mask}},
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
-#if (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_SPINLOCK
         /*.spin_id = */               {{read_write_spinlockid}},
 #endif /*CONFIG_RT_FRAMEWORK_SPINLOCK == 1*/
     },
@@ -155,10 +155,10 @@ DeclareIocRead(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
         /*.ioc_id = */               OS_IOC_READ_{{ioc_name.upper()}}_ID,
         /*.sub_class = */            ioc_read_class,
         /*.lock_mode = */            {{read_write_lockmode}},
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
         /*.accessing_appl_mask = */   {{receive_app_mask}},
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
-#if (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_SPINLOCK
         /*.spin_id = */               {{read_write_spinlockid}},
 #endif /*CONFIG_RT_FRAMEWORK_SPINLOCK == 1*/
     },
@@ -180,11 +180,11 @@ static FUNC(void, OS_CODE) os_ioc_copy_{{ioc_name}} ( void const * source, void 
 }
 static FUNC(void, OS_CODE) os_ioc_init_{{ioc_name}} ( void* data )
 {
-  /* #10 Initialize data. */
 {%- if baseDataType in ["uint8", "sint8", "boolean","uint16", "sint16", "uint32", "sint32", "float32", "uint64", "sint64", "float64"]:%}
     (*(({{dataType}}*)data)) = {{initValue}};
 {%- else:%}
-  (void)memset(data,{{initValue}},sizeof({{dataType}}));
+    static const {{dataType}} init_value = {{initValue}};
+    (void)memcpy(data, &init_value, sizeof(init_value));
 {%- endif %}
 }
 #define OS_STOP_SEC_CODE
@@ -242,10 +242,10 @@ DeclareIoc08Send(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
         /*.ioc_id = */               OS_IOC_SEND_{{ioc_name.upper()}}_ID,
         /*.sub_class = */            ioc_08_send_class,
         /*.lock_mode = */            {{send_lockmode}},
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
         /*.accessing_appl_mask = */   {{send_app_mask}},
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
-#if (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_SPINLOCK
         /*.spin_id = */               {{send_spinlockid}},
 #endif /*CONFIG_RT_FRAMEWORK_SPINLOCK == 1*/
     },
@@ -265,10 +265,10 @@ DeclareIoc08Receive(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
         /*.ioc_id = */               OS_IOC_RECEIVE_{{ioc_name.upper()}}_ID,
         /*.sub_class = */            ioc_08_receive_class,
         /*.lock_mode = */            {{receive_lockmode}},
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
         /*.accessing_appl_mask = */   {{receive_app_mask}},
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
-#if (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_SPINLOCK
         /*.spin_id = */               {{receive_spinlockid}},
 #endif /*CONFIG_RT_FRAMEWORK_SPINLOCK == 1*/
     },
@@ -308,10 +308,10 @@ DeclareIoc16Send(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
         /*.ioc_id = */               OS_IOC_SEND_{{ioc_name.upper()}}_ID,
         /*.sub_class = */            ioc_16_send_class,
         /*.lock_mode = */            {{send_lockmode}},
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
         /*.accessing_appl_mask = */   {{send_app_mask}},
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
-#if (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_SPINLOCK
         /*.spin_id = */               {{send_spinlockid}},
 #endif /*CONFIG_RT_FRAMEWORK_SPINLOCK == 1*/
     },
@@ -331,10 +331,10 @@ DeclareIoc16Receive(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
         /*.ioc_id = */               OS_IOC_RECEIVE_{{ioc_name.upper()}}_ID,
         /*.sub_class = */            ioc_16_receive_class,
         /*.lock_mode = */            {{receive_lockmode}},
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
         /*.accessing_appl_mask = */   {{receive_app_mask}},
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
-#if (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_SPINLOCK
         /*.spin_id = */               {{receive_spinlockid}},
 #endif /*CONFIG_RT_FRAMEWORK_SPINLOCK == 1*/
     },
@@ -374,10 +374,10 @@ DeclareIoc32Send(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
         /*.ioc_id = */               OS_IOC_SEND_{{ioc_name.upper()}}_ID,
         /*.sub_class = */            ioc_32_send_class,
         /*.lock_mode = */            {{send_lockmode}},
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
         /*.accessing_appl_mask = */   {{send_app_mask}},
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
-#if (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_SPINLOCK
         /*.spin_id = */               {{send_spinlockid}},
 #endif /*CONFIG_RT_FRAMEWORK_SPINLOCK == 1*/
     },
@@ -397,10 +397,10 @@ DeclareIoc32Receive(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
         /*.ioc_id = */               OS_IOC_RECEIVE_{{ioc_name.upper()}}_ID,
         /*.sub_class = */            ioc_32_receive_class,
         /*.lock_mode = */            {{receive_lockmode}},
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
         /*.accessing_appl_mask = */   {{receive_app_mask}},
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
-#if (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_SPINLOCK
         /*.spin_id = */               {{receive_spinlockid}},
 #endif /*CONFIG_RT_FRAMEWORK_SPINLOCK == 1*/
     },
@@ -446,10 +446,10 @@ DeclareIocRefSend(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
         /*.ioc_id = */               OS_IOC_SEND_{{ioc_name.upper()}}_ID,
         /*.sub_class = */            ioc_ref_send_class,
         /*.lock_mode = */            {{send_lockmode}},
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
         /*.accessing_appl_mask = */   {{send_app_mask}},
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
-#if (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_SPINLOCK
         /*.spin_id = */               {{send_spinlockid}},
 #endif /*CONFIG_RT_FRAMEWORK_SPINLOCK == 1*/
     },
@@ -470,10 +470,10 @@ DeclareIocRefReceive(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
         /*.ioc_id = */               OS_IOC_RECEIVE_{{ioc_name.upper()}}_ID,
         /*.sub_class = */            ioc_ref_receive_class,
         /*.lock_mode = */            {{receive_lockmode}},
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
         /*.accessing_appl_mask = */   {{receive_app_mask}},
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
-#if (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_SPINLOCK
         /*.spin_id = */               {{receive_spinlockid}},
 #endif /*CONFIG_RT_FRAMEWORK_SPINLOCK == 1*/
     },
@@ -526,14 +526,9 @@ CONSTP2CONST(os_ioc_cfg_t, OS_CONST, AUTOMATIC) os_core{{core_id}}_ioc_cfg_ref_t
             {%- if "OsIocDataProperties" in ioc_config[ioc_name] %}
                 {%- set dataType = ioc_config[ioc_name]["OsIocDataProperties"]["datatype"] %}
                 {%- set baseDataType = get_ioc_base_datatype(dataType) %}
-                {%- set initValue = ioc_config[ioc_name]["OsIocDataProperties"]["OsIocInitValue"] %}
-                {%- if not initValue %}
-                    {%- set initValue = 0 %}
-                {%- endif %}
             {%- else %}
                 {%- set dataType = "uint8" %}
                 {%- set baseDataType = "uint8" %}
-                {%- set initValue = 0 %}
             {%- endif %}
             {%- if "OsIocBufferLength" in  ioc_config[ioc_name] %}
                 {%- if ioc_config[ioc_name]["OsIocBufferLength"] == 0 %}
@@ -573,14 +568,9 @@ DeclareRtfwRefTable(OS_CONST_SECTION, ioc, OS_IOC_CNT) = {
     {%- if "OsIocDataProperties" in ioc_config[ioc_name] %}
         {%- set dataType = ioc_config[ioc_name]["OsIocDataProperties"]["datatype"] %}
         {%- set baseDataType = get_ioc_base_datatype(dataType) %}
-        {%- set initValue = ioc_config[ioc_name]["OsIocDataProperties"]["OsIocInitValue"] %}
-        {%- if not  initValue %}
-            {%- set initValue = 0 %}
-        {%- endif %}
     {%- else %}
         {%- set dataType = "uint8" %}
         {%- set baseDataType = "uint8" %}
-        {%- set initValue = 0 %}
     {%- endif %}
     {%- if "OsIocBufferLength" in  ioc_config[ioc_name] %}
         {%- if ioc_config[ioc_name]["OsIocBufferLength"] == 0 %}

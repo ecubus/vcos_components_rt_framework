@@ -17,8 +17,7 @@
 #define RT_FRAMEWORK_INC_OS_IOC_H
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /* Including File */
@@ -92,24 +91,24 @@ extern "C"
 /* Global Function Declaration */
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
-FUNC(StatusType, OS_CODE) Ioc08Send (IocIdType ioc_id, uint8 data);
-FUNC(StatusType, OS_CODE) Ioc08Receive (IocIdType ioc_id, uint8 * data);
-FUNC(StatusType, OS_CODE) Ioc08EmptyQueue (IocIdType ioc_id);
+FUNC(StatusType, OS_CODE) Ioc08Send(IocIdType ioc_id, uint8 data);
+FUNC(StatusType, OS_CODE) Ioc08Receive(IocIdType ioc_id, uint8 *data);
+FUNC(StatusType, OS_CODE) Ioc08EmptyQueue(IocIdType ioc_id);
 
-FUNC(StatusType, OS_CODE) Ioc16Send (IocIdType ioc_id, uint16 data);
-FUNC(StatusType, OS_CODE) Ioc16Receive (IocIdType ioc_id, uint16 * data);
-FUNC(StatusType, OS_CODE) Ioc16EmptyQueue (IocIdType ioc_id);
+FUNC(StatusType, OS_CODE) Ioc16Send(IocIdType ioc_id, uint16 data);
+FUNC(StatusType, OS_CODE) Ioc16Receive(IocIdType ioc_id, uint16 *data);
+FUNC(StatusType, OS_CODE) Ioc16EmptyQueue(IocIdType ioc_id);
 
-FUNC(StatusType, OS_CODE) Ioc32Send (IocIdType ioc_id, uint32 data);
-FUNC(StatusType, OS_CODE) Ioc32Receive (IocIdType ioc_id, uint32 * data);
-FUNC(StatusType, OS_CODE) Ioc32EmptyQueue (IocIdType ioc_id);
+FUNC(StatusType, OS_CODE) Ioc32Send(IocIdType ioc_id, uint32 data);
+FUNC(StatusType, OS_CODE) Ioc32Receive(IocIdType ioc_id, uint32 *data);
+FUNC(StatusType, OS_CODE) Ioc32EmptyQueue(IocIdType ioc_id);
 
-FUNC(StatusType, OS_CODE) IocRefSend (IocIdType ioc_id, void const *data);
-FUNC(StatusType, OS_CODE) IocRefReceive (IocIdType ioc_id, void *data);
-FUNC(StatusType, OS_CODE) IocRefEmptyQueue (IocIdType ioc_id);
+FUNC(StatusType, OS_CODE) IocRefSend(IocIdType ioc_id, void const *data);
+FUNC(StatusType, OS_CODE) IocRefReceive(IocIdType ioc_id, void *data);
+FUNC(StatusType, OS_CODE) IocRefEmptyQueue(IocIdType ioc_id);
 
-FUNC(StatusType, OS_CODE) IocWrite (IocIdType ioc_id, void const *data);
-FUNC(StatusType, OS_CODE) IocRead (IocIdType ioc_id, void *data);
+FUNC(StatusType, OS_CODE) IocWrite(IocIdType ioc_id, void const *data);
+FUNC(StatusType, OS_CODE) IocRead(IocIdType ioc_id, void *data);
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"
 

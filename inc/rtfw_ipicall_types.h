@@ -36,8 +36,8 @@ struct os_ipicall_set_event_param;
 typedef struct os_ipicall_set_event_param os_ipicall_set_event_param_t;
 
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-struct os_ipicall_hook_call_callback_param;
-typedef struct os_ipicall_hook_call_callback_param os_ipicall_hook_call_callback_param_t;
+struct os_ipicall_hook_call_void_hook_param;
+typedef struct os_ipicall_hook_call_void_hook_param os_ipicall_hook_call_void_hook_param_t;
 #endif
 
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
