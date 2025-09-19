@@ -34,9 +34,9 @@
 
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
-static FUNC(Os_StatusType, OS_CODE) os_start_scheduletable_rel_startup(ScheduleTableType sid, TickType offset);
-static FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_abs_startup(ScheduleTableType sid, TickType start);
-static FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_synchron_startup(ScheduleTableType schedtable_id);
+static FUNC(os_status_t, OS_CODE) os_start_scheduletable_rel_startup(ScheduleTableType sid, TickType offset);
+static FUNC(os_status_t, OS_CODE) os_start_schedule_table_abs_startup(ScheduleTableType sid, TickType start);
+static FUNC(os_status_t, OS_CODE) os_start_schedule_table_synchron_startup(ScheduleTableType schedtable_id);
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"
 
@@ -394,7 +394,7 @@ static FUNC(void, OS_CODE) os_update_sched_table_state(os_schedtable_inst_t *stb
 	return;
 }
 
-static FUNC(Os_StatusType, OS_CODE) os_sched_table_check_consistency(const os_schedtable_inst_t *schedtbl_ptr)
+static FUNC(os_status_t, OS_CODE) os_sched_table_check_consistency(const os_schedtable_inst_t *schedtbl_ptr)
 {
 	const os_schedtable_cfg_t *cfg_ptr = os_get_sched_table_cfg_by_id(schedtbl_ptr->schedtable_id);
 	TickType max_allowed_value = os_get_sched_table_max_value(schedtbl_ptr);
@@ -459,10 +459,10 @@ static FUNC(Os_StatusType, OS_CODE) os_sched_table_check_consistency(const os_sc
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_sched_table_validity_paras(const os_schedtable_cfg_t *os_schedtable_cfg)
+FUNC(os_status_t, OS_CODE) os_sched_table_validity_paras(const os_schedtable_cfg_t *os_schedtable_cfg)
 {
 	const os_schedtable_inst_t *schedtable_ptr;
-	Os_StatusType os_schedtbl_para_validity_result;
+	os_status_t os_schedtbl_para_validity_result;
 
 	if (os_schedtable_cfg == NULL) {
 		return OS_STATUS_NOT_OK;
@@ -478,9 +478,9 @@ FUNC(Os_StatusType, OS_CODE) os_sched_table_validity_paras(const os_schedtable_c
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_rel(ScheduleTableType schedtable_id, TickType offset)
+FUNC(os_status_t, OS_CODE) os_start_schedule_table_rel(ScheduleTableType schedtable_id, TickType offset)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schtbl_ptr;
 	const os_schedtable_cfg_t *cfg_ptr;
 	TickType max_offset;
@@ -510,7 +510,7 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_rel(ScheduleTableType sched
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif
 
@@ -520,14 +520,14 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_rel(ScheduleTableType sched
 		max_offset = os_get_sched_table_max_value(schtbl_ptr);
 		if ((offset == (TickType)0) ||
 		    ((offset + os_get_sched_table_initial_offset(schtbl_ptr)) > max_offset)) {
-			return_value = OS_STATUS_VALUE_IS_OUT_OF_BOUNDS_2;
+			return_value = OS_STATUS_VALUE_OUT_OF_RANGE_2;
 			return return_value;
 		}
 
 		os_int_suspend_kernel(&initial_state);
 		if (schtbl_ptr->state != SCHEDULETABLE_STOPPED) {
 			os_int_resume_kernel(&initial_state);
-			return OS_STATUS_STATE_STOPPED;
+			return OS_STATUS_STOPPED;
 		}
 
 		os_counter_add_rel_action(&cfg_ptr->action_config,
@@ -545,9 +545,9 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_rel(ScheduleTableType sched
 	return return_value;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_abs(ScheduleTableType schedtable_id, TickType start)
+FUNC(os_status_t, OS_CODE) os_start_schedule_table_abs(ScheduleTableType schedtable_id, TickType start)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtbl_ptr;
 	const os_schedtable_cfg_t *cfg_ptr;
 	os_int_state_t initial_state;
@@ -576,7 +576,7 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_abs(ScheduleTableType sched
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif
 
@@ -584,14 +584,14 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_abs(ScheduleTableType sched
 		cfg_ptr = os_get_sched_table_cfg_by_id(schedtable_id);
 
 		if (start > os_get_sched_table_max_value(schedtbl_ptr)) {
-			return OS_STATUS_VALUE_IS_OUT_OF_BOUNDS_1;
+			return OS_STATUS_VALUE_OUT_OF_RANGE_1;
 		}
 
 		os_int_suspend_kernel(&initial_state);
 
 		if (schedtbl_ptr->state != SCHEDULETABLE_STOPPED) {
 			os_int_resume_kernel(&initial_state);
-			return OS_STATUS_STATE_STOPPED;
+			return OS_STATUS_STOPPED;
 		}
 
 		os_counter_add_abs_action(&cfg_ptr->action_config,
@@ -616,12 +616,12 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_abs(ScheduleTableType sched
 	return return_value;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType schedtable_id)
+FUNC(os_status_t, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType schedtable_id)
 {
 	os_schedtable_inst_t *schedtable_ptr;
 	const os_schedtable_cfg_t *cfg_ptr;
 	os_int_state_t initial_state;
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
 	boolean check_result;
@@ -647,7 +647,7 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif
 
@@ -655,14 +655,14 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType 
 		cfg_ptr = os_get_sched_table_cfg_by_id(schedtable_id);
 
 		if (cfg_ptr->sync_strategy != EXPLICIT) {
-			return OS_STATUS_ID_DIFFERENT_SYNC;
+			return OS_STATUS_SYNC_TYPE_ID;
 		}
 
 		os_int_suspend_kernel(&initial_state);
 
 		if (schedtable_ptr->state != SCHEDULETABLE_STOPPED) {
 			os_int_resume_kernel(&initial_state);
-			return OS_STATUS_STATE_STOPPED;
+			return OS_STATUS_STOPPED;
 		}
 
 		schedtable_ptr->state = SCHEDULETABLE_WAITING;
@@ -686,9 +686,9 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType 
 	return return_value;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable_id)
+FUNC(os_status_t, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable_id)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schtbl_ptr;
 	const os_schedtable_cfg_t *cfg_ptr;
 	os_int_state_t initial_state;
@@ -717,7 +717,7 @@ FUNC(Os_StatusType, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif
 
@@ -749,9 +749,9 @@ FUNC(Os_StatusType, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable
 	return return_value;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_app_id(ScheduleTableType schedtable_id, ApplicationIDType app_id)
+FUNC(os_status_t, OS_CODE) os_set_schedule_table_app_id(ScheduleTableType schedtable_id, ApplicationIDType app_id)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtable_ptr;
 	os_int_state_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
@@ -779,7 +779,7 @@ FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_app_id(ScheduleTableType sche
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif
 
@@ -805,9 +805,9 @@ FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_app_id(ScheduleTableType sche
 	return return_value;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_clear_schedule_table_app_id(ScheduleTableType schedtable_id, ApplicationIDType app_id)
+FUNC(os_status_t, OS_CODE) os_clear_schedule_table_app_id(ScheduleTableType schedtable_id, ApplicationIDType app_id)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtable_ptr;
 	os_int_state_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
@@ -835,7 +835,7 @@ FUNC(Os_StatusType, OS_CODE) os_clear_schedule_table_app_id(ScheduleTableType sc
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif
 
@@ -857,10 +857,10 @@ FUNC(Os_StatusType, OS_CODE) os_clear_schedule_table_app_id(ScheduleTableType sc
 	return return_value;
 }
 
-FUNC(Os_StatusType, OS_CODE)
+FUNC(os_status_t, OS_CODE)
 os_next_schedule_table(ScheduleTableType schedule_table_id_from, ScheduleTableType schedule_table_id_to)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *sched_from_ptr;
 	os_schedtable_inst_t *sched_to_ptr;
 	os_int_state_t initial_state;
@@ -890,11 +890,11 @@ os_next_schedule_table(ScheduleTableType schedule_table_id_from, ScheduleTableTy
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedule_table_id_from)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedule_table_id_to)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif
 
@@ -910,7 +910,7 @@ os_next_schedule_table(ScheduleTableType schedule_table_id_from, ScheduleTableTy
 
 		if (UNLIKELY(sched_to_ptr->state != SCHEDULETABLE_STOPPED)) {
 			os_int_resume_kernel(&initial_state);
-			return OS_STATUS_STATE_STOPPED;
+			return OS_STATUS_STOPPED;
 		}
 
 		if (UNLIKELY(sched_from_ptr->next != NULL)) {
@@ -933,10 +933,10 @@ os_next_schedule_table(ScheduleTableType schedule_table_id_from, ScheduleTableTy
 	return return_value;
 }
 
-FUNC(Os_StatusType, OS_CODE)
+FUNC(os_status_t, OS_CODE)
 os_next_schedule_table_from_stop(ScheduleTableType schedule_table_id_from, ScheduleTableType schedule_table_id_to)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *sched_from_ptr;
 	os_schedtable_inst_t *sched_to_ptr;
 	os_int_state_t initial_state;
@@ -966,11 +966,11 @@ os_next_schedule_table_from_stop(ScheduleTableType schedule_table_id_from, Sched
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedule_table_id_from)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedule_table_id_to)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif
 
@@ -986,7 +986,7 @@ os_next_schedule_table_from_stop(ScheduleTableType schedule_table_id_from, Sched
 
 		if (UNLIKELY(sched_to_ptr->state != SCHEDULETABLE_STOPPED)) {
 			os_int_resume_kernel(&initial_state);
-			return OS_STATUS_STATE_STOPPED;
+			return OS_STATUS_STOPPED;
 		}
 
 		if (UNLIKELY(sched_from_ptr->next != NULL)) {
@@ -1010,9 +1010,9 @@ os_next_schedule_table_from_stop(ScheduleTableType schedule_table_id_from, Sched
 	return return_value;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable_id, TickType sync_time_now)
+FUNC(os_status_t, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable_id, TickType sync_time_now)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtable_ptr;
 	const os_schedtable_cfg_t *schedtable_cfg_ptr;
 	TickType startTimeToWait = 0;
@@ -1042,7 +1042,7 @@ FUNC(Os_StatusType, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif
 
@@ -1052,7 +1052,7 @@ FUNC(Os_StatusType, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable
 		os_int_suspend_kernel(&initial_state);
 		if (UNLIKELY((schedtable_ptr->state == SCHEDULETABLE_STOPPED) || (schedtable_ptr->state == SCHEDULETABLE_NEXT))) {
 			os_int_resume_kernel(&initial_state);
-			return OS_STATUS_STATE_STOPPED;
+			return OS_STATUS_STOPPED;
 		}
 
 		switch (schedtable_ptr->state) {
@@ -1104,9 +1104,9 @@ FUNC(Os_StatusType, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable
 	return return_value;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedtable_id, DeviateType deviate_value)
+FUNC(os_status_t, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedtable_id, DeviateType deviate_value)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtable_ptr;
 	const os_schedtable_cfg_t *schedtable_cfg_ptr;
 	os_int_state_t initial_state;
@@ -1135,7 +1135,7 @@ FUNC(Os_StatusType, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedta
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif
 
@@ -1143,17 +1143,17 @@ FUNC(Os_StatusType, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedta
 		schedtable_cfg_ptr = os_get_sched_table_cfg_by_id(schedtable_id);
 
 		if (schedtable_cfg_ptr->sync_strategy != EXPLICIT) {
-			return OS_STATUS_ID_DIFFERENT_SYNC;
+			return OS_STATUS_SYNC_TYPE_ID;
 		}
 
 		if (deviate_value > ((DeviateType)0)) {
 			if ((TickType)deviate_value > schedtable_cfg_ptr->duration) {
-				return OS_STATUS_VALUE_IS_TOO_HIGH_2;
+				return OS_STATUS_VALUE_TOO_HIGH_2;
 			}
 		} else {
 			TickType result_inverted = (TickType)(-deviate_value);
 			if (result_inverted > schedtable_cfg_ptr->duration) {
-				return OS_STATUS_VALUE_IS_TOO_LOW_2;
+				return OS_STATUS_VALUE_TOO_LOW_2;
 			}
 		}
 
@@ -1162,7 +1162,7 @@ FUNC(Os_StatusType, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedta
 		if ((schedtable_ptr->state == SCHEDULETABLE_STOPPED) ||
 		    (schedtable_ptr->state == SCHEDULETABLE_NEXT)) {
 			os_int_resume_kernel(&initial_state);
-			return OS_STATUS_STATE_STOPPED;
+			return OS_STATUS_STOPPED;
 		}
 
 		if (schedtable_ptr->sync.sync_state == SCHTBL_SYNCSTATUS_NOT_PROVIDED) {
@@ -1189,10 +1189,10 @@ FUNC(Os_StatusType, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedta
 	return return_value;
 }
 
-FUNC(Os_StatusType, OS_CODE)
+FUNC(os_status_t, OS_CODE)
 os_get_schedule_table_status(ScheduleTableType schedtable_id, ScheduleTableStatusRefType ScheduleStatus)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	const os_schedtable_inst_t *schedtable_ptr;
 	os_int_state_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
@@ -1220,7 +1220,7 @@ os_get_schedule_table_status(ScheduleTableType schedtable_id, ScheduleTableStatu
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif
 
@@ -1253,9 +1253,9 @@ os_get_schedule_table_status(ScheduleTableType schedtable_id, ScheduleTableStatu
 	return return_value;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_async(ScheduleTableType schedtable_id)
+FUNC(os_status_t, OS_CODE) os_set_schedule_table_async(ScheduleTableType schedtable_id)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtable_ptr;
 	os_int_state_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
@@ -1283,7 +1283,7 @@ FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_async(ScheduleTableType sched
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		if (UNLIKELY(os_app_check_is_accessible(GET_APP_CFG_BY_SCHEDULETABLE_ID \
 			(schedtable_id)) != OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif
 
@@ -1305,9 +1305,9 @@ FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_async(ScheduleTableType sched
 	return return_value;
 }
 
-static FUNC(Os_StatusType, OS_CODE) os_start_scheduletable_rel_startup(ScheduleTableType sid, TickType offset)
+static FUNC(os_status_t, OS_CODE) os_start_scheduletable_rel_startup(ScheduleTableType sid, TickType offset)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schtbl_ptr;
 	const os_schedtable_cfg_t *cfg_ptr;
 	TickType max_offset;
@@ -1327,14 +1327,14 @@ static FUNC(Os_StatusType, OS_CODE) os_start_scheduletable_rel_startup(ScheduleT
 
 	max_offset = os_get_sched_table_max_value(schtbl_ptr);
 	if (UNLIKELY((offset == 0UL) || ((offset + os_get_sched_table_initial_offset(schtbl_ptr)) > max_offset))) {
-		return OS_STATUS_VALUE_IS_OUT_OF_BOUNDS_2;
+		return OS_STATUS_VALUE_OUT_OF_RANGE_2;
 	}
 
 	os_int_suspend_kernel(&initial_state);
 
 	if (UNLIKELY(schtbl_ptr->state != SCHEDULETABLE_STOPPED)) {
 		os_int_resume_kernel(&initial_state);
-		return OS_STATUS_STATE_STOPPED;
+		return OS_STATUS_STOPPED;
 	}
 
 	/* calculate the expire value.. */
@@ -1346,9 +1346,9 @@ static FUNC(Os_StatusType, OS_CODE) os_start_scheduletable_rel_startup(ScheduleT
 	return return_value;
 }
 
-static FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_abs_startup(ScheduleTableType sid, TickType start)
+static FUNC(os_status_t, OS_CODE) os_start_schedule_table_abs_startup(ScheduleTableType sid, TickType start)
 {
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtbl_ptr;
 	const os_schedtable_cfg_t *cfg_ptr;
 	os_int_state_t initial_state;
@@ -1361,14 +1361,14 @@ static FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_abs_startup(Schedule
 	cfg_ptr = os_get_sched_table_cfg_by_id(sid);
 
 	if (UNLIKELY(start > os_get_sched_table_max_value(schedtbl_ptr))) {
-		return OS_STATUS_VALUE_IS_TOO_HIGH_1;
+		return OS_STATUS_VALUE_TOO_HIGH_1;
 	}
 
 	os_int_suspend_kernel(&initial_state);
 
 	if (UNLIKELY(schedtbl_ptr->state != SCHEDULETABLE_STOPPED)) {
 		os_int_resume_kernel(&initial_state);
-		return OS_STATUS_STATE_STOPPED;
+		return OS_STATUS_STOPPED;
 	}
 
 	os_counter_add_abs_action(&cfg_ptr->action_config,
@@ -1386,13 +1386,13 @@ static FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_abs_startup(Schedule
 	return return_value;
 }
 
-static FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_synchron_startup(ScheduleTableType schedtable_id)
+static FUNC(os_status_t, OS_CODE) os_start_schedule_table_synchron_startup(ScheduleTableType schedtable_id)
 {
 	os_schedtable_inst_t *schedtable_ptr;
 	const os_schedtable_cfg_t *schedtable_cfg_ptr;
 	os_int_state_t initial_state;
 
-	Os_StatusType return_value = OS_STATUS_OK;
+	os_status_t return_value = OS_STATUS_OK;
 
 	if (UNLIKELY(os_interrupt_is_disabled() == (boolean)TRUE)) {
 		return OS_STATUS_DISABLEDINT;
@@ -1403,14 +1403,14 @@ static FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_synchron_startup(Sch
 	schedtable_ptr = os_get_sched_table_by_id(schedtable_id);
 	schedtable_cfg_ptr = os_get_sched_table_cfg_by_id(schedtable_id);
 	if (UNLIKELY(schedtable_cfg_ptr->sync_strategy != EXPLICIT)) {
-        return OS_STATUS_ID_DIFFERENT_SYNC;
+        return OS_STATUS_SYNC_TYPE_ID;
     }
 
 	os_int_suspend_kernel(&initial_state);
 
 	if (UNLIKELY(schedtable_ptr->state != SCHEDULETABLE_STOPPED)) {
 		os_int_resume_kernel(&initial_state);
-		return OS_STATUS_STATE_STOPPED;
+		return OS_STATUS_STOPPED;
 	}
 
 	schedtable_ptr->state = SCHEDULETABLE_WAITING;
@@ -1427,7 +1427,7 @@ os_schedule_table_init(const os_schedtable_cfg_t *const os_schedtable_cfg_table[
 	const os_schedtable_cfg_t *schdtable_cfg;
 	os_counter_inst_t *counter_ptr;
 	os_schedtable_inst_t *schtbl_ptr;
-	Os_StatusType os_schedtable_init_result;
+	os_status_t os_schedtable_init_result;
 	const os_app_cfg_t *appCfg = NULL;
 	CoreIdType core_id = os_get_core_id();
 
@@ -1525,7 +1525,7 @@ FUNC(void, OS_CODE) os_schedule_table_kill(const os_schedtable_cfg_t *const sche
 	os_stop_schedule_table(schedtable_ref->schedtable_id);
 }
 
-FUNC(Os_StatusType, OS_CODE) get_sched_table_core_id(ScheduleTableType schedtable_id, CoreIdType *core_id_ref)
+FUNC(os_status_t, OS_CODE) get_sched_table_core_id(ScheduleTableType schedtable_id, CoreIdType *core_id_ref)
 {
 	ApplicationIDType application_id;
 	const os_app_cfg_t *application_cfg;

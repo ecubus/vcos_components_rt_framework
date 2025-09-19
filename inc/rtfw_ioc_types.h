@@ -33,59 +33,23 @@ typedef struct os_ioc_inst_s os_ioc_inst_t;
 struct os_ioc_cfg_s;
 typedef struct os_ioc_cfg_s os_ioc_cfg_t;
 
-struct os_ioc_08_send_inst_s;
-typedef struct os_ioc_08_send_inst_s os_ioc_08_send_inst_t;
+struct os_ioc_send_inst_s;
+typedef struct os_ioc_send_inst_s os_ioc_send_inst_t;
 
-struct os_ioc_08_send_cfg_s;
-typedef struct os_ioc_08_send_cfg_s os_ioc_08_send_cfg_t;
+struct os_ioc_send_cfg_s;
+typedef struct os_ioc_send_cfg_s os_ioc_send_cfg_t;
 
-struct os_ioc_16_send_inst_s;
-typedef struct os_ioc_16_send_inst_s os_ioc_16_send_inst_t;
+struct os_ioc_recv_inst_s;
+typedef struct os_ioc_recv_inst_s os_ioc_recv_inst_t;
 
-struct os_ioc_16_send_cfg_s;
-typedef struct os_ioc_16_send_cfg_s os_ioc_16_send_cfg_t;
-
-struct os_ioc_32_send_inst_s;
-typedef struct os_ioc_32_send_inst_s os_ioc_32_send_inst_t;
-
-struct os_ioc_32_send_cfg_s;
-typedef struct os_ioc_32_send_cfg_s os_ioc_32_send_cfg_t;
-
-struct os_ioc_ref_send_inst_s;
-typedef struct os_ioc_ref_send_inst_s os_ioc_ref_send_inst_t;
-
-struct os_ioc_ref_send_cfg_s;
-typedef struct os_ioc_ref_send_cfg_s os_ioc_ref_send_cfg_t;
+struct os_ioc_recv_cfg_s;
+typedef struct os_ioc_recv_cfg_s os_ioc_recv_cfg_t;
 
 struct os_ioc_write_inst_s;
 typedef struct os_ioc_write_inst_s os_ioc_write_inst_t;
 
 struct os_ioc_write_cfg_s;
 typedef struct os_ioc_write_cfg_s os_ioc_write_cfg_t;
-
-struct os_ioc_08_receive_inst_s;
-typedef struct os_ioc_08_receive_inst_s os_ioc_08_receive_inst_t;
-
-struct os_ioc_08_receive_cfg_s;
-typedef struct os_ioc_08_receive_cfg_s os_ioc_08_receive_cfg_t;
-
-struct os_ioc_16_receive_inst_s;
-typedef struct os_ioc_16_receive_inst_s os_ioc_16_receive_inst_t;
-
-struct os_ioc_16_receive_cfg_s;
-typedef struct os_ioc_16_receive_cfg_s os_ioc_16_receive_cfg_t;
-
-struct os_ioc_32_receive_inst_s;
-typedef struct os_ioc_32_receive_inst_s os_ioc_32_receive_inst_t;
-
-struct os_ioc_32_receive_cfg_s;
-typedef struct os_ioc_32_receive_cfg_s os_ioc_32_receive_cfg_t;
-
-struct os_ioc_ref_receive_inst_s;
-typedef struct os_ioc_ref_receive_inst_s os_ioc_ref_receive_inst_t;
-
-struct os_ioc_ref_receive_cfg_s;
-typedef struct os_ioc_ref_receive_cfg_s os_ioc_ref_receive_cfg_t;
 
 struct os_ioc_read_inst_s;
 typedef struct os_ioc_read_inst_s os_ioc_read_inst_t;

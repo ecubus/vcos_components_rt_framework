@@ -26,7 +26,7 @@
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 
-FUNC(Os_StatusType, OS_CODE) os_wait_event(os_event_mask_t mask)
+FUNC(os_status_t, OS_CODE) os_wait_event(os_event_mask_t mask)
 {
 	nxevent_mask_t ret;
 	boolean check_ret;
@@ -37,19 +37,21 @@ FUNC(Os_StatusType, OS_CODE) os_wait_event(os_event_mask_t mask)
 	if (UNLIKELY(FALSE == check_ret)) {
 		return OS_STATUS_CALLEVEL;
 	}
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 	check_ret = os_context_check_irq_disabled(cur_context);
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}
 	if (UNLIKELY(NULL_PTR == task_cfg->event_hdl)) {
-		return OS_STATUS_NOEXTENDEDTASK_CALLER;
+		return OS_STATUS_NOT_EXTENDED_TASK;
 	}
 
-	Os_StatusType lock_status = os_context_check_locklist(cur_context);
+	os_status_t lock_status = os_context_check_locklist(cur_context);
 
 	if (UNLIKELY(lock_status != OS_STATUS_OK)) {
 		return lock_status;
 	}
+#endif
 
 	os_task_event_t *task_event = task_cfg->event_hdl;
 
@@ -62,7 +64,7 @@ FUNC(Os_StatusType, OS_CODE) os_wait_event(os_event_mask_t mask)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) rtfw_event_tickwait(os_event_mask_t mask, uint32_t ticks_to_wait)
+FUNC(os_status_t, OS_CODE) rtfw_event_tickwait(os_event_mask_t mask, uint32_t ticks_to_wait)
 {
 	nxevent_mask_t ret;
 	boolean check_ret;
@@ -73,19 +75,22 @@ FUNC(Os_StatusType, OS_CODE) rtfw_event_tickwait(os_event_mask_t mask, uint32_t 
 	if (UNLIKELY(FALSE == check_ret)) {
 		return OS_STATUS_CALLEVEL;
 	}
+
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 	check_ret = os_context_check_irq_disabled(cur_context);
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}
 	if (UNLIKELY(NULL_PTR == task_cfg->event_hdl)) {
-		return OS_STATUS_NOEXTENDEDTASK_CALLER;
+		return OS_STATUS_NOT_EXTENDED_TASK;
 	}
 
-	Os_StatusType lock_status = os_context_check_locklist(cur_context);
+	os_status_t lock_status = os_context_check_locklist(cur_context);
 
 	if (UNLIKELY(lock_status != OS_STATUS_OK)) {
 		return lock_status;
 	}
+#endif
 
 	os_task_event_t *task_event = task_cfg->event_hdl;
 
@@ -98,7 +103,7 @@ FUNC(Os_StatusType, OS_CODE) rtfw_event_tickwait(os_event_mask_t mask, uint32_t 
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_set_event(TaskType task_id, os_event_mask_t mask)
+FUNC(os_status_t, OS_CODE) os_set_event(TaskType task_id, os_event_mask_t mask)
 {
 	boolean check_ret;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
@@ -111,26 +116,34 @@ FUNC(Os_StatusType, OS_CODE) os_set_event(TaskType task_id, os_event_mask_t mask
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 	if (UNLIKELY((task_id >= os_task_cfg_ref_table_size) || (NULL == os_task_cfg_ref_table[task_id]))) {
 		return OS_STATUS_ID_1;
 	}
+#endif
 	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[task_id];
 
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 	if (UNLIKELY(NULL_PTR == task_cfg->event_hdl)) {
-		return OS_STATUS_NOEXTENDEDTASK_CALLER;
+		return OS_STATUS_NOT_EXTENDED_TASK;
 	}
+#endif
 	const os_ctx_cfg_t *task_context = &(task_cfg->context);
 	os_task_event_t *task_event = task_cfg->event_hdl;
 	CoreIdType task_core_id = OS_CONTEXT_GET_OWNER_COREID(task_context);
 
 	if (task_core_id == os_get_core_id()) {
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 		os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(task_context);
 
 		if (UNLIKELY(task_inst->thread.tcb.flags & TCB_FLAG_THREAD_IS_SUSPENDED)) {
-			return OS_STATUS_STATE_STOPPED;
+			return OS_STATUS_STOPPED;
 		} else {
 			return (nxevent_post(&(task_event->event), mask, 0) == 0 ? OS_STATUS_OK : OS_STATUS_NOT_OK);
 		}
+#else
+		return (nxevent_post(&(task_event->event), mask, 0) == 0 ? OS_STATUS_OK : OS_STATUS_NOT_OK);
+#endif
 	} else {
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_set_event((uint32)task_core_id, task_id, mask);
@@ -141,7 +154,7 @@ FUNC(Os_StatusType, OS_CODE) os_set_event(TaskType task_id, os_event_mask_t mask
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_set_event_asyn(TaskType task_id, os_event_mask_t mask)
+FUNC(os_status_t, OS_CODE) os_set_event_asyn(TaskType task_id, os_event_mask_t mask)
 {
 	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[task_id];
 	const os_ctx_cfg_t *task_context = &(task_cfg->context);
@@ -149,13 +162,17 @@ FUNC(Os_StatusType, OS_CODE) os_set_event_asyn(TaskType task_id, os_event_mask_t
 	CoreIdType task_core_id = OS_CONTEXT_GET_OWNER_COREID(task_context);
 
 	if (task_core_id == os_get_core_id()) {
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 		os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(task_context);
 
 		if (UNLIKELY(task_inst->thread.tcb.flags & TCB_FLAG_THREAD_IS_SUSPENDED)) {
-			return OS_STATUS_STATE_STOPPED;
+			return OS_STATUS_STOPPED;
 		} else {
 			return (nxevent_post(&(task_event->event), mask, 0) == 0 ? OS_STATUS_OK : OS_STATUS_NOT_OK);
 		}
+#else
+	return (nxevent_post(&(task_event->event), mask, 0) == 0 ? OS_STATUS_OK : OS_STATUS_NOT_OK);
+#endif
 	} else {
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_set_event_asyn((uint32)task_core_id, task_id, mask);
@@ -166,7 +183,7 @@ FUNC(Os_StatusType, OS_CODE) os_set_event_asyn(TaskType task_id, os_event_mask_t
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_get_event(TaskType task_id, os_event_mask_t *mask)
+FUNC(os_status_t, OS_CODE) os_get_event(TaskType task_id, os_event_mask_t *mask)
 {
 	boolean check_ret;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
@@ -179,30 +196,38 @@ FUNC(Os_StatusType, OS_CODE) os_get_event(TaskType task_id, os_event_mask_t *mas
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 	if (UNLIKELY((task_id >= os_task_cfg_ref_table_size) || (NULL == os_task_cfg_ref_table[task_id]))) {
 		return OS_STATUS_ID_1;
 	}
+#endif
 	if (UNLIKELY(NULL == mask)) {
 		return OS_STATUS_PARAM_POINTER_2;
 	}
 	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[task_id];
 
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 	if (UNLIKELY(NULL_PTR == task_cfg->event_hdl)) {
-		return OS_STATUS_NOEXTENDEDTASK_CALLER;
+		return OS_STATUS_NOT_EXTENDED_TASK;
 	}
+#endif
 
 	const os_ctx_cfg_t *task_context = &(task_cfg->context);
 	os_task_event_t *task_event = task_cfg->event_hdl;
 	CoreIdType task_core_id = OS_CONTEXT_GET_OWNER_COREID(task_context);
 
 	if (task_core_id == os_get_core_id()) {
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 		os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(task_context);
 
 		if (UNLIKELY(task_inst->thread.tcb.flags & TCB_FLAG_THREAD_IS_SUSPENDED)) {
-			return OS_STATUS_STATE_STOPPED;
+			return OS_STATUS_STOPPED;
 		} else {
 			*mask = nxevent_getmask(&(task_event->event));
 		}
+#else
+	*mask = nxevent_getmask(&(task_event->event));
+#endif
 	} else {
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_get_event((uint32)task_core_id, task_id, mask);
@@ -213,7 +238,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_event(TaskType task_id, os_event_mask_t *mas
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_clear_event(os_event_mask_t mask)
+FUNC(os_status_t, OS_CODE) os_clear_event(os_event_mask_t mask)
 {
 	boolean check_ret;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
@@ -223,13 +248,15 @@ FUNC(Os_StatusType, OS_CODE) os_clear_event(os_event_mask_t mask)
 	if (UNLIKELY(FALSE == check_ret)) {
 		return OS_STATUS_CALLEVEL;
 	}
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 	check_ret = os_context_check_irq_disabled(cur_context);
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}
 	if (UNLIKELY(NULL_PTR == task_cfg->event_hdl)) {
-		return OS_STATUS_NOEXTENDEDTASK_CALLER;
+		return OS_STATUS_NOT_EXTENDED_TASK;
 	}
+#endif
 	(void)nxevent_clear(&(task_cfg->event_hdl->event), mask);
 
 	return OS_STATUS_OK;

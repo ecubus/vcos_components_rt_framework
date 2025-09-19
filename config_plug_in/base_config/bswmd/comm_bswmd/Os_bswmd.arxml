@@ -2435,16 +2435,9 @@
                       </DESC>
                       <INTRODUCTION>
                         <P>
-                          <L-1 L="ZH">此配置项暂不可配置.</L-1>
+                          <L-1 L="EN">如果该属性设置为 NON，则不能为此任务分配任何内部资源.</L-1>
                         </P>
                       </INTRODUCTION>
-                      <ADMIN-DATA>
-                        <SDGS>
-                          <SDG GID="VCOS:CfgUnrealized">
-                            <SD GID="VCOS:CfgLock">true</SD>
-                          </SDG>
-                        </SDGS>
-                      </ADMIN-DATA>
                       <RELATED-TRACE-ITEM-REF BASE="ArTrace" DEST="TRACEABLE">ECUC_Os_00076</RELATED-TRACE-ITEM-REF>
                       <LOWER-MULTIPLICITY>1</LOWER-MULTIPLICITY>
                       <UPPER-MULTIPLICITY>1</UPPER-MULTIPLICITY>
@@ -2551,7 +2544,7 @@
                         </ECUC-VALUE-CONFIGURATION-CLASS>
                       </VALUE-CONFIG-CLASSES>
                       <SYMBOLIC-NAME-VALUE>false</SYMBOLIC-NAME-VALUE>
-                      <MAX>65534</MAX>
+                      <MAX>255</MAX>
                       <MIN>0</MIN>
                     </ECUC-INTEGER-PARAM-DEF>
                     <ECUC-INTEGER-PARAM-DEF UUID="ECUC:61428e85-21e3-4df8-980f-9a985a02ede4">

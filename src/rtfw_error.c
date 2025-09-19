@@ -23,7 +23,7 @@
 #include "rtfw_hook_internal.h"
 #endif
 
-static inline_function void set_last_error_info(struct os_error_info_s *error_info, Os_StatusType status)
+static inline_function void set_last_error_info(struct os_error_info_s *error_info, os_status_t status)
 {
 	const os_ctx_cfg_t *context = os_context_get_contexthdl();
 
@@ -172,7 +172,7 @@ FUNC(StatusType, OS_CODE) os_get_error_info(struct os_error_info_s *error_info)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_get_error_service_id(OSServiceIdType *service_id)
+FUNC(os_status_t, OS_CODE) os_get_error_service_id(OSServiceIdType *service_id)
 {
 	os_core_inst_t *core = OS_CORE_GET_CORE_INSTANCE_REF(os_core_cfg_ref_table[os_get_core_id()]);
 
@@ -180,7 +180,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_error_service_id(OSServiceIdType *service_id
 	return OS_STATUS_OK;
 }
 
-FUNC(void, OS_CODE) vservice_error_report(OSServiceIdType service_id, Os_StatusType error_status,
+FUNC(void, OS_CODE) vservice_error_report(OSServiceIdType service_id, os_status_t error_status,
 										  uint32 param_cnt, va_list ap)
 {
 	uint32 idx;
@@ -206,7 +206,7 @@ FUNC(void, OS_CODE) os_protection_error_report(StatusType error_status)
 	const os_core_cfg_t *core_cfg = os_core_cfg_ref_table[os_get_core_id()];
 	struct os_error_info_s *error_info = &(OS_CORE_GET_CORE_INSTANCE_REF(core_cfg)->last_error_info);
 
-	set_last_error_info(error_info, (Os_StatusType)error_status);
+	set_last_error_info(error_info, (os_status_t)error_status);
 
 #if defined(CONFIG_RT_FRAMEWORK_PROTECTION_HOOK) && (CONFIG_RT_FRAMEWORK_PROTECTION_HOOK == 1)
 	protection_return_t repsonse = os_call_protection_hook(error_status);

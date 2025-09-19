@@ -29,7 +29,7 @@ extern "C" {
 #include "rtfw_core_types.h"
 #include "rtfw_thread_internal.h"
 
-/* Global Macro Definition */
+/* 全局宏定义 */
 
 #define OS_TASK_NO_ACTIVATION_CNT ((uint8)0) /* 任务没有激活 */
 #define OS_TASK_MIN_ACTIVATION_CNT ((uint8)1) /* 任务最小激活次数 */
@@ -39,7 +39,7 @@ extern "C" {
 #define OS_TASK_MAX_ACTIVATION_CNT ((uint8)1) /* 任务最大激活次数 */
 #endif /* CONFIG_RT_FRAMEWORK_TASK_MULTIPLE_ACTIVATION */
 
-/* 通过 os_task_cfg_t(task_cfg) 获取各种 object ID */
+/* 通过 os_task_cfg_t(task_cfg) 获取各种对象 ID */
 #define OS_TASK_GET_OWNER_APPID(task_cfg) (OS_APPLICATION_GET_APPID(OS_TASK_GET_APPONRWECFG_REF(task_cfg)))
 #define OS_TASK_GET_OWNER_COREID(task_cfg) (OS_CORE_GET_COREID(OS_TASK_GET_CORE_REF(task_cfg)))
 
@@ -65,6 +65,7 @@ extern "C" {
 #define OS_TASK_GET_ACCESSINGAPPLMASK(task_cfg) ((task_cfg)->context.access_app_mask)
 #define OS_TASK_GET_INITCONTEXTID(task_cfg) ((task_cfg)->context.initial_ctx_id)
 #define OS_TASK_GET_USEFPU(task_cfg) ((task_cfg)->context.use_fpu)
+#define OS_TASK_GET_ACTIVATION_LIMIT(task_cfg) ((task_cfg)->activation_limit)
 
 /* 通过 os_task_cfg_t(task_cfg) 获取 ContextInstType(ctx_instance) 的内部信息 */
 #define OS_TASK_GET_CURRENT_CONTEXTID(task_cfg) ((OS_TASK_GET_CONTEXTINST_REF(task_cfg))->current_ctx_id)
@@ -80,60 +81,70 @@ extern "C" {
 
 #define OS_TASK_GET_TASKREF_BY_ID(task_id) (os_task_cfg_ref_table[task_id])
 
-/* Global Enumeration Definition */
+/* 全局枚举定义 */
 
-/* Global Type & Structure Definition */
+/* 全局类型与结构体定义 */
 struct os_task_event_s {
 	nxevent_wait_t wait;
 	nxevent_t event;
 };
 
 struct os_task_inst_s {
-	os_ctx_inst_t ctx_instance; /*! Context instance. Must be the first member !!! */
-	uint32 activate_cnt;
-	os_task_thread_inst_t thread; /*! Thread instance. Must be the second member !!! */
+	os_ctx_inst_t ctx_instance; /*! 上下文实例。必须是第一个成员！！！ */
+	os_task_thread_inst_t thread;
 }; /* os_task_inst_t */
 
 /*! Task configuration by user */
 struct os_task_cfg_s {
-	/* 32 bit */
-	os_ctx_cfg_t context; /*! Context configuration. Must be the first member !!! */
-
-	OsTaskPrioType base_priority; /*! The configured priority of a task. */
-
+	os_ctx_cfg_t context; /*! 上下文配置。必须是第一个成员！！！ */
+	OsTaskPrioType base_priority; /*! 任务的配置优先级 */
 	os_task_event_t *event_hdl;
-
 #if defined(CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK == 1)
-	const task_share_stack_info_t * const task_share_stack;
+	const task_share_stack_info_t *const task_share_stack;
 #endif
-	/* enum */
-
-	/* 16 bit */
-	TaskType task_id; /*! Task identifier */
-
-	/* 8 bit */
-	AppModeType autostart_mode; /*! Application modes where the task shall be activated during OS initialization. */
-	uint8 activation_limit; /*! Task activation limited, which must be > 1 */
+	TaskType task_id; /*! 任务标识符 */
+	AppModeType autostart_mode; /*! 在 OS 初始化时应被激活的应用模式 */
+	boolean is_preemptive;
+	uint8 activation_limit;  /*! 任务激活限制，必须大于等于 1 */
 }; /* os_task_cfg_t */
 
-DeclareRtfwRefTable_H(task) /*! Reference to OS task configuration table  */
+DeclareRtfwRefTable_H(task) /*! 指向 OS 任务配置表的引用 */
 
-/* Global Function Declaration */
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 
-	extern FUNC(void, OS_CODE) os_task_init(const os_task_cfg_t *const os_task_cfg_table[], OsObjIndexType size);
+extern FUNC(void, OS_CODE) os_task_init(const os_task_cfg_t *const os_task_cfg_table[], OsObjIndexType size);
 extern FUNC(void, OS_CODE) os_disable_level_km(void);
 extern FUNC(void, OS_CODE) os_enable_level_km(void);
-extern FUNC(Os_StatusType, OS_CODE) os_activate_task(TaskType task_id);
-extern FUNC(Os_StatusType, OS_CODE) os_activate_task_asyn(TaskType task_id);
-extern FUNC(Os_StatusType, OS_CODE) os_terminate_task(void);
-extern FUNC(Os_StatusType, OS_CODE) os_chain_task(TaskType task_id);
-extern FUNC(Os_StatusType, OS_CODE) os_get_task_id(TaskRefType task_id_ref);
+extern FUNC(os_status_t, OS_CODE) os_activate_task(TaskType task_id);
+extern FUNC(os_status_t, OS_CODE) os_activate_task_asyn(TaskType task_id);
+extern FUNC(os_status_t, OS_CODE) os_get_task_state(TaskType task_id, TaskStateRefType task_state_ref);
+extern FUNC(os_status_t, OS_CODE) os_schedule(void);
+extern FUNC(os_status_t, OS_CODE) os_terminate_task(void);
+extern FUNC(os_status_t, OS_CODE) os_chain_task(TaskType task_id);
+extern FUNC(os_status_t, OS_CODE) os_get_task_id(TaskRefType task_id_ref);
 extern FUNC(void, OS_CODE) os_task_reset(const os_task_cfg_t *const task_cfg);
+extern FUNC(void, OS_CODE) os_task_preinit(const os_task_cfg_t *const task_cfg);
 
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"
+
+static inline_function TaskStateType os_get_task_state_internal(const os_task_inst_t *task_inst)
+{
+	if (task_inst->thread.tcb.flags & TCB_FLAG_THREAD_IS_SUSPENDED) {
+		return SUSPENDED;
+	} else {
+		if (task_inst->thread.tcb.task_state == TSTATE_WAIT_SEM) {
+			return WAITING;
+		} else if (task_inst->thread.tcb.task_state == TSTATE_TASK_READYTORUN) {
+			return READY;
+		} else if (task_inst->thread.tcb.task_state == TSTATE_TASK_RUNNING) {
+			return RUNNING;
+		} else {
+			return INVALID_STATE;
+		}
+	}
+}
 
 #ifdef __cplusplus
 }

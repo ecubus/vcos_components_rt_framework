@@ -34,9 +34,26 @@
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 
-FUNC(void, OS_CODE) os_task_reset(const os_task_cfg_t *const task_cfg)
+FUNC(void, OS_CODE) os_task_preinit(const os_task_cfg_t *const task_cfg)
 {
 	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+	sem_t *sem = &(task_inst->thread.act_sem);
+
+	if (task_cfg->autostart_mode) {
+		sem->semcount += 2;
+	} else {
+		sem->semcount += 1;
+	}
+	if (sem->semcount > sem->sem_max_value + 1) {
+		sem->semcount = sem->sem_max_value + 1;
+	}
+}
+
+FUNC(void, OS_CODE) os_task_reset(const os_task_cfg_t *const task_cfg)
+{
+#if defined(CONFIG_SCHED_INSTRUMENTATION) || (CONFIG_RT_FRAMEWORK_TASK_MULTIPLE_ACTIVATION != 1)
+	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+#endif
 
 	if (LIKELY(NULL_PTR != task_cfg->event_hdl)) {
 		(void)nxevent_clear(&(task_cfg->event_hdl->event), NXEVENT_ALL_MASK);
@@ -50,7 +67,6 @@ FUNC(void, OS_CODE) os_task_reset(const os_task_cfg_t *const task_cfg)
 		sched_note_reactivate(&(task_inst->thread.tcb));
 	}
 #endif
-	task_inst->thread.tcb.flags &= ~TCB_FLAG_THREAD_IS_SUSPENDED;
 }
 
 FUNC(void, OS_CODE) os_task_init(const os_task_cfg_t *const os_task_cfg_table[], OsObjIndexType size)
@@ -78,16 +94,15 @@ FUNC(void, OS_CODE) os_task_init(const os_task_cfg_t *const os_task_cfg_table[],
 		}
 
 		os_context_init_context_instance(context_cfg);
-		nxsem_init(&(task_inst->thread.act_sem), 0, 0);
-
-		task_inst->thread.act_sem.sem_max_value = task_cfg->activation_limit;
 
 		if (LIKELY(NULL_PTR != task_cfg->event_hdl)) {
 			(void)nxevent_clear(&(task_cfg->event_hdl->event), NXEVENT_ALL_MASK);
 		}
 
 		task_inst->thread.tcb.flags = TCB_FLAG_TTYPE_KERNEL | TCB_FLAG_TASK_THREAD |
-					      TCB_FLAG_THREAD_ENABLE_IRQ | TCB_FLAG_THREAD_IN_KERNEL_MPU_SET;
+					      TCB_FLAG_THREAD_ENABLE_IRQ | TCB_FLAG_THREAD_IN_KERNEL_MPU_SET |
+					      TCB_FLAG_THREAD_IS_SUSPENDED;
+
 		task_inst->thread.tcb.contexthdl = (void *)context_cfg;
 
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
@@ -108,15 +123,24 @@ FUNC(void, OS_CODE) os_task_init(const os_task_cfg_t *const os_task_cfg_table[],
 
 		if (NULL_PTR != task_cfg->event_hdl) {
 			nxevent_init(&(task_cfg->event_hdl->event), 0);
+			nxsem_init(&(task_cfg->event_hdl->wait.sem), 0, 0);
 		}
-		if (task_cfg->autostart_mode) {
-			nxsem_post(&((task_inst->thread.act_sem)));
+
+		if (task_cfg->is_preemptive == FALSE) {
+			task_inst->thread.tcb.lockcount = 1;
 		}
+
+		nxsem_init(&(task_inst->thread.act_sem), 0, 0);
+
+		task_inst->thread.act_sem.semcount = -1;
+
+		task_inst->thread.act_sem.sem_max_value = task_cfg->activation_limit - 1;
+
 		nxtask_activate(&(task_inst->thread.tcb));
 	}
 }
 
-FUNC(Os_StatusType, OS_CODE) os_activate_task(TaskType task_id)
+FUNC(os_status_t, OS_CODE) os_activate_task(TaskType task_id)
 {
 #if defined(CONFIG_RT_FRAMEWORK_EXTENDED_STATUS) || defined(CONFIG_RT_FRAMEWORK_ACCESSCHECK)
 	const os_ctx_cfg_t *const current_context = os_context_get_contexthdl();
@@ -149,7 +173,7 @@ FUNC(Os_StatusType, OS_CODE) os_activate_task(TaskType task_id)
 	AccessApplMaskType target_app_mask = OS_CONTEXT_GET_ACCESSINGAPPLMASK(task_context);
 
 	if (UNLIKELY(os_app_check_access(app_id, target_app_mask) != OS_STATUS_OK)) {
-		return OS_STATUS_ACCESSRIGHTS_1;
+		return OS_STATUS_ACCESS_RIGHT;
 	}
 #endif
 
@@ -157,7 +181,7 @@ FUNC(Os_StatusType, OS_CODE) os_activate_task(TaskType task_id)
 #if defined(CONFIG_RT_FRAMEWORK_ACCESSCHECK)
 		if (UNLIKELY(os_app_check_is_accessible(OS_CONTEXT_GET_APPONRWECFG_REF(task_context)) !=
 			     OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_NOT_ACCESSIBLE;
 		}
 #endif
 		ret = nxsem_post(&(task_inst->thread.act_sem));
@@ -176,11 +200,11 @@ FUNC(Os_StatusType, OS_CODE) os_activate_task(TaskType task_id)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_terminate_task(void)
+FUNC(os_status_t, OS_CODE) os_terminate_task(void)
 {
 	const os_ctx_cfg_t *current_context;
 	os_task_inst_t *task_inst;
-	Os_StatusType status = OS_STATUS_OK;
+	os_status_t status = OS_STATUS_OK;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	os_set_thread_mode_to_privilege();
@@ -211,15 +235,14 @@ FUNC(Os_StatusType, OS_CODE) os_terminate_task(void)
 	}
 	up_irq_disable();
 	task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(current_context);
-	task_inst->thread.tcb.flags |= TCB_FLAG_THREAD_IN_KERNEL_MPU_SET;
-	task_inst->thread.tcb.flags |= TCB_FLAG_THREAD_IS_SUSPENDED;
+	task_inst->thread.tcb.flags |= (TCB_FLAG_THREAD_IN_KERNEL_MPU_SET | TCB_FLAG_THREAD_IS_SUSPENDED);
 
 	longjmp(task_inst->thread.jmpbuf, 1);
 	/* not be executed */
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_activate_task_asyn(TaskType task_id)
+FUNC(os_status_t, OS_CODE) os_activate_task_asyn(TaskType task_id)
 {
 	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[task_id];
 	const os_ctx_cfg_t *task_context = OS_TASK_GET_CONTEXT_REF(task_cfg);
@@ -234,7 +257,7 @@ FUNC(Os_StatusType, OS_CODE) os_activate_task_asyn(TaskType task_id)
 	AccessApplMaskType target_app_mask = OS_CONTEXT_GET_ACCESSINGAPPLMASK(task_context);
 
 	if (UNLIKELY(os_app_check_access(app_id, target_app_mask) != OS_STATUS_OK)) {
-		return OS_STATUS_ACCESSRIGHTS_1;
+		return OS_STATUS_ACCESS_RIGHT;
 	}
 #endif
 
@@ -242,7 +265,7 @@ FUNC(Os_StatusType, OS_CODE) os_activate_task_asyn(TaskType task_id)
 #if defined(CONFIG_RT_FRAMEWORK_ACCESSCHECK)
 		if (UNLIKELY(os_app_check_is_accessible(OS_CONTEXT_GET_APPONRWECFG_REF(task_context)) !=
 			     OS_STATUS_OK)) {
-			return OS_STATUS_NOTACCESSIBLE_1;
+			return OS_STATUS_NOT_ACCESSIBLE;
 		}
 #endif
 		ret = nxsem_post(&(task_inst->thread.act_sem));
@@ -261,7 +284,7 @@ FUNC(Os_StatusType, OS_CODE) os_activate_task_asyn(TaskType task_id)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_chain_task(TaskType task_id)
+FUNC(os_status_t, OS_CODE) os_chain_task(TaskType task_id)
 {
 	int ret = 0;
 
@@ -300,7 +323,7 @@ FUNC(Os_StatusType, OS_CODE) os_chain_task(TaskType task_id)
 	if (UNLIKELY(os_app_check_access(OS_CONTEXT_GET_CURRENT_APPID(current_context),
 					 OS_TASK_GET_ACCESSINGAPPLMASK(os_task_cfg_ref_table[task_id])) !=
 		     OS_STATUS_OK)) {
-		return OS_STATUS_ACCESSRIGHTS_1;
+		return OS_STATUS_ACCESS_RIGHT;
 	}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK*/
 
@@ -325,9 +348,9 @@ FUNC(Os_StatusType, OS_CODE) os_chain_task(TaskType task_id)
 	}
 }
 
-FUNC(Os_StatusType, OS_CODE) os_get_task_id(TaskRefType task_id_ref)
+FUNC(os_status_t, OS_CODE) os_get_task_id(TaskRefType task_id_ref)
 {
-	Os_StatusType ret = OS_STATUS_OK;
+	os_status_t ret = OS_STATUS_OK;
 	const os_ctx_cfg_t *const current_context = os_context_get_contexthdl();
 
 	if (UNLIKELY(task_id_ref == NULL)) {
@@ -349,7 +372,89 @@ FUNC(Os_StatusType, OS_CODE) os_get_task_id(TaskRefType task_id_ref)
 	return ret;
 }
 
-FUNC(Os_StatusType, OS_CODE) get_task_app_id(ApplicationIDType *appid_ref)
+FUNC(os_status_t, OS_CODE) os_get_task_state(TaskType task_id, TaskStateRefType task_state_ref)
+{
+	os_status_t ret = OS_STATUS_OK;
+#if defined(CONFIG_RT_FRAMEWORK_EXTENDED_STATUS) || defined(CONFIG_RT_FRAMEWORK_ACCESSCHECK)
+	const os_ctx_cfg_t *const current_context = os_context_get_contexthdl();
+#endif
+
+#if defined(CONFIG_RT_FRAMEWORK_EXTENDED_STATUS)
+	if (UNLIKELY(FALSE == os_context_check_curcontext_id(current_context, OS_CONTEXT_GETTASKSTATE))) {
+		return OS_STATUS_CALLEVEL;
+	}
+	if (UNLIKELY(task_state_ref == NULL_PTR)) {
+		return OS_STATUS_PARAM_POINTER_2;
+	}
+	if (UNLIKELY(task_id >= os_task_cfg_ref_table_size)) {
+		return OS_STATUS_ID_1;
+	}
+	if (UNLIKELY(TRUE == os_context_check_irq_disabled(current_context))) {
+		return OS_STATUS_DISABLEDINT;
+	}
+#endif
+
+	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[task_id];
+	const os_ctx_cfg_t *task_context = OS_TASK_GET_CONTEXT_REF(task_cfg);
+	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+	CoreIdType task_core_id = OS_CONTEXT_GET_OWNER_COREID(task_context);
+
+	if (task_core_id == os_get_core_id()) {
+#if defined(CONFIG_RT_FRAMEWORK_ACCESSCHECK)
+		if (UNLIKELY(os_app_check_is_accessible(OS_CONTEXT_GET_APPONRWECFG_REF(task_context)) !=
+			     OS_STATUS_OK)) {
+			return OS_STATUS_NOT_ACCESSIBLE;
+		}
+#endif
+		*task_state_ref = os_get_task_state_internal(task_inst);
+	} else {
+#if defined(CONFIG_RT_FRAMEWORK_IPICALL)
+		return os_ipicall_get_task_state((uint32)task_core_id, task_id, task_state_ref);
+#else
+		return OS_STATUS_ID_1;
+#endif /* CONFIG_RT_FRAMEWORK_IPICALL */
+	}
+
+	return ret;
+}
+
+FUNC(os_status_t, OS_CODE) os_schedule(void)
+{
+	os_status_t ret = OS_STATUS_OK;
+
+#if defined(CONFIG_RT_FRAMEWORK_EXTENDED_STATUS) || defined(CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK)
+	const os_ctx_cfg_t *const current_context = os_context_get_contexthdl();
+#endif
+
+#if defined(CONFIG_RT_FRAMEWORK_EXTENDED_STATUS)
+	if (UNLIKELY(FALSE == os_context_check_curcontext_id(current_context, OS_CONTEXT_SCHEDULE))) {
+		return OS_STATUS_CALLEVEL;
+	}
+	if (UNLIKELY(os_context_check_irq_disabled(current_context) == (boolean)TRUE)) {
+		return OS_STATUS_DISABLEDINT;
+	}
+#endif
+
+#if defined(CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK == 1)
+	const os_task_cfg_t * task_cfg = os_task_cfg_ref_table[OS_CONTEXT_GET_CURRENT_TASKID(current_context)];
+
+	if (task_cfg->task_share_stack != NULL_PTR) {
+		return OS_STATUS_CALLEVEL_SHARED_STACK;
+	}
+#endif
+#if defined(CONFIG_RT_FRAMEWORK_EXTENDED_STATUS)
+	ret = os_context_check_locklist(current_context);
+	if (ret != OS_STATUS_OK) {
+		return ret;
+	}
+#endif
+
+	sched_yield();
+
+	return ret;
+}
+
+FUNC(os_status_t, OS_CODE) get_task_app_id(ApplicationIDType *appid_ref)
 {
 	const os_ctx_cfg_t *const current_context = os_context_get_contexthdl();
 
@@ -370,9 +475,9 @@ FUNC(Os_StatusType, OS_CODE) get_task_app_id(ApplicationIDType *appid_ref)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) rtfw_task_tickdelay(TickType ticks_to_delay)
+FUNC(os_status_t, OS_CODE) rtfw_task_tickdelay(TickType ticks_to_delay)
 {
-	Os_StatusType ret = OS_STATUS_OK;
+	os_status_t ret = OS_STATUS_OK;
 	const os_ctx_cfg_t *const current_context = os_context_get_contexthdl();
 
 	if (UNLIKELY(os_context_check_curcontext_id(current_context, OS_CONTEXT_TASK_TICKDELAY) == (boolean)FALSE)) {

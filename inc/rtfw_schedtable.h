@@ -73,7 +73,7 @@ extern "C" {
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_rel(ScheduleTableType schedtable_id, TickType offset);
+FUNC(os_status_t, OS_CODE) os_start_schedule_table_rel(ScheduleTableType schedtable_id, TickType offset);
 
 /*! \brief          Start the schedule table at absolute time.
  *  \details        None
@@ -94,7 +94,7 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_rel(ScheduleTableType sched
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_abs(ScheduleTableType schedtable_id, TickType start);
+FUNC(os_status_t, OS_CODE) os_start_schedule_table_abs(ScheduleTableType schedtable_id, TickType start);
 
 /*! \brief          Stop the schedule table
  *  \details        None
@@ -113,7 +113,7 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_abs(ScheduleTableType sched
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable_id);
+FUNC(os_status_t, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable_id);
 
 /*! \brief          Set the bit corresponding to AppId in the app_status internal variable of the schedule table
  *  \details        None
@@ -134,7 +134,7 @@ FUNC(Os_StatusType, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable
  *  \synchronous    TRUE
  */
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_app_id(ScheduleTableType schedtable_id, ApplicationIDType app_id);
+FUNC(os_status_t, OS_CODE) os_set_schedule_table_app_id(ScheduleTableType schedtable_id, ApplicationIDType app_id);
 
 /*! \brief          Set the bit corresponding to AppId in the app_status_mask internal variable of the schedule table
  *  \details        None
@@ -154,7 +154,7 @@ FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_app_id(ScheduleTableType sche
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_clear_schedule_table_app_id(ScheduleTableType schedtable_id, ApplicationIDType app_id);
+FUNC(os_status_t, OS_CODE) os_clear_schedule_table_app_id(ScheduleTableType schedtable_id, ApplicationIDType app_id);
 #endif
 
 /*! \brief          Gets the running state of a schedule table.
@@ -173,7 +173,7 @@ FUNC(Os_StatusType, OS_CODE) os_clear_schedule_table_app_id(ScheduleTableType sc
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_get_schedule_table_status(ScheduleTableType schedtable_id, ScheduleTableStatusRefType ScheduleStatus);
+FUNC(os_status_t, OS_CODE) os_get_schedule_table_status(ScheduleTableType schedtable_id, ScheduleTableStatusRefType ScheduleStatus);
 
 /*! \brief          Stop the current schedule table CurrSchedTableID, start the next schedule table NextSchedTableID
  *  \details        None
@@ -193,7 +193,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_schedule_table_status(ScheduleTableType sche
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_next_schedule_table(ScheduleTableType schedule_table_id_from, ScheduleTableType schedule_table_id_to);
+FUNC(os_status_t, OS_CODE) os_next_schedule_table(ScheduleTableType schedule_table_id_from, ScheduleTableType schedule_table_id_to);
 
 /*! \brief          Current schedule table CurrSchedTableID is in stopped state, and the next schedule table NextSchedTableID follows schedule table CurrSchedTableID to start
  *  \details        None
@@ -213,7 +213,7 @@ FUNC(Os_StatusType, OS_CODE) os_next_schedule_table(ScheduleTableType schedule_t
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_next_schedule_table_from_stop(ScheduleTableType schedule_table_id_from, ScheduleTableType schedule_table_id_to);
+FUNC(os_status_t, OS_CODE) os_next_schedule_table_from_stop(ScheduleTableType schedule_table_id_from, ScheduleTableType schedule_table_id_to);
 
 /*! \brief          Start schedule table synchronization
  *  \details        None
@@ -231,7 +231,7 @@ FUNC(Os_StatusType, OS_CODE) os_next_schedule_table_from_stop(ScheduleTableType 
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType schedtable_id);
+FUNC(os_status_t, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType schedtable_id);
 
 /*! \brief          Synchronize schedule table and correct time
  *  \details        None
@@ -251,7 +251,7 @@ FUNC(Os_StatusType, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType 
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable_id, TickType sync_time_now);
+FUNC(os_status_t, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable_id, TickType sync_time_now);
 
 /*! \brief          Set time offset to schedule table
  *  \details        None
@@ -271,7 +271,7 @@ FUNC(Os_StatusType, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedtable_id, DeviateType deviate_value);
+FUNC(os_status_t, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedtable_id, DeviateType deviate_value);
 
 /*! \brief          Set schedule table to running state
  *  \details        None
@@ -288,7 +288,7 @@ FUNC(Os_StatusType, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedta
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_set_schedule_table_async(ScheduleTableType schedtable_id);
+FUNC(os_status_t, OS_CODE) os_set_schedule_table_async(ScheduleTableType schedtable_id);
 
 /*! \brief          Schedule table Action callback function
  *  \details        None
@@ -321,7 +321,7 @@ void schedule_table_action_callback(struct hrtimer_s *hrtimer);
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) get_sched_table_core_id(ScheduleTableType schedtable_id, CoreIdType *core_id_ref);
+FUNC(os_status_t, OS_CODE) get_sched_table_core_id(ScheduleTableType schedtable_id, CoreIdType *core_id_ref);
 
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"

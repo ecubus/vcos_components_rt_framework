@@ -110,6 +110,7 @@ class Function(FunctionBase):
                 "TaskEventRef": utils.resolve_ref_list("OsTaskEventRef", value),
                 "TaskResourceRef": utils.resolve_ref_list("OsTaskResourceRef", value),
                 "TaskUsesFpu": 1 if value["OsTaskUsesFpu"]["Value"] else 0,
+                "TaskSchedule": value["OsTaskSchedule"]["Value"],
                 "TaskAutostart": "FALSE"
             }
 

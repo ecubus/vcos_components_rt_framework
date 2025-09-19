@@ -32,10 +32,11 @@ extern "C"
 {%- set ioc_config, _ = get_ioc_cfg() %}
 {%- set core_cfg = get_core_configs() %}
 {%- set core_ioc = get_ioc_cnt_by_core() %}
+{%- set ns = namespace(counter=0) %}
 
 {%- for core_val in core_cfg.values() %}
-{%- set core_key = core_val["core_id"] %}
-    {%- if core_ioc.get(core_key, 0) > 0 %}
+  {%- set core_key = core_val["core_id"] %}
+  {%- if core_ioc.get(core_key, 0) > 0 %}
     {%- set core_id = core_val["core_id"][-1] %}
 #define OS_START_SEC_CONST
 #include "rtfw_memmap.h"
@@ -43,28 +44,35 @@ extern CONSTP2CONST(os_ioc_cfg_t, OS_CONST, AUTOMATIC) os_core{{core_id}}_ioc_cf
 extern CONST(OsObjIndexType, OS_CONST) os_core{{core_id}}_ioc_cfg_ref_table_size;
 #define OS_STOP_SEC_CONST
 #include "rtfw_memmap.h"
-    {%- endif %}
+  {%- endif %}
 {%- endfor %}
 
 /* Global Enumeration Definition */
 
 typedef enum {
 {%- for ioc_name in ioc_config: %}
-    {%- set ioc_header = ioc_name.upper() %}
-    {%- if "OsIocBufferLength" in ioc_config[ioc_name] %}
-        {%- if ioc_config[ioc_name]["OsIocBufferLength"] == 0 %}
-    OS_IOC_WRITE_{{ioc_header}}_ID,
-    OS_IOC_READ_{{ioc_header}}_ID,
-        {%- else: %}
-    OS_IOC_SEND_{{ioc_header}}_ID,
-    OS_IOC_RECEIVE_{{ioc_header}}_ID,
-        {%- endif %}
+  {%- set ioc_header = ioc_name.upper() %}
+  {%- if "OsIocBufferLength" in ioc_config[ioc_name] %}
+    {%- if ioc_config[ioc_name]["OsIocBufferLength"] == 0 %}
+    OS_IOC_WRITE_{{ioc_header}}_ID = {{ns.counter}},
+    {%- set ns.counter = ns.counter + 1 %}
+    OS_IOC_READ_{{ioc_header}}_ID = {{ns.counter}},
+    {%- set ns.counter = ns.counter + 1 %}
     {%- else: %}
-    OS_IOC_WRITE_{{ioc_header}}_ID,
-    OS_IOC_READ_{{ioc_header}}_ID,
+    OS_IOC_SEND_{{ioc_header}}_ID = {{ns.counter}},
+    {%- set ns.counter = ns.counter + 1 %}
+    OS_IOC_RECEIVE_{{ioc_header}}_ID = {{ns.counter}},
+    {%- set ns.counter = ns.counter + 1 %}
     {%- endif %}
+  {%- else: %}
+    OS_IOC_WRITE_{{ioc_header}}_ID = {{ns.counter}},
+    {%- set ns.counter = ns.counter + 1 %}
+    OS_IOC_READ_{{ioc_header}}_ID = {{ns.counter}},
+    {%- set ns.counter = ns.counter + 1 %}
+  {%- endif %}
 {%- endfor %}
-    OS_IOC_CNT
+    OS_IOC_CNT  = {{ns.counter}},
+    OS_IOC_NONE = OS_IOC_CNT
 } OS_IOC_DEF;
 
 /* Global Function Declaration */
@@ -75,4 +83,4 @@ typedef enum {
 }
 #endif
 
-#endif	 /* RT_FRAMEWORK_IOC_CFG_H */
+#endif /* RT_FRAMEWORK_IOC_CFG_H */

@@ -50,13 +50,13 @@ extern FUNC(void, OS_CODE) os_suspend_os_interrupts(void);
 extern FUNC(void, OS_CODE) os_resume_os_interrupts(void);
 
 /* 函数说明详见 EnableInterruptSource */
-extern FUNC(Os_StatusType, OS_CODE) os_enable_interrupt_source(isr_id_t isr_id, boolean clear_pending);
+extern FUNC(os_status_t, OS_CODE) os_enable_interrupt_source(isr_id_t isr_id, boolean clear_pending);
 
 /* 函数说明详见 DisableInterruptSource */
-extern FUNC(Os_StatusType, OS_CODE) os_disable_interrupt_source(isr_id_t isr_id);
+extern FUNC(os_status_t, OS_CODE) os_disable_interrupt_source(isr_id_t isr_id);
 
 /* 函数说明详见 ClearPendingInterrupt */
-extern FUNC(Os_StatusType, OS_CODE) os_clear_pending_interrupt(isr_id_t isr_id);
+extern FUNC(os_status_t, OS_CODE) os_clear_pending_interrupt(isr_id_t isr_id);
 
 /*!  \brief         初始化中断状态，必须在使用任何中断API之前调用
  *  \details        None

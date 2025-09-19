@@ -27,12 +27,12 @@ extern "C" {
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 
-extern FUNC(Os_StatusType, OS_CODE) os_set_event(TaskType task_id, os_event_mask_t mask);
-extern FUNC(Os_StatusType, OS_CODE) os_set_event_asyn(TaskType task_id, os_event_mask_t mask);
-extern FUNC(Os_StatusType, OS_CODE) os_clear_event(os_event_mask_t mask);
-extern FUNC(Os_StatusType, OS_CODE) os_wait_event(os_event_mask_t mask);
-extern FUNC(Os_StatusType, OS_CODE) rtfw_event_tickwait(os_event_mask_t mask, uint32_t ticks_to_wait);
-extern FUNC(Os_StatusType, OS_CODE) os_get_event(TaskType task_id, os_event_mask_t *mask);
+extern FUNC(os_status_t, OS_CODE) os_set_event(TaskType task_id, os_event_mask_t mask);
+extern FUNC(os_status_t, OS_CODE) os_set_event_asyn(TaskType task_id, os_event_mask_t mask);
+extern FUNC(os_status_t, OS_CODE) os_clear_event(os_event_mask_t mask);
+extern FUNC(os_status_t, OS_CODE) os_wait_event(os_event_mask_t mask);
+extern FUNC(os_status_t, OS_CODE) rtfw_event_tickwait(os_event_mask_t mask, uint32_t ticks_to_wait);
+extern FUNC(os_status_t, OS_CODE) os_get_event(TaskType task_id, os_event_mask_t *mask);
 
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"

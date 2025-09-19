@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 #include <nuttx/config.h>
-#include "Os.h"
 #include <nuttx/irq.h>
+#include "Os.h"
 #include "rtfw_core.h"
 #include "rtfw_task.h"
 #include "rtfw_event.h"
@@ -37,6 +37,10 @@
 #endif
 #if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
 #include "rtfw_ioc.h"
+#endif
+#if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
+#include "rtfw_application.h"
+#include "application_cfg.h"
 #endif
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
@@ -80,7 +84,7 @@ FUNC(CoreIdType, OS_CODE) GetCoreID(void)
 
 FUNC(StatusType, OS_CODE) ActivateTask(TaskType task_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -123,7 +127,7 @@ FUNC(void, OS_CODE) ActivateTaskAsyn(TaskType task_id)
 
 FUNC(StatusType, OS_CODE) TerminateTask(void)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 	status = os_terminate_task();
 
@@ -133,7 +137,7 @@ FUNC(StatusType, OS_CODE) TerminateTask(void)
 
 FUNC(StatusType, OS_CODE) ChainTask(TaskType task_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -162,7 +166,7 @@ FUNC(StatusType, OS_CODE) ChainTask(TaskType task_id)
 
 FUNC(StatusType, OS_CODE) GetTaskID(TaskRefType task_id_ref)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -185,9 +189,156 @@ FUNC(StatusType, OS_CODE) GetTaskID(TaskRefType task_id_ref)
 	return (StatusType)status;
 }
 
+FUNC(StatusType, OS_CODE) GetApplicationState(ApplicationType app_id, ApplicationStateRefType app_state_ref)
+{
+	os_status_t status;
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
+#endif
+		status = os_get_app_state(app_id, app_state_ref);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_GETAPPLICATIONSTATE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_app_t = app_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_app_state_ref = app_state_ref;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+
+	REPORT_SERVICE_ERROR(OSServiceId_GetApplicationState, status, 2, (uintptr_t)app_id, (uintptr_t)app_state_ref);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) GetTaskState(TaskType task_id, TaskStateRefType task_state_ref)
+{
+	os_status_t status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
+#endif
+		status = os_get_task_state(task_id, task_state_ref);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_GETTASKSTATE;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_task_t = task_id;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_task_state_ref = task_state_ref;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+
+	REPORT_SERVICE_ERROR(OSServiceId_GetTaskState, status, 2, (uintptr_t)task_id, (uintptr_t)task_state_ref);
+	return (StatusType)status;
+}
+
+FUNC(StatusType, OS_CODE) AllowAccess(void)
+{
+	os_status_t status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
+#endif
+		status = os_allow_access();
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_ALLOWACCESS;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+
+	REPORT_SERVICE_ERROR(OSServiceId_AllowAccess, status, 0);
+
+	return (StatusType)status;
+}
+
+FUNC(ApplicationType, OS_CODE) GetApplicationID(void)
+{
+	ApplicationType app_id = OS_APPLICATION_CNT;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
+#endif
+		app_id = os_get_app_id();
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_GETAPPLICATIONID;
+
+		up_syscall(&syscall);
+
+		app_id = syscall.syscall_return_value.return_application_type;
+	}
+#endif
+
+	return app_id;
+}
+
+FUNC(ApplicationType, OS_CODE)  GetCurrentApplicationID(void)
+{
+	ApplicationType app_id = OS_APPLICATION_CNT;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
+#endif
+		app_id = os_get_current_app_id();
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_GETCURRENTAPPLICATIONID;
+
+		up_syscall(&syscall);
+
+		app_id = syscall.syscall_return_value.return_application_type;
+	}
+#endif
+
+	return app_id;
+}
+
+FUNC(StatusType, OS_CODE) Schedule(void)
+{
+	os_status_t status;
+
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
+#endif
+		status = os_schedule();
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_SCHEDULE;
+
+		up_syscall(&syscall);
+
+		status = syscall.syscall_return_value.return_os_status;
+	}
+#endif
+
+	REPORT_SERVICE_ERROR(OSServiceId_Schedule, status, 0);
+
+	return (StatusType)status;
+}
+
 FUNC(StatusType, OS_CODE) task_tickdelay(TickType ticks_to_delay)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -212,7 +363,7 @@ FUNC(StatusType, OS_CODE) task_tickdelay(TickType ticks_to_delay)
 
 FUNC(StatusType, OS_CODE) WaitEvent(EventMaskType mask)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -237,7 +388,7 @@ FUNC(StatusType, OS_CODE) WaitEvent(EventMaskType mask)
 
 FUNC(StatusType, OS_CODE) event_tickwait(EventMaskType mask, TickType ticks_to_wait)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -263,7 +414,7 @@ FUNC(StatusType, OS_CODE) event_tickwait(EventMaskType mask, TickType ticks_to_w
 
 FUNC(StatusType, OS_CODE) SetEvent(TaskType task_id, EventMaskType mask)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -308,7 +459,7 @@ FUNC(void, OS_CODE) SetEventAsyn(TaskType task_id, EventMaskType mask)
 
 FUNC(StatusType, OS_CODE) GetEvent(TaskType task_id, EventMaskRefType mask)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -334,7 +485,7 @@ FUNC(StatusType, OS_CODE) GetEvent(TaskType task_id, EventMaskRefType mask)
 
 FUNC(StatusType, OS_CODE) ClearEvent(EventMaskType mask)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -360,7 +511,7 @@ FUNC(StatusType, OS_CODE) ClearEvent(EventMaskType mask)
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
 FUNC(StatusType, OS_CODE) StartScheduleTableRel(ScheduleTableType schedtable_id, TickType Offset)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -386,7 +537,7 @@ FUNC(StatusType, OS_CODE) StartScheduleTableRel(ScheduleTableType schedtable_id,
 
 FUNC(StatusType, OS_CODE) StartScheduleTableAbs(ScheduleTableType schedtable_id, TickType start)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -412,7 +563,7 @@ FUNC(StatusType, OS_CODE) StartScheduleTableAbs(ScheduleTableType schedtable_id,
 
 FUNC(StatusType, OS_CODE) StartScheduleTableSynchron(ScheduleTableType schedtable_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -437,7 +588,7 @@ FUNC(StatusType, OS_CODE) StartScheduleTableSynchron(ScheduleTableType schedtabl
 
 FUNC(StatusType, OS_CODE) StopScheduleTable(ScheduleTableType schedtable_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -462,7 +613,7 @@ FUNC(StatusType, OS_CODE) StopScheduleTable(ScheduleTableType schedtable_id)
 
 FUNC(StatusType, OS_CODE) SetScheduleTableAppId(ScheduleTableType schedtable_id, ApplicationIDType app_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -488,7 +639,7 @@ FUNC(StatusType, OS_CODE) SetScheduleTableAppId(ScheduleTableType schedtable_id,
 
 FUNC(StatusType, OS_CODE) ClearScheduleTableAppId(ScheduleTableType schedtable_id, ApplicationIDType app_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -508,13 +659,14 @@ FUNC(StatusType, OS_CODE) ClearScheduleTableAppId(ScheduleTableType schedtable_i
 	}
 #endif
 
-	REPORT_SERVICE_ERROR(OSServiceId_ClearScheduleTableAppId, status, 2, (uintptr_t)schedtable_id, (uintptr_t)app_id);
+	REPORT_SERVICE_ERROR(OSServiceId_ClearScheduleTableAppId, status, 2, (uintptr_t)schedtable_id,
+			     (uintptr_t)app_id);
 	return (StatusType)status;
 }
 
 FUNC(StatusType, OS_CODE) NextScheduleTable(ScheduleTableType curr_schedtable_id, ScheduleTableType next_schedtable_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -534,8 +686,8 @@ FUNC(StatusType, OS_CODE) NextScheduleTable(ScheduleTableType curr_schedtable_id
 	}
 #endif
 
-	REPORT_SERVICE_ERROR(OSServiceId_NextScheduleTable, status, 2,
-		(uintptr_t)curr_schedtable_id, (uintptr_t)next_schedtable_id);
+	REPORT_SERVICE_ERROR(OSServiceId_NextScheduleTable, status, 2, (uintptr_t)curr_schedtable_id,
+			     (uintptr_t)next_schedtable_id);
 
 	return (StatusType)status;
 }
@@ -543,7 +695,7 @@ FUNC(StatusType, OS_CODE) NextScheduleTable(ScheduleTableType curr_schedtable_id
 FUNC(StatusType, OS_CODE)
 NextScheduleTableFromStop(ScheduleTableType curr_schedtable_id, ScheduleTableType next_schedtable_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -563,14 +715,14 @@ NextScheduleTableFromStop(ScheduleTableType curr_schedtable_id, ScheduleTableTyp
 	}
 #endif
 
-	REPORT_SERVICE_ERROR(OSServiceId_NextScheduleTableFromStop, status, 2,
-		(uintptr_t)curr_schedtable_id, (uintptr_t)next_schedtable_id);
+	REPORT_SERVICE_ERROR(OSServiceId_NextScheduleTableFromStop, status, 2, (uintptr_t)curr_schedtable_id,
+			     (uintptr_t)next_schedtable_id);
 	return (StatusType)status;
 }
 
 FUNC(StatusType, OS_CODE) SyncScheduleTable(ScheduleTableType schedtable_id, TickType tick_value)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -597,7 +749,7 @@ FUNC(StatusType, OS_CODE) SyncScheduleTable(ScheduleTableType schedtable_id, Tic
 
 FUNC(StatusType, OS_CODE) DeviateScheduleTable(ScheduleTableType schedtable_id, DeviateType deviate_value)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -617,14 +769,14 @@ FUNC(StatusType, OS_CODE) DeviateScheduleTable(ScheduleTableType schedtable_id, 
 	}
 #endif
 
-	REPORT_SERVICE_ERROR(OSServiceId_DeviateScheduleTable, status, 2,
-		(uintptr_t)schedtable_id, (uintptr_t)deviate_value);
+	REPORT_SERVICE_ERROR(OSServiceId_DeviateScheduleTable, status, 2, (uintptr_t)schedtable_id,
+			     (uintptr_t)deviate_value);
 	return (StatusType)status;
 }
 
 FUNC(StatusType, OS_CODE) GetScheduleTableStatus(ScheduleTableType schedtable_id, ScheduleTableStatusRefType StatusRef)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -644,13 +796,14 @@ FUNC(StatusType, OS_CODE) GetScheduleTableStatus(ScheduleTableType schedtable_id
 	}
 #endif
 
-	REPORT_SERVICE_ERROR(OSServiceId_GetScheduleTableStatus, status, 2, (uintptr_t)schedtable_id, (uintptr_t)StatusRef);
+	REPORT_SERVICE_ERROR(OSServiceId_GetScheduleTableStatus, status, 2, (uintptr_t)schedtable_id,
+			     (uintptr_t)StatusRef);
 	return (StatusType)status;
 }
 
 FUNC(StatusType, OS_CODE) SetScheduleTableAsync(ScheduleTableType schedtable_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -678,7 +831,7 @@ FUNC(StatusType, OS_CODE) SetScheduleTableAsync(ScheduleTableType schedtable_id)
 #if defined(CONFIG_RT_FRAMEWORK_SPINLOCK) && (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
 FUNC(StatusType, OS_CODE) GetSpinlock(SpinlockIdType spinlock_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -702,7 +855,7 @@ FUNC(StatusType, OS_CODE) GetSpinlock(SpinlockIdType spinlock_id)
 
 FUNC(StatusType, OS_CODE) ReleaseSpinlock(SpinlockIdType spinlock_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -726,7 +879,7 @@ FUNC(StatusType, OS_CODE) ReleaseSpinlock(SpinlockIdType spinlock_id)
 
 FUNC(StatusType, OS_CODE) TryToGetSpinlock(SpinlockIdType spinlock_id, TryToGetSpinlockType *success)
 {
-	Os_StatusType status;
+	os_status_t status;
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
 #endif
@@ -750,7 +903,7 @@ FUNC(StatusType, OS_CODE) TryToGetSpinlock(SpinlockIdType spinlock_id, TryToGetS
 
 FUNC(StatusType, OS_CODE) GetSpinlockRead(SpinlockIdType spinlock_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -774,7 +927,7 @@ FUNC(StatusType, OS_CODE) GetSpinlockRead(SpinlockIdType spinlock_id)
 
 FUNC(StatusType, OS_CODE) GetSpinlockWrite(SpinlockIdType spinlock_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -798,7 +951,7 @@ FUNC(StatusType, OS_CODE) GetSpinlockWrite(SpinlockIdType spinlock_id)
 
 FUNC(StatusType, OS_CODE) ReleaseSpinlockRead(SpinlockIdType spinlock_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -822,7 +975,7 @@ FUNC(StatusType, OS_CODE) ReleaseSpinlockRead(SpinlockIdType spinlock_id)
 
 FUNC(StatusType, OS_CODE) ReleaseSpinlockWrite(SpinlockIdType spinlock_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -846,7 +999,7 @@ FUNC(StatusType, OS_CODE) ReleaseSpinlockWrite(SpinlockIdType spinlock_id)
 
 FUNC(StatusType, OS_CODE) TryToGetSpinlockRead(SpinlockIdType spinlock_id, TryToGetSpinlockType *success)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
@@ -871,7 +1024,7 @@ FUNC(StatusType, OS_CODE) TryToGetSpinlockRead(SpinlockIdType spinlock_id, TryTo
 
 FUNC(StatusType, OS_CODE) TryToGetSpinlockWrite(SpinlockIdType spinlock_id, TryToGetSpinlockType *success)
 {
-	Os_StatusType status;
+	os_status_t status;
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (FALSE == syscall_is_required()) {
 #endif
@@ -994,7 +1147,7 @@ FUNC(void, OS_CODE) ResumeOSInterrupts(void)
 #if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
 FUNC(StatusType, OS_CODE) GetResource(ResourceType resource_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (syscall_is_required() == FALSE) {
@@ -1018,7 +1171,7 @@ FUNC(StatusType, OS_CODE) GetResource(ResourceType resource_id)
 
 FUNC(StatusType, OS_CODE) ReleaseResource(ResourceType resource_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (syscall_is_required() == FALSE) {
@@ -1044,7 +1197,7 @@ FUNC(StatusType, OS_CODE) ReleaseResource(ResourceType resource_id)
 #if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
 FUNC(StatusType, OS_CODE) GetCounterValue(CounterType counter_id, TickRefType tick_value)
 {
-	Os_StatusType status;
+	os_status_t status;
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (syscall_is_required() == FALSE) {
 #endif
@@ -1068,7 +1221,7 @@ FUNC(StatusType, OS_CODE) GetCounterValue(CounterType counter_id, TickRefType ti
 
 FUNC(StatusType, OS_CODE) GetElapsedValue(CounterType counter_id, TickRefType pre_value, TickRefType elapsed_value)
 {
-	Os_StatusType status;
+	os_status_t status;
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (syscall_is_required() == FALSE) {
 #endif
@@ -1087,14 +1240,14 @@ FUNC(StatusType, OS_CODE) GetElapsedValue(CounterType counter_id, TickRefType pr
 		status = syscall.syscall_return_value.return_os_status;
 	}
 #endif
-	REPORT_SERVICE_ERROR(OSServiceId_GetElapsedValue, status, 3,
-						 (uintptr_t)counter_id, (uintptr_t)pre_value, (uintptr_t)elapsed_value);
+	REPORT_SERVICE_ERROR(OSServiceId_GetElapsedValue, status, 3, (uintptr_t)counter_id, (uintptr_t)pre_value,
+			     (uintptr_t)elapsed_value);
 	return (StatusType)status;
 }
 
 FUNC(StatusType, OS_CODE) IncrementCounter(CounterType counter_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (syscall_is_required() == FALSE) {
 #endif
@@ -1118,7 +1271,7 @@ FUNC(StatusType, OS_CODE) IncrementCounter(CounterType counter_id)
 #endif
 
 #if defined(CONFIG_RT_FRAMEWORK_ERROR) && (CONFIG_RT_FRAMEWORK_ERROR == 1)
-FUNC(void, OS_CODE) service_error_report(OSServiceIdType service_id, Os_StatusType error_status, uint32 param_cnt, ...)
+FUNC(void, OS_CODE) service_error_report(OSServiceIdType service_id, os_status_t error_status, uint32 param_cnt, ...)
 {
 	va_list args;
 
@@ -1145,241 +1298,19 @@ FUNC(void, OS_CODE) service_error_report(OSServiceIdType service_id, Os_StatusTy
 #endif
 
 #if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
-FUNC(StatusType, OS_CODE) Ioc08Send(IocIdType ioc_id, uint8 data)
+FUNC(StatusType, OS_CODE) IocSend(IocIdType ioc_id, void const *data)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (syscall_is_required() == FALSE) {
 #endif
-		status = os_ioc_08_send(ioc_id, data);
+		status = os_ioc_send(ioc_id, data);
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
-		syscall.syscall_id = OS_SYSCALLID_IOC08SEND;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint8_t = data;
-
-		up_syscall(&syscall);
-
-		status = syscall.syscall_return_value.return_os_status;
-	}
-#endif
-	REPORT_SERVICE_ERROR(OSServiceId_IocSend, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
-	return (StatusType)status;
-}
-
-FUNC(StatusType, OS_CODE) Ioc08Receive(IocIdType ioc_id, uint8 *data)
-{
-	Os_StatusType status;
-
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	if (syscall_is_required() == FALSE) {
-#endif
-		status = os_ioc_08_receive(ioc_id, data);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	} else {
-		syscall_data_t syscall;
-
-		syscall.syscall_id = OS_SYSCALLID_IOC08RECEIVE;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint8_ref_t = data;
-
-		up_syscall(&syscall);
-
-		status = syscall.syscall_return_value.return_os_status;
-	}
-#endif
-	REPORT_SERVICE_ERROR(OSServiceId_IocReceive, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
-	return (StatusType)status;
-}
-
-FUNC(StatusType, OS_CODE) Ioc08EmptyQueue(IocIdType ioc_id)
-{
-	Os_StatusType status;
-
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	if (syscall_is_required() == FALSE) {
-#endif
-		status = os_ioc_08_empty_queue(ioc_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	} else {
-		syscall_data_t syscall;
-
-		syscall.syscall_id = OS_SYSCALLID_IOC08EMPTYQUEUE;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
-
-		up_syscall(&syscall);
-
-		status = syscall.syscall_return_value.return_os_status;
-	}
-#endif
-	REPORT_SERVICE_ERROR(OSServiceId_IocEmptyQueue, status, 1, (uintptr_t)ioc_id);
-	return (StatusType)status;
-}
-
-FUNC(StatusType, OS_CODE) Ioc16Send(IocIdType ioc_id, uint16 data)
-{
-	Os_StatusType status;
-
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	if (syscall_is_required() == FALSE) {
-#endif
-		status = os_ioc_16_send(ioc_id, data);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	} else {
-		syscall_data_t syscall;
-
-		syscall.syscall_id = OS_SYSCALLID_IOC16SEND;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint16_t = data;
-
-		up_syscall(&syscall);
-
-		status = syscall.syscall_return_value.return_os_status;
-	}
-#endif
-	REPORT_SERVICE_ERROR(OSServiceId_IocSend, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
-	return (StatusType)status;
-}
-
-FUNC(StatusType, OS_CODE) Ioc16Receive(IocIdType ioc_id, uint16 *data)
-{
-	Os_StatusType status;
-
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	if (syscall_is_required() == FALSE) {
-#endif
-		status = os_ioc_16_receive(ioc_id, data);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	} else {
-		syscall_data_t syscall;
-
-		syscall.syscall_id = OS_SYSCALLID_IOC16RECEIVE;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint16_ref_t = data;
-
-		up_syscall(&syscall);
-
-		status = syscall.syscall_return_value.return_os_status;
-	}
-#endif
-	REPORT_SERVICE_ERROR(OSServiceId_IocReceive, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
-	return (StatusType)status;
-}
-
-FUNC(StatusType, OS_CODE) Ioc16EmptyQueue(IocIdType ioc_id)
-{
-	Os_StatusType status;
-
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	if (syscall_is_required() == FALSE) {
-#endif
-		status = os_ioc_16_empty_queue(ioc_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	} else {
-		syscall_data_t syscall;
-
-		syscall.syscall_id = OS_SYSCALLID_IOC16EMPTYQUEUE;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
-
-		up_syscall(&syscall);
-
-		status = syscall.syscall_return_value.return_os_status;
-	}
-#endif
-	REPORT_SERVICE_ERROR(OSServiceId_IocEmptyQueue, status, 1, (uintptr_t)ioc_id);
-	return (StatusType)status;
-}
-
-FUNC(StatusType, OS_CODE) Ioc32Send(IocIdType ioc_id, uint32 data)
-{
-	Os_StatusType status;
-
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	if (syscall_is_required() == FALSE) {
-#endif
-		status = os_ioc_32_send(ioc_id, data);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	} else {
-		syscall_data_t syscall;
-
-		syscall.syscall_id = OS_SYSCALLID_IOC32SEND;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint32_t = data;
-
-		up_syscall(&syscall);
-
-		status = syscall.syscall_return_value.return_os_status;
-	}
-#endif
-	REPORT_SERVICE_ERROR(OSServiceId_IocSend, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
-	return (StatusType)status;
-}
-
-FUNC(StatusType, OS_CODE) Ioc32Receive(IocIdType ioc_id, uint32 *data)
-{
-	Os_StatusType status;
-
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	if (syscall_is_required() == FALSE) {
-#endif
-		status = os_ioc_32_receive(ioc_id, data);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	} else {
-		syscall_data_t syscall;
-
-		syscall.syscall_id = OS_SYSCALLID_IOC32RECEIVE;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_uint32_ref_t = data;
-
-		up_syscall(&syscall);
-
-		status = syscall.syscall_return_value.return_os_status;
-	}
-#endif
-	REPORT_SERVICE_ERROR(OSServiceId_IocReceive, status, 2, (uintptr_t)ioc_id, (uintptr_t)data);
-	return (StatusType)status;
-}
-
-FUNC(StatusType, OS_CODE) Ioc32EmptyQueue(IocIdType ioc_id)
-{
-	Os_StatusType status;
-
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	if (syscall_is_required() == FALSE) {
-#endif
-		status = os_ioc_32_empty_queue(ioc_id);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	} else {
-		syscall_data_t syscall;
-
-		syscall.syscall_id = OS_SYSCALLID_IOC32EMPTYQUEUE;
-		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
-
-		up_syscall(&syscall);
-
-		status = syscall.syscall_return_value.return_os_status;
-	}
-#endif
-	REPORT_SERVICE_ERROR(OSServiceId_IocEmptyQueue, status, 1, (uintptr_t)ioc_id);
-	return (StatusType)status;
-}
-
-FUNC(StatusType, OS_CODE) IocRefSend(IocIdType ioc_id, void const *data)
-{
-	Os_StatusType status;
-
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	if (syscall_is_required() == FALSE) {
-#endif
-		status = os_ioc_ref_send(ioc_id, data);
-#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
-	} else {
-		syscall_data_t syscall;
-
-		syscall.syscall_id = OS_SYSCALLID_IOCREFSEND;
+		syscall.syscall_id = OS_SYSCALLID_IOCSEND;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_const_void_ref_type = data;
 
@@ -1392,19 +1323,19 @@ FUNC(StatusType, OS_CODE) IocRefSend(IocIdType ioc_id, void const *data)
 	return (StatusType)status;
 }
 
-FUNC(StatusType, OS_CODE) IocRefReceive(IocIdType ioc_id, void *data)
+FUNC(StatusType, OS_CODE) IocReceive(IocIdType ioc_id, void *data)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (syscall_is_required() == FALSE) {
 #endif
-		status = os_ioc_ref_receive(ioc_id, data);
+		status = os_ioc_recv(ioc_id, data);
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
-		syscall.syscall_id = OS_SYSCALLID_IOCREFRECEIVE;
+		syscall.syscall_id = OS_SYSCALLID_IOCRECEIVE;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_2].param_void_ref_type = data;
 
@@ -1417,19 +1348,19 @@ FUNC(StatusType, OS_CODE) IocRefReceive(IocIdType ioc_id, void *data)
 	return (StatusType)status;
 }
 
-FUNC(StatusType, OS_CODE) IocRefEmptyQueue(IocIdType ioc_id)
+FUNC(StatusType, OS_CODE) IocEmptyQueue(IocIdType ioc_id)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (syscall_is_required() == FALSE) {
 #endif
-		status = os_ioc_ref_empty_queue(ioc_id);
+		status = os_ioc_empty_queue(ioc_id);
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	} else {
 		syscall_data_t syscall;
 
-		syscall.syscall_id = OS_SYSCALLID_IOCREFEMPTYQUEUE;
+		syscall.syscall_id = OS_SYSCALLID_IOCEMPTYQUEUE;
 		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_ioc_type = ioc_id;
 
 		up_syscall(&syscall);
@@ -1443,7 +1374,7 @@ FUNC(StatusType, OS_CODE) IocRefEmptyQueue(IocIdType ioc_id)
 
 FUNC(StatusType, OS_CODE) IocWrite(IocIdType ioc_id, void const *data)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (syscall_is_required() == FALSE) {
@@ -1468,7 +1399,7 @@ FUNC(StatusType, OS_CODE) IocWrite(IocIdType ioc_id, void const *data)
 
 FUNC(StatusType, OS_CODE) IocRead(IocIdType ioc_id, void *data)
 {
-	Os_StatusType status;
+	os_status_t status;
 
 #if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
 	if (syscall_is_required() == FALSE) {

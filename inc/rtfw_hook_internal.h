@@ -121,8 +121,8 @@ DeclareRtfwRefTable_H(hook) /*! Reference to OS task configuration table  */
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 extern FUNC(void, OS_CODE) os_hook_init(const os_hook_cfg_t *const os_hook_cfg_table[], OsObjIndexType size);
-extern FUNC(Os_StatusType, OS_CODE) os_hook_call_status_hook(HookType hook_id, StatusType error);
-extern FUNC(Os_StatusType, OS_CODE) os_hook_call_void_hook(HookType hook_id);
+extern FUNC(os_status_t, OS_CODE) os_hook_call_status_hook(HookType hook_id, StatusType error);
+extern FUNC(os_status_t, OS_CODE) os_hook_call_void_hook(HookType hook_id);
 extern FUNC(protection_return_t, OS_CODE) os_hook_call_protection_hook(HookType hook_id, StatusType error);
 extern FUNC(protection_return_t, OS_CODE) os_hook_call_callback(const os_hook_cfg_t *hook_cfg);
 extern FUNC(void, OS_CODE) os_hook_return(void);
@@ -139,7 +139,7 @@ FUNC(void, OS_CODE) os_call_startup_hook(const os_core_cfg_t *core_cfg);
 FUNC(protection_return_t, OS_CODE) os_call_protection_hook(StatusType error_status);
 #endif
 
-extern FUNC(Os_StatusType, OS_CODE) rtfw_call_void_callback_hook(const os_hook_cfg_t *hook_cfg);
+extern FUNC(os_status_t, OS_CODE) rtfw_call_void_callback_hook(const os_hook_cfg_t *hook_cfg);
 
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"

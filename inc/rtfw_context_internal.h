@@ -401,7 +401,7 @@ static inline boolean os_context_is_any_hook(const os_ctx_cfg_t *const ctx_ref)
 	return ((OS_CONTEXT_GET_INITCONTEXTID(ctx_ref) & OS_CONTEXT_ANYHOOK)) != FALSE;
 }
 
-static inline Os_StatusType os_context_check_locklist(const os_ctx_cfg_t *const ctx_ref)
+static inline os_status_t os_context_check_locklist(const os_ctx_cfg_t *const ctx_ref)
 {
 #if (defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)) || \
 	(defined(CONFIG_RT_FRAMEWORK_SPINLOCK) && (CONFIG_RT_FRAMEWORK_SPINLOCK == 1))

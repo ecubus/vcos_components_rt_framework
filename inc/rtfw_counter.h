@@ -54,15 +54,15 @@ FUNC(void, OS_CODE) os_counter_init(const os_counter_cfg_t *const os_counter_cfg
 
 FUNC(void, OS_CODE) os_counter_start(const os_counter_cfg_t *const os_counter_cfg_table[], OsObjIndexType size);
 
-FUNC(Os_StatusType, OS_CODE) os_counter_increment(CounterType counter_id);
+FUNC(os_status_t, OS_CODE) os_counter_increment(CounterType counter_id);
 
 FUNC(void, OS_CODE) os_counter_check(void);
 
 FUNC(void, OS_CODE) os_counter_hrt_handler(void);
 
-FUNC(Os_StatusType, OS_CODE) os_counter_get_value(CounterType counter_id, TickRefType value);
+FUNC(os_status_t, OS_CODE) os_counter_get_value(CounterType counter_id, TickRefType value);
 
-FUNC(Os_StatusType, OS_CODE)
+FUNC(os_status_t, OS_CODE)
 os_counter_get_elapsed_value(CounterType counter_id, TickRefType value, TickRefType elapsed_value_ref);
 
 FUNC(void, OS_CODE) os_counter_add_abs_action(const os_action_cfg_t *action_cfg, TickType start);

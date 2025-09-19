@@ -250,7 +250,7 @@ FUNC(void, OS_CODE) os_counter_delete_action(const os_action_cfg_t *action_cfg)
 	hrtimer_delete(hrtimer);
 }
 
-FUNC(Os_StatusType, OS_CODE) os_counter_get_value(CounterType counter_id, TickRefType value)
+FUNC(os_status_t, OS_CODE) os_counter_get_value(CounterType counter_id, TickRefType value)
 {
 	const os_ctx_cfg_t *const current_context = os_context_get_contexthdl();
 	const os_counter_cfg_t *counter_cfg;
@@ -263,7 +263,7 @@ FUNC(Os_StatusType, OS_CODE) os_counter_get_value(CounterType counter_id, TickRe
 	if (UNLIKELY(TRUE == os_context_check_irq_disabled(current_context))) {
 		return OS_STATUS_DISABLEDINT;
 	}
-#if (CONFIG_RT_FRAMEWORK_EXTENDED_STATUS == 1)
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 	if (UNLIKELY(FALSE == os_counter_is_valid(counter_id))) {
 		return OS_STATUS_ID_1;
 	}
@@ -277,12 +277,12 @@ FUNC(Os_StatusType, OS_CODE) os_counter_get_value(CounterType counter_id, TickRe
 		return OS_STATUS_CORE;
 	}
 	if (UNLIKELY(APPLICATION_ACCESSIBLE != app_cfg->instance->state)) {
-		return OS_STATUS_NOTACCESSIBLE_1;
+		return OS_STATUS_NOT_ACCESSIBLE;
 	}
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
 	if (UNLIKELY(OS_STATUS_OK != os_app_check_access(OS_CONTEXT_GET_CURRENT_APPID(current_context),
 							 counter_cfg->access_app_mask))) {
-		return OS_STATUS_ACCESSRIGHTS_1;
+		return OS_STATUS_ACCESS_RIGHT;
 	}
 #endif
 
@@ -293,7 +293,7 @@ FUNC(Os_StatusType, OS_CODE) os_counter_get_value(CounterType counter_id, TickRe
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE)
+FUNC(os_status_t, OS_CODE)
 os_counter_get_elapsed_value(CounterType counter_id, TickRefType value, TickRefType elapsed_value_ref)
 {
 	const os_ctx_cfg_t *const current_context = os_context_get_contexthdl();
@@ -308,7 +308,7 @@ os_counter_get_elapsed_value(CounterType counter_id, TickRefType value, TickRefT
 	if (UNLIKELY(TRUE == os_context_check_irq_disabled(current_context))) {
 		return OS_STATUS_DISABLEDINT;
 	}
-#if (CONFIG_RT_FRAMEWORK_EXTENDED_STATUS == 1)
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 	if (UNLIKELY(FALSE == os_counter_is_valid(counter_id))) {
 		return OS_STATUS_ID_1;
 	}
@@ -321,9 +321,9 @@ os_counter_get_elapsed_value(CounterType counter_id, TickRefType value, TickRefT
 		return OS_STATUS_PARAM_POINTER_3;
 	}
 	max_allowed_value = counter_cfg->max_allowed_value;
-#if (CONFIG_RT_FRAMEWORK_EXTENDED_STATUS == 1)
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 	if (UNLIKELY((*value) > max_allowed_value)) {
-		return OS_STATUS_VALUE_IS_TOO_HIGH_2;
+		return OS_STATUS_VALUE_TOO_HIGH_2;
 	}
 #endif
 	app_cfg = os_app_cfg_ref_table[counter_cfg->owner_app_id];
@@ -331,12 +331,12 @@ os_counter_get_elapsed_value(CounterType counter_id, TickRefType value, TickRefT
 		return OS_STATUS_CORE;
 	}
 	if (UNLIKELY(APPLICATION_ACCESSIBLE != app_cfg->instance->state)) {
-		return OS_STATUS_NOTACCESSIBLE_1;
+		return OS_STATUS_NOT_ACCESSIBLE;
 	}
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
 	if (UNLIKELY(OS_STATUS_OK != os_app_check_access(OS_CONTEXT_GET_CURRENT_APPID(current_context),
 							 counter_cfg->access_app_mask))) {
-		return OS_STATUS_ACCESSRIGHTS_1;
+		return OS_STATUS_ACCESS_RIGHT;
 	}
 #endif
 
@@ -349,7 +349,7 @@ os_counter_get_elapsed_value(CounterType counter_id, TickRefType value, TickRefT
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_counter_increment(CounterType counter_id)
+FUNC(os_status_t, OS_CODE) os_counter_increment(CounterType counter_id)
 {
 	const os_ctx_cfg_t *current_context = os_context_get_contexthdl();
 	const os_counter_cfg_t *counter_cfg;
@@ -362,13 +362,13 @@ FUNC(Os_StatusType, OS_CODE) os_counter_increment(CounterType counter_id)
 	if (UNLIKELY(TRUE == os_context_check_irq_disabled(current_context))) {
 		return OS_STATUS_DISABLEDINT;
 	}
-#if (CONFIG_RT_FRAMEWORK_EXTENDED_STATUS == 1)
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 	if (UNLIKELY(FALSE == os_counter_is_valid(counter_id))) {
 		return OS_STATUS_ID_1;
 	}
 #endif
 	counter_cfg = os_counter_cfg_ref_table[counter_id];
-#if (CONFIG_RT_FRAMEWORK_EXTENDED_STATUS == 1)
+#ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
 	if (UNLIKELY(TIMERTYPE_SOFTWARE != counter_cfg->timer_type)) {
 		return OS_STATUS_ID_TYPE_1;
 	}
@@ -378,12 +378,12 @@ FUNC(Os_StatusType, OS_CODE) os_counter_increment(CounterType counter_id)
 		return OS_STATUS_CORE;
 	}
 	if (UNLIKELY(APPLICATION_ACCESSIBLE != app_cfg->instance->state)) {
-		return OS_STATUS_NOTACCESSIBLE_1;
+		return OS_STATUS_NOT_ACCESSIBLE;
 	}
-#if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
+#ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
 	if (UNLIKELY(OS_STATUS_OK != os_app_check_access(OS_CONTEXT_GET_CURRENT_APPID(current_context),
 							 counter_cfg->access_app_mask))) {
-		return OS_STATUS_ACCESSRIGHTS_1;
+		return OS_STATUS_ACCESS_RIGHT;
 	}
 #endif
 

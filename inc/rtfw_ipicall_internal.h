@@ -49,6 +49,11 @@ struct os_ipicall_activate_task_param {
 	TaskType task_id;
 };
 
+struct os_ipicall_get_task_state_param {
+	TaskType task_id;
+	TaskStateType task_state;
+};
+
 struct os_ipicall_get_app_state_param {
 	ApplicationType app_id;
 	ApplicationStateType app_state;
@@ -136,6 +141,7 @@ struct os_ipicall_test_param {
 
 union os_ipicall_param_e {
 	os_ipicall_activate_task_param_t avtivate_task_param;
+	os_ipicall_get_task_state_param_t get_task_state_param;
 	os_ipicall_get_event_param_t get_event_param;
 	os_ipicall_set_event_param_t set_event_param;
 	os_ipicall_get_app_state_param_t get_app_state_param;
@@ -170,7 +176,7 @@ struct os_ipicall_send_s {
 
 struct os_ipicall_return_s {
 	os_ipicall_param_t out_param;
-	Os_StatusType return_status;
+	os_status_t return_status;
 	os_ipicall_service_id_t service;
 };
 
@@ -180,7 +186,7 @@ struct os_ipicall_data_s {
 	os_ipicall_return_t ret_element;
 };
 
-typedef Os_StatusType (*os_ipicall_service_t)(os_ipicall_data_t *param);
+typedef os_status_t (*os_ipicall_service_t)(os_ipicall_data_t *param);
 
 /*! IPICALL Instance Description */
 struct os_ipicall_inst_s {
@@ -208,58 +214,73 @@ DeclareRtfwRefTable_H(ipicall) /*! Reference to OS task configuration table  */
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 /* Global Function Implementation */
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_activate_task_asyn(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_get_application_state(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_get_event(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_event(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_event_asyn(os_ipicall_data_t *param);
-FUNC(Os_StatusType, OS_CODE) os_ipicall_get_app_state(uint32 target_core, ApplicationType app_id, ApplicationStateRefType state);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_activate_task(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_activate_task_asyn(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_get_task_state(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_get_application_state(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_get_event(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_set_event(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_set_event_asyn(os_ipicall_data_t *param);
+FUNC(os_status_t, OS_CODE)
+os_ipicall_get_app_state(uint32 target_core, ApplicationType app_id, ApplicationStateRefType state);
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_start_scheduletable_rel(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_start_scheduletable_abs(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_stop_scheduletable(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_get_scheduletable_status(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_next_scheduletable(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_next_scheduletable_from_stop(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_start_scheduletable_synchron(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_sync_scheduletable(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_scheduletable_async(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_start_schedule_table_rel(uint32 target_core, ScheduleTableType schedtable_id, TickType offset);
-extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_start_schedule_table_abs(uint32 target_core, ScheduleTableType schedtable_id, TickType start);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_stop_schedule_table(uint32 target_core, ScheduleTableType schedtable_id);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_get_schedule_table_status(uint32 target_core, ScheduleTableType schedtable_id,
-								      									ScheduleTableStatusType *schedtable_status);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_next_schedule_table(uint32 target_core, ScheduleTableType curr_schedtable_id,
-								 									ScheduleTableType next_schedtable_id);
-extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_next_schedule_table_from_stop(uint32 target_core, ScheduleTableType curr_schedtable_id,
-					     													ScheduleTableType next_schedtable_id);
-extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_start_schedule_table_synchron(uint32 target_core, ScheduleTableType schedtable_id);
-extern FUNC(Os_StatusType, OS_CODE)	os_ipicall_sync_schedule_table(uint32 target_core, ScheduleTableType schedtable_id, TickType tick_value);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_schedule_table_async(uint32 target_core, ScheduleTableType schedtable_id);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_deviate_schedule_table(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_set_schedule_table_app_id(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_clear_schedule_table_app_id(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_deviate_schedule_table(uint32 target_core, ScheduleTableType schedtable_id,
-                                                                     TickType deviate_value);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_schedule_table_app_id(uint32 target_core, ScheduleTableType schedtable_id,
-                                                                        ApplicationIDType app_id);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_clear_schedule_table_app_id(uint32 target_core, ScheduleTableType schedtable_id,
-                                                                          ApplicationIDType app_id);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_start_scheduletable_rel(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_start_scheduletable_abs(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_stop_scheduletable(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_get_scheduletable_status(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_next_scheduletable(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_next_scheduletable_from_stop(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_start_scheduletable_synchron(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_sync_scheduletable(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_set_scheduletable_async(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_start_schedule_table_rel(uint32 target_core, ScheduleTableType schedtable_id, TickType offset);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_start_schedule_table_abs(uint32 target_core, ScheduleTableType schedtable_id, TickType start);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_stop_schedule_table(uint32 target_core, ScheduleTableType schedtable_id);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_get_schedule_table_status(uint32 target_core, ScheduleTableType schedtable_id,
+					     ScheduleTableStatusType *schedtable_status);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_next_schedule_table(uint32 target_core, ScheduleTableType curr_schedtable_id,
+				       ScheduleTableType next_schedtable_id);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_next_schedule_table_from_stop(uint32 target_core, ScheduleTableType curr_schedtable_id,
+						 ScheduleTableType next_schedtable_id);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_start_schedule_table_synchron(uint32 target_core, ScheduleTableType schedtable_id);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_sync_schedule_table(uint32 target_core, ScheduleTableType schedtable_id, TickType tick_value);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_set_schedule_table_async(uint32 target_core, ScheduleTableType schedtable_id);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_deviate_schedule_table(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_set_schedule_table_app_id(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_clear_schedule_table_app_id(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_deviate_schedule_table(uint32 target_core, ScheduleTableType schedtable_id, TickType deviate_value);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_set_schedule_table_app_id(uint32 target_core, ScheduleTableType schedtable_id,
+					     ApplicationIDType app_id);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_clear_schedule_table_app_id(uint32 target_core, ScheduleTableType schedtable_id,
+					       ApplicationIDType app_id);
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1) */
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_hook_call_void_hook(uint32 target_core, HookType hook_id);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_hook_call_void_hook(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_hook_call_void_hook(uint32 target_core, HookType hook_id);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_hook_call_void_hook(os_ipicall_data_t *param);
 #endif
 extern FUNC(void, OS_CODE) os_ipicall_init(const os_ipicall_cfg_t *const os_ipicall_cfg_table[], OsObjIndexType count);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_activate_task(uint32 target_core, TaskType task_id);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_activate_task_asyn(uint32 target_core, TaskType task_id);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_get_event(uint32 target_core, TaskType task_id, os_event_mask_t *mask);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_event(uint32 target_core, TaskType task_id, os_event_mask_t mask);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_set_event_asyn(uint32 target_core, TaskType task_id, os_event_mask_t mask);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_activate_task(uint32 target_core, TaskType task_id);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_activate_task_asyn(uint32 target_core, TaskType task_id);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_get_task_state(uint32 target_core, TaskType task_id, TaskStateRefType state_ref);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_get_event(uint32 target_core, TaskType task_id, os_event_mask_t *mask);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_set_event(uint32 target_core, TaskType task_id, os_event_mask_t mask);
+extern FUNC(os_status_t, OS_CODE)
+	os_ipicall_set_event_asyn(uint32 target_core, TaskType task_id, os_event_mask_t mask);
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL_TEST) && (CONFIG_RT_FRAMEWORK_IPICALL_TEST == 1)
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_recv_ipc_test_function(os_ipicall_data_t *param);
-extern FUNC(Os_StatusType, OS_CODE) os_ipicall_ipc_test_function(uint32 target_core, uint32 test_value);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_ipc_test_function(os_ipicall_data_t *param);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_ipc_test_function(uint32 target_core, uint32 test_value);
 #endif
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"

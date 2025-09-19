@@ -26,6 +26,9 @@ extern "C" {
 struct os_ipicall_activate_task_param;
 typedef struct os_ipicall_activate_task_param os_ipicall_activate_task_param_t;
 
+struct os_ipicall_get_task_state_param;
+typedef struct os_ipicall_get_task_state_param os_ipicall_get_task_state_param_t;
+
 struct os_ipicall_get_app_state_param;
 typedef struct os_ipicall_get_app_state_param os_ipicall_get_app_state_param_t;
 

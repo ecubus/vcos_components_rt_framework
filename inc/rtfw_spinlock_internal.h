@@ -103,7 +103,7 @@ FUNC(void, OS_CODE) os_spinlock_init(void);
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_get_raw_spinlock(const os_spin_id_t spin_id);
+FUNC(os_status_t, OS_CODE) os_get_raw_spinlock(const os_spin_id_t spin_id);
 /*!  \brief         release_spinlock() actual Implementation
  *  \details        None
  *
@@ -119,7 +119,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_raw_spinlock(const os_spin_id_t spin_id);
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_release_raw_spinlock(const os_spin_id_t spin_id);
+FUNC(os_status_t, OS_CODE) os_release_raw_spinlock(const os_spin_id_t spin_id);
 /*! \brief         get_spinlock() Implementation
  *  \details       None
  *
@@ -144,7 +144,7 @@ FUNC(Os_StatusType, OS_CODE) os_release_raw_spinlock(const os_spin_id_t spin_id)
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_get_spinlock(const os_spin_id_t spin_id);
+FUNC(os_status_t, OS_CODE) os_get_spinlock(const os_spin_id_t spin_id);
 /*!  \brief         release_spinlock() Implementation
  *  \details        None
  *
@@ -165,7 +165,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_spinlock(const os_spin_id_t spin_id);
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_release_spinlock(const os_spin_id_t spin_id);
+FUNC(os_status_t, OS_CODE) os_release_spinlock(const os_spin_id_t spin_id);
 /*!  \brief         try_to_get_spinlock() Implementation
  *  \details        None
  *
@@ -190,7 +190,7 @@ FUNC(Os_StatusType, OS_CODE) os_release_spinlock(const os_spin_id_t spin_id);
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock(const os_spin_id_t spin_id, try_get_spin_t *success);
+FUNC(os_status_t, OS_CODE) os_try_to_get_spinlock(const os_spin_id_t spin_id, try_get_spin_t *success);
 /*! \brief         get_spinlock_read() Implementation
  *  \details       None
  *
@@ -211,7 +211,7 @@ FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock(const os_spin_id_t spin_id, 
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_get_spinlock_read(const os_spin_id_t spin_id);
+FUNC(os_status_t, OS_CODE) os_get_spinlock_read(const os_spin_id_t spin_id);
 /*! \brief         get_spinlock_write() Implementation
  *  \details       None
  *
@@ -233,7 +233,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_spinlock_read(const os_spin_id_t spin_id);
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_get_spinlock_write(const os_spin_id_t spin_id);
+FUNC(os_status_t, OS_CODE) os_get_spinlock_write(const os_spin_id_t spin_id);
 /*!  \brief         release_spinlock_read() Implementation
  *  \details        None
  *
@@ -254,7 +254,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_spinlock_write(const os_spin_id_t spin_id);
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_release_spinlock_read(const os_spin_id_t spin_id);
+FUNC(os_status_t, OS_CODE) os_release_spinlock_read(const os_spin_id_t spin_id);
 /*!  \brief         release_spinlock_read() Implementation
  *  \details        None
  *
@@ -275,7 +275,7 @@ FUNC(Os_StatusType, OS_CODE) os_release_spinlock_read(const os_spin_id_t spin_id
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_release_spinlock_write(const os_spin_id_t spin_id);
+FUNC(os_status_t, OS_CODE) os_release_spinlock_write(const os_spin_id_t spin_id);
 /*!  \brief         try_to_get_spinlock_read() Implementation
  *  \details        None
  *
@@ -296,7 +296,7 @@ FUNC(Os_StatusType, OS_CODE) os_release_spinlock_write(const os_spin_id_t spin_i
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock_read(const os_spin_id_t spin_id, try_get_spin_t *success);
+FUNC(os_status_t, OS_CODE) os_try_to_get_spinlock_read(const os_spin_id_t spin_id, try_get_spin_t *success);
 /*!  \brief         try_to_get_spinlock_write() Implementation
  *  \details        None
  *
@@ -317,7 +317,7 @@ FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock_read(const os_spin_id_t spin
  *
  *  \synchronous    TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock_write(const os_spin_id_t spin_id, try_get_spin_t *success);
+FUNC(os_status_t, OS_CODE) os_try_to_get_spinlock_write(const os_spin_id_t spin_id, try_get_spin_t *success);
 /* Global Function Implementation */
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"

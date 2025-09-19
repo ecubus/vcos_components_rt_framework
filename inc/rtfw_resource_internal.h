@@ -93,7 +93,7 @@ FUNC(void, OS_CODE) os_resource_init(const os_resource_cfg_t *const os_resource_
  *
  * @synchronous  TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_get_resource(ResourceType resource_id);
+FUNC(os_status_t, OS_CODE) os_get_resource(ResourceType resource_id);
 
 /**
  * @brief        ReleaseResource() Implementation
@@ -116,7 +116,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_resource(ResourceType resource_id);
  *
  * @synchronous  TRUE
  */
-FUNC(Os_StatusType, OS_CODE) os_release_resource(ResourceType resource_id);
+FUNC(os_status_t, OS_CODE) os_release_resource(ResourceType resource_id);
 
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"

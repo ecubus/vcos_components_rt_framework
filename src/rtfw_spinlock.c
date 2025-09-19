@@ -84,9 +84,9 @@ static inline void __spin_wr_unlock(os_rw_spin_t *lock)
 	Os_AtomicSet(lock, 0U);
 }
 
-static inline Os_StatusType spin_order_check(const os_list_t *lock_list, const os_spin_id_t order)
+static inline os_status_t spin_order_check(const os_list_t *lock_list, const os_spin_id_t order)
 {
-	Os_StatusType ret = OS_STATUS_NOT_OK;
+	os_status_t ret = OS_STATUS_NOT_OK;
 	const os_lock_cfg_t *lock_cfg;
 	os_spin_id_t last_order;
 	const os_list_node_t *last_node;
@@ -171,9 +171,9 @@ static inline void spin_remove_lock_method(const os_spin_method_t method)
  * if cpu switches to a higher priority task or interrupt after the check, the entity must
  * release the lock after switching back the origin task.
  */
-static inline Os_StatusType spin_local_core_check(const os_spin_inst_t *lock_inst)
+static inline os_status_t spin_local_core_check(const os_spin_inst_t *lock_inst)
 {
-	Os_StatusType status = OS_STATUS_NOT_OK;
+	os_status_t status = OS_STATUS_NOT_OK;
 	const os_ctx_cfg_t *lock_owner = lock_inst->owner_context;
 
 	if (LIKELY(lock_owner == NULL_PTR)) {
@@ -192,10 +192,10 @@ static inline Os_StatusType spin_local_core_check(const os_spin_inst_t *lock_ins
 	return status;
 }
 
-static inline Os_StatusType spin_entity_opccupy_check(const os_ctx_cfg_t *cur_context,
+static inline os_status_t spin_entity_opccupy_check(const os_ctx_cfg_t *cur_context,
 						      const os_ctx_cfg_t *owner_context)
 {
-	Os_StatusType status = OS_STATUS_NOT_OK;
+	os_status_t status = OS_STATUS_NOT_OK;
 
 	if (LIKELY(cur_context == owner_context)) {
 		status = OS_STATUS_OK;
@@ -203,9 +203,9 @@ static inline Os_StatusType spin_entity_opccupy_check(const os_ctx_cfg_t *cur_co
 	return status;
 }
 
-static inline Os_StatusType spin_fifo_check(const os_ctx_cfg_t *cur_context, const os_list_node_t *lock_node)
+static inline os_status_t spin_fifo_check(const os_ctx_cfg_t *cur_context, const os_list_node_t *lock_node)
 {
-	Os_StatusType status = OS_STATUS_NOT_OK;
+	os_status_t status = OS_STATUS_NOT_OK;
 
 	if (LIKELY(OS_LIST_LAST(OS_CONTEXT_GET_LOCKLIST_REF(cur_context)) == lock_node)) {
 		status = OS_STATUS_OK;
@@ -248,7 +248,7 @@ FUNC(void, OS_CODE) os_spinlock_init(void)
 	}
 }
 
-FUNC(Os_StatusType, OS_CODE) os_get_raw_spinlock(const os_spin_id_t spin_id)
+FUNC(os_status_t, OS_CODE) os_get_raw_spinlock(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
@@ -263,7 +263,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_raw_spinlock(const os_spin_id_t spin_id)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_release_raw_spinlock(const os_spin_id_t spin_id)
+FUNC(os_status_t, OS_CODE) os_release_raw_spinlock(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
@@ -278,12 +278,12 @@ FUNC(Os_StatusType, OS_CODE) os_release_raw_spinlock(const os_spin_id_t spin_id)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_get_spinlock(const os_spin_id_t spin_id)
+FUNC(os_status_t, OS_CODE) os_get_spinlock(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
 	os_int_state_t int_state;
-	Os_StatusType check_stat;
+	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 	ApplicationIDType app_id;
@@ -319,7 +319,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_spinlock(const os_spin_id_t spin_id)
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		check_stat = os_app_check_access(app_id, spin_cfg->access_app_mask);
 		if (UNLIKELY(check_stat != OS_STATUS_OK)) {
-			return OS_STATUS_ACCESSRIGHTS_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
 	} else {
@@ -340,12 +340,12 @@ FUNC(Os_StatusType, OS_CODE) os_get_spinlock(const os_spin_id_t spin_id)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_release_spinlock(const os_spin_id_t spin_id)
+FUNC(os_status_t, OS_CODE) os_release_spinlock(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
 	os_int_state_t int_state;
-	Os_StatusType check_stat;
+	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
@@ -373,14 +373,14 @@ FUNC(Os_StatusType, OS_CODE) os_release_spinlock(const os_spin_id_t spin_id)
 #if (CONFIG_RT_FRAMEWORK_EXTENDED_STATUS == 1)
 		check_stat = os_app_check_access(app_id, spin_cfg->access_app_mask);
 		if (UNLIKELY(check_stat != OS_STATUS_OK)) {
-			return OS_STATUS_ACCESSRIGHTS_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_EXTENDED_STATUS == 1 */
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
 		check_stat = spin_entity_opccupy_check(cur_context, lock_inst->owner_context);
 		if (UNLIKELY(check_stat != OS_STATUS_OK)) {
 			/* 调用实体未拥有此锁 */
-			return OS_STATUS_STATE_1;
+			return OS_STATUS_STATE;
 		}
 		check_stat = spin_fifo_check(cur_context, &(lock_inst->lock.lock_node));
 		if (UNLIKELY(check_stat != OS_STATUS_OK)) {
@@ -405,13 +405,13 @@ FUNC(Os_StatusType, OS_CODE) os_release_spinlock(const os_spin_id_t spin_id)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock(const os_spin_id_t spin_id, try_get_spin_t *success)
+FUNC(os_status_t, OS_CODE) os_try_to_get_spinlock(const os_spin_id_t spin_id, try_get_spin_t *success)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
 	boolean lock_succ;
 	os_int_state_t int_state;
-	Os_StatusType check_stat;
+	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
@@ -451,7 +451,7 @@ FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock(const os_spin_id_t spin_id, 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		check_stat = os_app_check_access(app_id, spin_cfg->access_app_mask);
 		if (UNLIKELY(check_stat != OS_STATUS_OK)) {
-			return OS_STATUS_ACCESSRIGHTS_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
 	} else {
@@ -484,11 +484,11 @@ FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock(const os_spin_id_t spin_id, 
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_get_spinlock_read(const os_spin_id_t spin_id)
+FUNC(os_status_t, OS_CODE) os_get_spinlock_read(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
-	Os_StatusType check_stat;
+	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
@@ -515,7 +515,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_spinlock_read(const os_spin_id_t spin_id)
 		app_id = OS_CONTEXT_GET_CURRENT_APPID(cur_context);
 		check_stat = os_app_check_access(app_id, spin_cfg->access_app_mask);
 		if (UNLIKELY(check_stat != OS_STATUS_OK)) {
-			return OS_STATUS_ACCESSRIGHTS_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
 	} else {
@@ -528,12 +528,12 @@ FUNC(Os_StatusType, OS_CODE) os_get_spinlock_read(const os_spin_id_t spin_id)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_get_spinlock_write(const os_spin_id_t spin_id)
+FUNC(os_status_t, OS_CODE) os_get_spinlock_write(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
 	os_int_state_t int_state;
-	Os_StatusType check_stat;
+	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
@@ -567,7 +567,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_spinlock_write(const os_spin_id_t spin_id)
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		check_stat = os_app_check_access(app_id, spin_cfg->access_app_mask);
 		if (UNLIKELY(check_stat != OS_STATUS_OK)) {
-			return OS_STATUS_ACCESSRIGHTS_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
 	} else {
@@ -591,11 +591,11 @@ FUNC(Os_StatusType, OS_CODE) os_get_spinlock_write(const os_spin_id_t spin_id)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_release_spinlock_read(const os_spin_id_t spin_id)
+FUNC(os_status_t, OS_CODE) os_release_spinlock_read(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
-	Os_StatusType check_stat;
+	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
@@ -618,7 +618,7 @@ FUNC(Os_StatusType, OS_CODE) os_release_spinlock_read(const os_spin_id_t spin_id
 		app_id = OS_CONTEXT_GET_CURRENT_APPID(cur_context);
 		check_stat = os_app_check_access(app_id, spin_cfg->access_app_mask);
 		if (UNLIKELY(check_stat != OS_STATUS_OK)) {
-			return OS_STATUS_ACCESSRIGHTS_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
 	} else {
@@ -631,12 +631,12 @@ FUNC(Os_StatusType, OS_CODE) os_release_spinlock_read(const os_spin_id_t spin_id
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_release_spinlock_write(const os_spin_id_t spin_id)
+FUNC(os_status_t, OS_CODE) os_release_spinlock_write(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
 	os_int_state_t int_state;
-	Os_StatusType check_stat;
+	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
@@ -659,7 +659,7 @@ FUNC(Os_StatusType, OS_CODE) os_release_spinlock_write(const os_spin_id_t spin_i
 		app_id = OS_CONTEXT_GET_CURRENT_APPID(cur_context);
 		check_stat = os_app_check_access(app_id, spin_cfg->access_app_mask);
 		if (UNLIKELY(check_stat != OS_STATUS_OK)) {
-			return OS_STATUS_ACCESSRIGHTS_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
 	} else {
@@ -682,12 +682,12 @@ FUNC(Os_StatusType, OS_CODE) os_release_spinlock_write(const os_spin_id_t spin_i
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock_read(const os_spin_id_t spin_id, try_get_spin_t *success)
+FUNC(os_status_t, OS_CODE) os_try_to_get_spinlock_read(const os_spin_id_t spin_id, try_get_spin_t *success)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
 	boolean lock_succ;
-	Os_StatusType check_stat;
+	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
@@ -719,7 +719,7 @@ FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock_read(const os_spin_id_t spin
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		app_id = OS_CONTEXT_GET_CURRENT_APPID(cur_context);
 		if (UNLIKELY(os_app_check_access(app_id, spin_cfg->access_app_mask) != OS_STATUS_OK)) {
-			return OS_STATUS_ACCESSRIGHTS_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
 	} else {
@@ -739,13 +739,13 @@ FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock_read(const os_spin_id_t spin
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock_write(const os_spin_id_t spin_id, try_get_spin_t *success)
+FUNC(os_status_t, OS_CODE) os_try_to_get_spinlock_write(const os_spin_id_t spin_id, try_get_spin_t *success)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
 	boolean lock_succ;
 	os_int_state_t int_state;
-	Os_StatusType check_stat;
+	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
@@ -785,7 +785,7 @@ FUNC(Os_StatusType, OS_CODE) os_try_to_get_spinlock_write(const os_spin_id_t spi
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		check_stat = os_app_check_access(app_id, spin_cfg->access_app_mask);
 		if (UNLIKELY(check_stat != OS_STATUS_OK)) {
-			return OS_STATUS_ACCESSRIGHTS_1;
+			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
 	} else {

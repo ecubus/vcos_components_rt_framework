@@ -42,7 +42,7 @@ FUNC(void, OS_CODE) os_resource_init(const os_resource_cfg_t * const os_resource
 	}
 }
 
-FUNC(Os_StatusType, OS_CODE) os_get_resource(ResourceType resource_id)
+FUNC(os_status_t, OS_CODE) os_get_resource(ResourceType resource_id)
 {
 	const os_resource_cfg_t *resource_cfg;
 	os_resource_inst_t *resource_inst;
@@ -68,7 +68,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_resource(ResourceType resource_id)
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 	if (UNLIKELY(os_app_check_access(OS_CONTEXT_GET_CURRENT_APPID(current_context),
 	resource_cfg->access_app_mask) != OS_STATUS_OK)) {
-		return OS_STATUS_ACCESSRIGHTS_1;
+		return OS_STATUS_ACCESS_RIGHT;
 	}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
 
@@ -110,7 +110,7 @@ FUNC(Os_StatusType, OS_CODE) os_get_resource(ResourceType resource_id)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_release_resource(ResourceType resource_id)
+FUNC(os_status_t, OS_CODE) os_release_resource(ResourceType resource_id)
 {
 	const os_resource_cfg_t *resource_cfg;
 	os_resource_inst_t *resource_inst;
@@ -135,7 +135,7 @@ FUNC(Os_StatusType, OS_CODE) os_release_resource(ResourceType resource_id)
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 	if (UNLIKELY(os_app_check_access(OS_CONTEXT_GET_CURRENT_APPID(current_context),
 	resource_cfg->access_app_mask) != OS_STATUS_OK)) {
-		return OS_STATUS_ACCESSRIGHTS_1;
+		return OS_STATUS_ACCESS_RIGHT;
 	}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
 

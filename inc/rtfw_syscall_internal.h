@@ -32,6 +32,12 @@ typedef enum {
 	OS_SYSCALLID_ACTIVATETASKASYNC,
 	OS_SYSCALLID_CHAINTASK,
 	OS_SYSCALLID_GETTASKID,
+	OS_SYSCALLID_GETTASKSTATE,
+	OS_SYSCALLID_ALLOWACCESS,
+	OS_SYSCALLID_GETAPPLICATIONSTATE,
+	OS_SYSCALLID_GETAPPLICATIONID,
+	OS_SYSCALLID_GETCURRENTAPPLICATIONID,
+	OS_SYSCALLID_SCHEDULE,
 	OS_SYSCALLID_TASK_TICKDELAY,
 	OS_SYSCALLID_SET_USER_TO_PRIVILEGE,
 	OS_SYSCALLID_SETEVENT,
@@ -84,18 +90,9 @@ typedef enum {
 	OS_SYSCALLID_SERVICEERRORREPORT,
 #endif /* CONFIG_RT_FRAMEWORK_ERROR */
 #if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
-	OS_SYSCALLID_IOC08SEND,
-	OS_SYSCALLID_IOC08RECEIVE,
-	OS_SYSCALLID_IOC08EMPTYQUEUE,
-	OS_SYSCALLID_IOC16SEND,
-	OS_SYSCALLID_IOC16RECEIVE,
-	OS_SYSCALLID_IOC16EMPTYQUEUE,
-	OS_SYSCALLID_IOC32SEND,
-	OS_SYSCALLID_IOC32RECEIVE,
-	OS_SYSCALLID_IOC32EMPTYQUEUE,
-	OS_SYSCALLID_IOCREFSEND,
-	OS_SYSCALLID_IOCREFRECEIVE,
-	OS_SYSCALLID_IOCREFEMPTYQUEUE,
+	OS_SYSCALLID_IOCSEND,
+	OS_SYSCALLID_IOCRECEIVE,
+	OS_SYSCALLID_IOCEMPTYQUEUE,
 	OS_SYSCALLID_IOCWRITE,
 	OS_SYSCALLID_IOCREAD,
 #endif /* CONFIG_RT_FRAMEWORK_IOC */
@@ -114,14 +111,17 @@ typedef enum {
 /* Global Type & Structure Definition */
 typedef union {
 	TaskType param_task_t;
+	ApplicationType param_app_t;
 	TaskRefType param_task_ref;
+	TaskStateRefType param_task_state_ref;
+	ApplicationStateRefType param_app_state_ref;
 	TickType param_tick_t;
 	ApplicationIDType param_applicationid;
 	EventMaskType param_event_mask;
 	EventMaskRefType param_event_mask_ref;
 	TickRefType param_tick_ref_type;
 	OSServiceIdType param_service_id;
-	Os_StatusType param_os_status;
+	os_status_t param_os_status;
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
 	ScheduleTableType param_scheduletable;
 	ScheduleTableStatusType param_scheduletable_status;
@@ -152,7 +152,8 @@ typedef union {
 
 typedef union {
 	CoreIdType    return_coreid_type;
-	Os_StatusType return_os_status;
+	ApplicationType return_application_type;
+	os_status_t return_os_status;
 } os_syscall_return_t;
 
 struct syscall_data_s {

@@ -69,7 +69,7 @@ static inline void os_int_resume_cat2(const os_int_state_t *const cat2_state)
 
 FUNC(void, OS_CODE) os_disable_all_interrupts(void)
 {
-	Os_StatusType status = OS_STATUS_OK;
+	os_status_t status = OS_STATUS_OK;
 	os_int_api_state_t *int_state = os_core_get_interrupt_api_stateref();
 
 	if (UNLIKELY(os_interrupt_is_in_critical_section(int_state) == TRUE)) {
@@ -84,7 +84,7 @@ FUNC(void, OS_CODE) os_disable_all_interrupts(void)
 
 FUNC(void, OS_CODE) os_enable_all_interrupts(void)
 {
-	Os_StatusType status = OS_STATUS_OK;
+	os_status_t status = OS_STATUS_OK;
 	os_int_api_state_t *int_state = os_core_get_interrupt_api_stateref();
 
 	if (UNLIKELY(os_interrupt_is_in_disable_all(int_state) == FALSE)) {
@@ -98,7 +98,7 @@ FUNC(void, OS_CODE) os_enable_all_interrupts(void)
 
 FUNC(void, OS_CODE) os_suspend_all_interrupts(void)
 {
-	Os_StatusType status = OS_STATUS_OK;
+	os_status_t status = OS_STATUS_OK;
 	os_int_api_state_t *int_state = os_core_get_interrupt_api_stateref();
 
 	if (UNLIKELY(os_interrupt_is_in_disable_all(int_state) == TRUE)) {
@@ -119,7 +119,7 @@ FUNC(void, OS_CODE) os_suspend_all_interrupts(void)
 
 FUNC(void, OS_CODE) os_resume_all_interrupts(void)
 {
-	Os_StatusType status = OS_STATUS_OK;
+	os_status_t status = OS_STATUS_OK;
 	os_int_api_state_t *int_state = os_core_get_interrupt_api_stateref();
 
 	if (UNLIKELY(os_interrupt_is_in_suspend_all(int_state) == FALSE)) {
@@ -141,7 +141,7 @@ FUNC(void, OS_CODE) os_resume_all_interrupts(void)
 
 FUNC(void, OS_CODE) os_suspend_os_interrupts(void)
 {
-	Os_StatusType status = OS_STATUS_OK;
+	os_status_t status = OS_STATUS_OK;
 	os_int_api_state_t *int_state = os_core_get_interrupt_api_stateref();
 
 	if (UNLIKELY(os_interrupt_is_in_disable_all(int_state) == TRUE)) {
@@ -162,7 +162,7 @@ FUNC(void, OS_CODE) os_suspend_os_interrupts(void)
 
 FUNC(void, OS_CODE) os_resume_os_interrupts(void)
 {
-	Os_StatusType status = OS_STATUS_OK;
+	os_status_t status = OS_STATUS_OK;
 	os_int_api_state_t *int_state = os_core_get_interrupt_api_stateref();
 
 	if (UNLIKELY(os_interrupt_is_in_suspend_os(int_state) == FALSE)) {
@@ -226,22 +226,22 @@ FUNC(void, OS_CODE) os_int_enable_global(void)
 }
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
-static FUNC(Os_StatusType, OS_CODE) os_interrupt_access_check(const os_isr_cfg_t *IsrCfgRef)
+static FUNC(os_status_t, OS_CODE) os_interrupt_access_check(const os_isr_cfg_t *IsrCfgRef)
 {
 	const os_ctx_cfg_t *const current_ctx = os_context_get_contexthdl();
 
 	if (OS_STATUS_OK !=
 	    os_app_check_access(OS_CONTEXT_GET_CURRENT_APPID(current_ctx), IsrCfgRef->context.access_app_mask)) {
-		return OS_STATUS_ACCESSRIGHTS_1;
+		return OS_STATUS_ACCESS_RIGHT;
 	} else {
 		return OS_STATUS_OK;
 	}
 }
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
 
-FUNC(Os_StatusType, OS_CODE) os_enable_interrupt_source(isr_id_t isr_id, boolean clear_pending)
+FUNC(os_status_t, OS_CODE) os_enable_interrupt_source(isr_id_t isr_id, boolean clear_pending)
 {
-	Os_StatusType status = OS_STATUS_NOT_OK;
+	os_status_t status = OS_STATUS_NOT_OK;
 
 	/* Only if OsStatus is EXTENDED */
 	if (isr_id >= OS_ISR_CNT) {
@@ -249,7 +249,7 @@ FUNC(Os_StatusType, OS_CODE) os_enable_interrupt_source(isr_id_t isr_id, boolean
 	}
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 	else if (os_app_check_is_accessible(GET_APP_CFG_BY_ISR_ID(isr_id)) != OS_STATUS_OK) {
-		status = OS_STATUS_NOTACCESSIBLE_1;
+		status = OS_STATUS_ACCESS_RIGHT;
 	}
 #endif
 	else {
@@ -265,7 +265,7 @@ FUNC(Os_StatusType, OS_CODE) os_enable_interrupt_source(isr_id_t isr_id, boolean
 #endif
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		else if (os_interrupt_access_check(OS_ISR_GET_ISRREF_BY_ID(isr_id)) != OS_STATUS_OK) {
-			status = OS_STATUS_ACCESSRIGHTS_1;
+			status = OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK */
 		else {
@@ -281,16 +281,16 @@ FUNC(Os_StatusType, OS_CODE) os_enable_interrupt_source(isr_id_t isr_id, boolean
 	return status;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_disable_interrupt_source(isr_id_t isr_id)
+FUNC(os_status_t, OS_CODE) os_disable_interrupt_source(isr_id_t isr_id)
 {
-	Os_StatusType status = OS_STATUS_NOT_OK;
+	os_status_t status = OS_STATUS_NOT_OK;
 
 	if (isr_id >= OS_ISR_CNT) {
 		status = OS_STATUS_ID_1;
 	}
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 	else if (os_app_check_is_accessible(GET_APP_CFG_BY_ISR_ID(isr_id)) != OS_STATUS_OK) {
-		status = OS_STATUS_NOTACCESSIBLE_1;
+		status = OS_STATUS_ACCESS_RIGHT;
 	}
 #endif
 	else {
@@ -306,7 +306,7 @@ FUNC(Os_StatusType, OS_CODE) os_disable_interrupt_source(isr_id_t isr_id)
 #endif
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 		else if (os_interrupt_access_check(OS_ISR_GET_ISRREF_BY_ID(isr_id)) != OS_STATUS_OK) {
-			status = OS_STATUS_ACCESSRIGHTS_1;
+			status = OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK */
 		else {
@@ -319,9 +319,9 @@ FUNC(Os_StatusType, OS_CODE) os_disable_interrupt_source(isr_id_t isr_id)
 	return status;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_clear_pending_interrupt(isr_id_t isr_id)
+FUNC(os_status_t, OS_CODE) os_clear_pending_interrupt(isr_id_t isr_id)
 {
-	Os_StatusType status = OS_STATUS_NOT_OK;
+	os_status_t status = OS_STATUS_NOT_OK;
 
 	if (isr_id >= OS_ISR_CNT) {
 		status = OS_STATUS_ID_1;
@@ -333,9 +333,9 @@ FUNC(Os_StatusType, OS_CODE) os_clear_pending_interrupt(isr_id_t isr_id)
 #endif
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
 	else if (os_app_check_is_accessible(GET_APP_CFG_BY_ISR_ID(isr_id)) != OS_STATUS_OK) {
-		status = OS_STATUS_NOTACCESSIBLE_1;
+		status = OS_STATUS_ACCESS_RIGHT;
 	} else if (os_interrupt_access_check(OS_ISR_GET_ISRREF_BY_ID(isr_id)) != OS_STATUS_OK) {
-		status = OS_STATUS_ACCESSRIGHTS_1;
+		status = OS_STATUS_ACCESS_RIGHT;
 	}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK */
 	else {

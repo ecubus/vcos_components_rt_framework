@@ -16,7 +16,10 @@
 
 static noinline_function FUNC(void, OS_CODE) os_thread_enter_task(const os_task_cfg_t *task_cfg, boolean is_privilege)
 {
-	OS_TASK_GET_INSTANCE_REF(task_cfg)->thread.tcb.flags &= ~TCB_FLAG_THREAD_IN_KERNEL_MPU_SET;
+	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+
+	task_inst->thread.tcb.flags &= ~(TCB_FLAG_THREAD_IN_KERNEL_MPU_SET | TCB_FLAG_THREAD_IS_SUSPENDED);
+
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
 	up_mpu_enable_set(OS_TASK_GET_CONTEXTINST_REF(task_cfg)->current_mpu_access_right->set_num);
 #endif
@@ -33,7 +36,8 @@ static noinline_function FUNC(void, OS_CODE) os_thread_enter_hook(void)
 {
 	protection_return_t protection_return;
 #if defined(CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK == 1)
-	os_hook_thread_inst_t *hook_thread = NULL_PTR;
+	os_hook_thread_inst_t *hook_thread =
+		(os_hook_thread_inst_t *)rtfw_shared_hook_thead_ref_table[os_get_core_id()];
 #endif
 	const os_ctx_cfg_t *current_context = os_context_get_contexthdl();
 	const os_hook_cfg_t *hook_cfg = OS_CONTEXT_GET_HOOK_CFG_REF(current_context);
@@ -45,17 +49,19 @@ static noinline_function FUNC(void, OS_CODE) os_thread_enter_hook(void)
 	hook_tcb = &(hook_inst->thread.tcb);
 #endif
 
-	hook_tcb->flags &= ~TCB_FLAG_THREAD_IN_KERNEL_MPU_SET;
+	if ((hook_tcb->flags & TCB_FLAG_THREAD_IS_SUSPENDED) == 0) {
+		hook_tcb->flags &= ~TCB_FLAG_THREAD_IN_KERNEL_MPU_SET;
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
-	up_mpu_enable_set(OS_HOOK_GET_CONTEXTINST_REF(hook_cfg)->current_mpu_access_right->set_num);
+		up_mpu_enable_set(OS_HOOK_GET_CONTEXTINST_REF(hook_cfg)->current_mpu_access_right->set_num);
 #endif
-	protection_return = os_hook_call_callback(hook_cfg);
+		protection_return = os_hook_call_callback(hook_cfg);
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
-	up_mpu_enable_set(0U);
+		up_mpu_enable_set(0U);
 #endif
-	hook_inst->return_value.protection_reaction = protection_return;
+		hook_inst->return_value.protection_reaction = protection_return;
+	}
+
 #if defined(CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_HOOK_STACK == 1)
-	hook_thread = (os_hook_thread_inst_t *)rtfw_shared_hook_thead_ref_table[os_get_core_id()];
 	longjmp(hook_thread->jmpbuf, 1);
 #else
 	longjmp(hook_inst->thread.jmpbuf, 1);
@@ -73,6 +79,7 @@ static noinline_function void os_task_thread_start(int argc, FAR char *argv[])
 	const os_task_cfg_t *task_cfg = OS_CONTEXT_GET_TASK_CFG_REF(current_context);
 	os_task_inst_t *task_inst = OS_CONTEXT_GET_TASK_INSTANCE_REF(current_context);
 
+	os_task_preinit(task_cfg);
 	if (setjmp(task_inst->thread.jmpbuf) == 1) {
 		os_task_reset(task_cfg);
 	}

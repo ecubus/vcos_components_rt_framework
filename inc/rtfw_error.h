@@ -29,9 +29,9 @@ extern "C" {
 FUNC(void, OS_CODE) os_error_init(void);
 
 FUNC(StatusType, OS_CODE) os_get_error_info(struct os_error_info_s *error_info);
-FUNC(Os_StatusType, OS_CODE) os_get_error_service_id(OSServiceIdType *service_id);
+FUNC(os_status_t, OS_CODE) os_get_error_service_id(OSServiceIdType *service_id);
 
-FUNC(void, OS_CODE) service_error_report(OSServiceIdType service_id, Os_StatusType error_status, uint32 param_cnt, ...);
+FUNC(void, OS_CODE) service_error_report(OSServiceIdType service_id, os_status_t error_status, uint32 param_cnt, ...);
 FUNC(void, OS_CODE) os_protection_error_report(StatusType error_status);
 
 #define OS_STOP_SEC_CODE
@@ -49,7 +49,7 @@ FUNC(void, OS_CODE) os_protection_error_report(StatusType error_status);
 #else
 
 static inline_function void
-service_error_report(OSServiceIdType service_id, Os_StatusType error_status, uint32 param_cnt, ...)
+service_error_report(OSServiceIdType service_id, os_status_t error_status, uint32 param_cnt, ...)
 {
 	UNUSED(service_id);
 	UNUSED(error_status);

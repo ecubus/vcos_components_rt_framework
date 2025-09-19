@@ -85,10 +85,10 @@ DeclareRtfwRefTable_H(app)
 
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
-extern FUNC(Os_StatusType, OS_CODE) os_get_app_state(ApplicationType app_id, ApplicationStateRefType state);
+extern FUNC(os_status_t, OS_CODE) os_get_app_state(ApplicationType app_id, ApplicationStateRefType state);
 extern FUNC(ApplicationType, OS_CODE) os_get_app_id(void);
 extern FUNC(ApplicationType, OS_CODE) os_get_current_app_id(void);
-extern FUNC(Os_StatusType, OS_CODE) os_allow_access(void);
+extern FUNC(os_status_t, OS_CODE) os_allow_access(void);
 extern FUNC(ApplicationType, OS_CODE) os_check_object_ownership(ObjectTypeType object_type, Os_ObjectIdType object_id);
 extern FUNC(void, OS_CODE) os_app_init(const os_app_cfg_t *const os_app_cfg_table[], OsObjIndexType size);
 
@@ -96,19 +96,19 @@ extern FUNC(void, OS_CODE) os_app_init(const os_app_cfg_t *const os_app_cfg_tabl
 #include "rtfw_memmap.h"
 
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
-static inline Os_StatusType os_app_check_access(ApplicationIDType app_id, uint32 access_mask)
+static inline os_status_t os_app_check_access(ApplicationIDType app_id, uint32 access_mask)
 {
 	if (app_id > (ApplicationIDType)31) {
-		return OS_STATUS_ACCESSRIGHTS_1;
+		return OS_STATUS_ACCESS_RIGHT;
 	}
-	return (((access_mask & (RTFW_APPID2MASK(app_id))) > 0U) ? OS_STATUS_OK : OS_STATUS_ACCESSRIGHTS_1);
+	return (((access_mask & (RTFW_APPID2MASK(app_id))) > 0U) ? OS_STATUS_OK : OS_STATUS_ACCESS_RIGHT);
 }
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK */
 
-static inline Os_StatusType os_app_check_is_accessible(const os_app_cfg_t *app_cfg)
+static inline os_status_t os_app_check_is_accessible(const os_app_cfg_t *app_cfg)
 {
 	ApplicationStateType app_state;
-	Os_StatusType status;
+	os_status_t status;
 
 	status = os_get_app_state(app_cfg->app_id, &app_state);
 	if ((status == OS_STATUS_OK) && (app_state == APPLICATION_ACCESSIBLE)) {

@@ -58,9 +58,9 @@ extern "C" {
 #include "rtfw_memmap.h"
 
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-extern FUNC(Os_StatusType, OS_CODE) get_task_app_id(ApplicationIDType *appid_ref);
+extern FUNC(os_status_t, OS_CODE) get_task_app_id(ApplicationIDType *appid_ref);
 #endif
-extern FUNC(Os_StatusType, OS_CODE) rtfw_task_tickdelay(TickType ticks_to_delay);
+extern FUNC(os_status_t, OS_CODE) rtfw_task_tickdelay(TickType ticks_to_delay);
 
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"

@@ -35,20 +35,6 @@
 #include "memory_protection_cfg.h"
 #endif
 
-/* Local Enumeration Definition */
-
-/* Local type & Structure Definition */
-
-/* global Variable Definition */
-
-/* Local Variable Definition */
-
-/* Local Function Declaration */
-
-/* Local Function Implementation */
-
-/* global Function Implementation */
-
 {%- set task_cfg = get_task_cfg() %}
 {%- set app_cfg = get_app_cfg() %}
 {%- set task_stack_sharing_info, task_stack_sharing_ref = get_task_stack_sharing() %}
@@ -62,8 +48,8 @@ DeclareTaskShareStackOwner({{app_cfg[bsw_appname]["AppInstSection"]}}, {{ ("Core
         {%- for task in comb_value["CombTasklist"] %}
         {%- set t_cfg = task.upper() + "_CFG" %}
 DeclareTaskShareStackCFG(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{t_cfg}}) = {
-    /* .temp_stack              = */&TASKTEMPSTACKVAR({{t_cfg}}),
-    /* .share_stack_owner       = */&TASKSHARESTACKOWNERVAR({{ ("Core%s_%s_Cfg" % (core_id, comb)) | upper }}),
+    /* .temp_stack =            */ &TASKTEMPSTACKVAR({{t_cfg}}),
+    /* .share_stack_owner =     */ &TASKSHARESTACKOWNERVAR({{ ("Core%s_%s_Cfg" % (core_id, comb)) | upper }}),
 };
         {%- endfor %}
     {%- endfor %}
@@ -83,52 +69,57 @@ DeclareBasicTask(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {
 {%- else %}
 DeclareExtendedTask(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{t_cfg}}) = {
 {%- endif %}
-    /* .context      = */
+    /* .context =               */
     {
-        /* .instance             = */            &TASKOBJVAR({{t_cfg}}),
-        /* .instance_name        = */            "{{task}}",
-        /* .core                = */             &OSCORECFGVAR(Os_Core{{core_i}}),
-        /* .int_api_state         = */           &(OSCOREOBJVAR(Os_Core{{core_i}}).int_api_state),
-        /* .arch_ctx_cfg      = */
+        /* .instance =             */ &TASKOBJVAR({{t_cfg}}),
+        /* .instance_name =        */ "{{task}}",
+        /* .core =                 */ &OSCORECFGVAR(Os_Core{{core_i}}),
+        /* .int_api_state =        */ &(OSCOREOBJVAR(Os_Core{{core_i}}).int_api_state),
+        /* .arch_ctx_cfg =         */
         {
-{%- if task in task_stack_sharing_ref.keys() %}            
-            /* .StackAddr       = */             (OsStackAddrType)THREADSTACKVAR({{ ("Core%s_%s_Cfg" % (core_i, task_stack_sharing_ref[task])) | upper }}),
-            /* .StackSize       = */             (OsStackSizeType)THREADSTACKSIZEVAR({{ ("Core%s_%s_Cfg_Stack_Size" % (core_i, task_stack_sharing_ref[task])) | upper }}),
+{%- if task in task_stack_sharing_ref.keys() %}
+            /* .StackAddr =        */ (OsStackAddrType)THREADSTACKVAR({{ ("Core%s_%s_Cfg" % (core_i, task_stack_sharing_ref[task])) | upper }}),
+            /* .StackSize =        */ (OsStackSizeType)THREADSTACKSIZEVAR({{ ("Core%s_%s_Cfg_Stack_Size" % (core_i, task_stack_sharing_ref[task])) | upper }}),
 {%- else %}
-            /* .stack_addr       = */            (OsStackAddrType)THREADSTACKVAR({{t_cfg}}),
-            /* .stack_size       = */            (OsStackSizeType)THREADSTACKSIZEVAR({{t_cfg}}_STACK_SIZE),
+            /* .stack_addr =       */ (OsStackAddrType)THREADSTACKVAR({{t_cfg}}),
+            /* .stack_size =       */ (OsStackSizeType)THREADSTACKSIZEVAR({{t_cfg}}_STACK_SIZE),
 {%- endif %}
-            /* .entry_addr       = */            (os_context_entry_t)&os_task_{{task.lower()}},
-            /* .exit_addr        = */            (os_context_exit_t)NULL_PTR,
-            /* .entry_param      = */            (os_context_entry_para_t)NULL_PTR,
+            /* .entry_addr =       */ (os_context_entry_t)&os_task_{{task.lower()}},
+            /* .exit_addr =        */ (os_context_exit_t)NULL_PTR,
+            /* .entry_param =      */ (os_context_entry_para_t)NULL_PTR,
         },
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-        /* .app_owner_cfg        = */            &OSAPPCFGVAR({{app}}),
+        /* .app_owner_cfg =        */ &OSAPPCFGVAR({{app}}),
         {%- set access_app = task_cfg[task]["TaskAccessApp"] + [app] %}
-        {%- set access_str = get_access_app_mask(access_app, index_size=50) %}
-        /* .access_app_mask   = */               ({{access_str}}),
+        {%- set access_str = get_access_app_mask(access_app, index_size=39) %}
+        /* .access_app_mask =      */ ({{access_str}}),
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1) */
-        /* .initial_ctx_id    = */            OS_TASK_CONTEXT_ID,
+        /* .initial_ctx_id =       */ OS_TASK_CONTEXT_ID,
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
-        /* .mpu_access_right  = */              &{{task.lower()}}_access_right,
+        /* .mpu_access_right =     */ &{{task.lower()}}_access_right,
 #endif
     },
-    /* .base_priority            = */            {{t_cfg}}_PRIORITY,
+    /* .base_priority =            */ {{t_cfg}}_PRIORITY,
 {%- if task_cfg[task]["TaskType"] == 'EXTENDED' %}
-    /* .event_hdl                = */            &TASKEVENTOBJVAR({{t_cfg}}),
+    /* .event_hdl =                */ &TASKEVENTOBJVAR({{t_cfg}}),
 {%- else %}
-    /* .event_hdl                = */            NULL_PTR,
+    /* .event_hdl =                */ NULL_PTR,
 {%- endif %}
 #if defined(CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK == 1)
 {%- if task in task_stack_sharing_ref.keys() %}
-    /* .task_share_stack                = */     &TASKSHARESTACKCFGVAR({{t_cfg}}),
+    /* .task_share_stack =         */ &TASKSHARESTACKCFGVAR({{t_cfg}}),
 {%- else %}
-    /* .task_share_stack                = */     NULL_PTR,
+    /* .task_share_stack =         */ NULL_PTR,
 {%- endif %}
 #endif
-    /* .task_id                  = */            OS_TASK_{{task.upper()}}_ID,
-    /* .autostart_mode           = */            {{task_cfg[task]["TaskAutostart"]}},
-    /* .activation_limit         = */            {{task_cfg[task]["TaskActivation"]}},
+    /* .task_id =                  */ OS_TASK_{{task.upper()}}_ID,
+    /* .autostart_mode =           */ {{task_cfg[task]["TaskAutostart"]}},
+{%- if task_cfg[task]["TaskSchedule"] == 'FULL' %}
+    /* .is_preemptive =            */ TRUE,
+{%- else %}
+    /* .is_preemptive =            */ FALSE,
+{%- endif %}
+    /* .activation_limit =         */ {{task_cfg[task]["TaskActivation"]}},
 };
         {%- endfor %}
     {%- endif %}

@@ -35,27 +35,28 @@
 /* Global Function Implementation */
 {%- set ioc_config, _ = get_ioc_cfg() %}
 {%- for ioc_name in ioc_config %}
-    {%- if "OsIocDataProperties" in ioc_config[ioc_name] %}
-        {%- set dataType = ioc_config[ioc_name]["OsIocDataProperties"]["datatype"] %}
-        {%- set baseDataType = get_ioc_base_datatype(dataType) %}
-    {%- else: %}
-        {%- set dataType = "uint8" %}
-        {%- set baseDataType = "uint8" %}
-    {%- endif %}
-    {%- if "OsIocBufferLength" in ioc_config[ioc_name]%}
-        {%- set queuelen = ioc_config[ioc_name]["OsIocBufferLength"] %}
-    {%- else: %}
-        {%- set queuelen = 0 %}
-    {%- endif %}
-    {%- if queuelen == 0 : %}
-        {%- for index in range(get_ioc_sender_cnt(ioc_name)) %}
-            {%- set sender_id = ioc_config[ioc_name]["OsIocSenderProperties"][index]["OsIocSenderId"] %}
-                {%- if baseDataType in ["uint8", "sint8", "boolean", "uint16", "sint16", "uint32", "sint32", "float32", "uint64", "sint64", "float64"]: %}
+  {%- if "OsIocDataProperties" in ioc_config[ioc_name] %}
+    {%- set dataType = ioc_config[ioc_name]["OsIocDataProperties"]["datatype"] %}
+    {%- set baseDataType = get_ioc_base_datatype(dataType) %}
+  {%- else: %}
+    {%- set dataType = "uint8" %}
+    {%- set baseDataType = "uint8" %}
+  {%- endif %}
+  {%- if "OsIocBufferLength" in ioc_config[ioc_name]%}
+    {%- set queuelen = ioc_config[ioc_name]["OsIocBufferLength"] %}
+  {%- else: %}
+    {%- set queuelen = 0 %}
+  {%- endif %}
+
+  {%- if queuelen == 0 : %}
+    {%- for index in range(get_ioc_sender_cnt(ioc_name)) %}
+      {%- set sender_id = ioc_config[ioc_name]["OsIocSenderProperties"][index]["OsIocSenderId"] %}
+      {%- if baseDataType in ["uint8", "sint8", "boolean", "uint16", "sint16", "uint32", "sint32", "float32", "uint64", "sint64", "float64"]: %}
 Std_ReturnType IocWrite_{{ioc_name}}{% if sender_id %}_{{ sender_id }}{% endif %} ( {{dataType}} Arg0 )
 {
   return IocWrite(OS_IOC_WRITE_{{ioc_name.upper()}}_ID, (void *) &Arg0);
 }
-                {%- else: %}
+      {%- else: %}
 Std_ReturnType IocWrite_{{ioc_name}}{% if sender_id %}_{{ sender_id }}{% endif %} ( {{dataType}} *Arg0 )
 {
     Std_ReturnType status;
@@ -67,13 +68,13 @@ Std_ReturnType IocWrite_{{ioc_name}}{% if sender_id %}_{{ sender_id }}{% endif %
     {
         status = IocWrite(OS_IOC_WRITE_{{ioc_name.upper()}}_ID, (void *) Arg0);
     }
-
     return status;
 }
-                {%- endif %}
-        {%- endfor %}
-        {%- for index in range(get_ioc_receiver_cnt(ioc_name)) %}
-            {%- set receiver_id = ioc_config[ioc_name]["OsIocReceiverProperties"][index]["OsIocReceiverId"] %}
+      {%- endif %}
+    {%- endfor %}
+
+    {%- for index in range(get_ioc_receiver_cnt(ioc_name)) %}
+      {%- set receiver_id = ioc_config[ioc_name]["OsIocReceiverProperties"][index]["OsIocReceiverId"] %}
 Std_ReturnType IocRead_{{ioc_name}}{% if receiver_id %}_{{ receiver_id }}{% endif %} ( {{dataType}} *Arg0 )
 {
     Std_ReturnType status;
@@ -85,51 +86,32 @@ Std_ReturnType IocRead_{{ioc_name}}{% if receiver_id %}_{{ receiver_id }}{% endi
     {
         status = IocRead(OS_IOC_READ_{{ioc_name.upper()}}_ID, (void *) Arg0);
     }
-
     return status;
 }
-        {%- endfor %}
-    {%- else: %}
-        {%- for index in range(get_ioc_sender_cnt(ioc_name)) %}
-            {%- set sender_id = ioc_config[ioc_name]["OsIocSenderProperties"][index]["OsIocSenderId"] %}
-                {%- if baseDataType in ["uint8", "sint8","boolean"] :%}
+    {%- endfor %}
+
+  {%- else: %}
+    {%- for index in range(get_ioc_sender_cnt(ioc_name)) %}
+      {%- set sender_id = ioc_config[ioc_name]["OsIocSenderProperties"][index]["OsIocSenderId"] %}
+      {%- if baseDataType in ["uint8","sint8","boolean","uint16","sint16","uint32","sint32","float32"] %}
 Std_ReturnType IocSend_{{ioc_name}}{% if sender_id %}_{{ sender_id }}{% endif %} ( {{dataType}} Arg0 )
 {
-    return Ioc08Send(OS_IOC_SEND_{{ioc_name.upper()}}_ID, Arg0 );
+    return IocSend(OS_IOC_SEND_{{ioc_name.upper()}}_ID, (void*)&Arg0);
 }
-                {%- elif baseDataType in ["uint16", "sint16"]:%}
-Std_ReturnType IocSend_{{ioc_name}}{% if sender_id %}_{{ sender_id }}{% endif %} ( {{dataType}} Arg0 )
-{
-    return Ioc16Send(OS_IOC_SEND_{{ioc_name.upper()}}_ID, Arg0 );
-}
-                {%- elif baseDataType in ["uint32", "sint32", "float32"]:%}
-Std_ReturnType IocSend_{{ioc_name}}{% if sender_id %}_{{ sender_id }}{% endif %} ( {{dataType}} Arg0 )
-{
-    return Ioc32Send(OS_IOC_SEND_{{ioc_name.upper()}}_ID, Arg0 );
-}
-                {%- elif baseDataType in ["uint64", "sint64", "float64"]:%}
-Std_ReturnType IocSend_{{ioc_name}}{% if sender_id %}_{{ sender_id }}{% endif %} ( {{dataType}} Arg0 )
-{
-    return IocRefSend(OS_IOC_SEND_{{ioc_name.upper()}}_ID, ({{dataType}}*)&Arg0 );
-}
-                {%- else:%}
+      {%- else %}
 Std_ReturnType IocSend_{{ioc_name}}{% if sender_id %}_{{ sender_id }}{% endif %} ( {{dataType}}* Arg0 )
 {
     Std_ReturnType status;
-    if (Arg0 == NULL_PTR)
-    {
+    if (Arg0 == NULL_PTR) {
         status = (Std_ReturnType)E_OS_ID;
-    }
-    else
-    {
-        status = IocRefSend(OS_IOC_SEND_{{ioc_name.upper()}}_ID, Arg0 );
+    } else {
+        status = IocSend(OS_IOC_SEND_{{ioc_name.upper()}}_ID, (void*)Arg0);
     }
     return status;
 }
-                {%- endif %}
-        {%- endfor %}
+      {%- endif %}
+    {%- endfor %}
 
-        {%- if baseDataType in ["uint8", "sint8","boolean"] :%}
 Std_ReturnType IocReceive_{{ioc_name}} ( {{dataType}}* Arg0 )
 {
     Std_ReturnType status;
@@ -139,72 +121,9 @@ Std_ReturnType IocReceive_{{ioc_name}} ( {{dataType}}* Arg0 )
     }
     else
     {
-        status = Ioc08Receive(OS_IOC_RECEIVE_{{ioc_name.upper()}}_ID, ({{dataType}}*) Arg0 );
+        status = IocReceive(OS_IOC_RECEIVE_{{ioc_name.upper()}}_ID, (void*)Arg0);
     }
     return status;
 }
-        {%- elif baseDataType in ["uint16", "sint16"]:%}
-Std_ReturnType IocReceive_{{ioc_name}} ( {{dataType}}* Arg0 )
-{
-    Std_ReturnType status;
-    if (Arg0 == NULL_PTR)
-    {
-        status = (Std_ReturnType)E_OS_ID;
-    }
-    else
-    {
-        status = Ioc16Receive(OS_IOC_RECEIVE_{{ioc_name.upper()}}_ID, ({{dataType}}*) Arg0 );
-    }
-    return status;
-}
-        {%- elif baseDataType in ["uint32", "sint32", "float32"]:%}
-Std_ReturnType IocReceive_{{ioc_name}} ( {{dataType}}* Arg0 )
-{
-    Std_ReturnType status;
-    if (Arg0 == NULL_PTR)
-    {
-        status = (Std_ReturnType)E_OS_ID;
-    }
-    else
-    {
-        status = Ioc32Receive(OS_IOC_RECEIVE_{{ioc_name.upper()}}_ID, ({{dataType}}*) Arg0 );
-    }
-    return status;
-}
-        {%- elif baseDataType in ["uint64", "sint64", "float64"]:%}
-Std_ReturnType IocReceive_{{ioc_name}} ( {{dataType}}* Arg0 )
-{
-    Std_ReturnType status;
-    if (Arg0 == NULL_PTR)
-    {
-        status = (Std_ReturnType)E_OS_ID;
-    }
-    else
-    {
-        status = IocRefReceive(OS_IOC_RECEIVE_{{ioc_name.upper()}}_ID, ({{dataType}}*) Arg0);
-    }
-    return status;
-}
-        {%- else:%}
-Std_ReturnType IocReceive_{{ioc_name}} ( {{dataType}}* Arg0 )
-{
-    Std_ReturnType status;
-    if (Arg0 == NULL_PTR)
-    {
-        status = (Std_ReturnType)E_OS_ID;
-    }
-    else
-    {
-        status = IocRefReceive(OS_IOC_RECEIVE_{{ioc_name.upper()}}_ID, ({{dataType}}*) Arg0 );
-    }
-    return status;
-}
-        {%- endif %}
-    {%- endif %}
+  {%- endif %}
 {%- endfor %}
-
-/* Local Variable Definition */
-
-/* Local Function Declaration */
-
-/* Local Function Implementation */

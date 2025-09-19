@@ -34,9 +34,9 @@ extern "C" {
 /* Global Function Declaration */
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
-FUNC(Os_StatusType, OS_CODE) os_ipicall_send_async(uint32 target_core_id, os_ipicall_data_t *data);
-FUNC(Os_StatusType, OS_CODE) os_ipicall_send_sync(uint32 target_core_id, os_ipicall_data_t *data);
-FUNC(Os_StatusType, OS_CODE) os_ipicall_broad_cast(uint32 target_core_mask, os_ipicall_data_t *data);
+FUNC(os_status_t, OS_CODE) os_ipicall_send_async(uint32 target_core_id, os_ipicall_data_t *data);
+FUNC(os_status_t, OS_CODE) os_ipicall_send_sync(uint32 target_core_id, os_ipicall_data_t *data);
+FUNC(os_status_t, OS_CODE) os_ipicall_broad_cast(uint32 target_core_mask, os_ipicall_data_t *data);
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"
 

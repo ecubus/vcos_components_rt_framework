@@ -259,7 +259,7 @@ FUNC(protection_return_t, OS_CODE) os_hook_call_callback(const os_hook_cfg_t *ho
 	return protection_ret;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_hook_call_void_hook(HookType hook_id)
+FUNC(os_status_t, OS_CODE) os_hook_call_void_hook(HookType hook_id)
 {
 	const os_hook_cfg_t *hook_cfg = os_hook_cfg_ref_table[hook_id];
 
@@ -272,7 +272,7 @@ FUNC(Os_StatusType, OS_CODE) os_hook_call_void_hook(HookType hook_id)
 	return OS_STATUS_OK;
 }
 
-FUNC(Os_StatusType, OS_CODE) os_hook_call_status_hook(HookType hook_id, StatusType error)
+FUNC(os_status_t, OS_CODE) os_hook_call_status_hook(HookType hook_id, StatusType error)
 {
 	const os_hook_cfg_t *hook_cfg = os_hook_cfg_ref_table[hook_id];
 	os_hook_inst_t *hook_inst = NULL_PTR;
@@ -401,9 +401,9 @@ FUNC(void, OS_CODE) rtfw_call_posttask_hook(void)
 }
 #endif
 
-FUNC(Os_StatusType, OS_CODE) rtfw_call_void_callback_hook(const os_hook_cfg_t *hook_cfg)
+FUNC(os_status_t, OS_CODE) rtfw_call_void_callback_hook(const os_hook_cfg_t *hook_cfg)
 {
-	Os_StatusType status = OS_STATUS_OK;
+	os_status_t status = OS_STATUS_OK;
 
 	if ((hook_cfg == NULL) || (OS_HOOK_GET_INSTANCE_REF(hook_cfg) == NULL_PTR)) {
 		return OS_STATUS_PARAM_POINTER_1;

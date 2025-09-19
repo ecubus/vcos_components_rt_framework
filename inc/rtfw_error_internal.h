@@ -40,7 +40,7 @@ typedef union {
 struct os_error_info_s {
 	OSServiceIdType service_id;
 	StatusType status;
-	Os_StatusType detailed_status;
+	os_status_t detailed_status;
 	ApplicationIDType app_id;
 	os_context_id_t context_id;
 	os_error_call_id_t call_id;
@@ -50,7 +50,7 @@ struct os_error_info_s {
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 FUNC(void, OS_CODE) os_fatal_error_report(const char *func_name, uint32 line);
-FUNC(void, OS_CODE) vservice_error_report(OSServiceIdType service_id, Os_StatusType error_status,
+FUNC(void, OS_CODE) vservice_error_report(OSServiceIdType service_id, os_status_t error_status,
 										  uint32 param_cnt, va_list ap);
 
 #define OS_STOP_SEC_CODE
