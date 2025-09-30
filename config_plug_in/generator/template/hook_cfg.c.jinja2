@@ -59,7 +59,6 @@ DeclareHook(OS_CONST_SECTION, {{app_cfg[bsw_app_name]["AppInstSection"]}}, OS_CO
         /* .instance             = */            &HOOKOBJVAR(OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID),
         /* .instance_name        = */            "core{{core_id}}_{{os_hook_name}}",
         /* .core                = */             &OSCORECFGVAR(Os_Core{{app_cfg[bsw_app_name]['CoreNumber']}}),
-        /* .int_api_state         = */           &(OSCOREOBJVAR(Os_Core{{app_cfg[bsw_app_name]['CoreNumber']}}).int_api_state),
         /* .arch_ctx_cfg      = */
         {
             {%- if os_hook_cfg["os_sharehook"]["enabled"] %}
@@ -124,7 +123,6 @@ DeclareHook(OS_CONST_SECTION, {{app_cfg[bsw_app_name]["AppInstSection"]}}, {{hoo
         /* .instance             = */            &HOOKOBJVAR({{hook_cfg["hook_id"]}}),
         /* .instance_name        = */            "core{{core_id}}_{{hook_cfg['app_hook_name'].lower()}}",
         /* .core                = */             &OSCORECFGVAR(Os_Core{{core_id}}),
-        /* .int_api_state         = */           &(OSCOREOBJVAR(Os_Core{{core_id}}).int_api_state),
         /* .arch_ctx_cfg      = */
         {
             {%- if os_hook_cfg["os_sharehook"]["enabled"] %}

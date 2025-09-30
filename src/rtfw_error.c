@@ -82,7 +82,7 @@ static inline_function protection_return_t verify_protection_response(const os_c
 
 	if (response != PRO_IGNORE_EXCEPTION) {
 		if ((response_status == E_OS_PROTECTION_MEMORY) ||
-			(os_interrupt_is_in_critical_section(OS_CONTEXT_GET_INTAPISTATE_REF(context)))) {
+			(os_interrupt_is_disabled())) {
 				return PRO_SHUTDOWN;
 			}
 	} else if (response_status != E_OS_PROTECTION_MEMORY) {

@@ -484,7 +484,7 @@ FUNC(os_status_t, OS_CODE) os_start_schedule_table_rel(ScheduleTableType schedta
 	os_schedtable_inst_t *schtbl_ptr;
 	const os_schedtable_cfg_t *cfg_ptr;
 	TickType max_offset;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
 	boolean check_result;
@@ -499,7 +499,7 @@ FUNC(os_status_t, OS_CODE) os_start_schedule_table_rel(ScheduleTableType schedta
 		if (UNLIKELY(FALSE == check_result)) {
 			return OS_STATUS_CALLEVEL;
 		}
-		check_result = os_context_check_irq_disabled(cur_context);
+		check_result = os_interrupt_is_disabled();
 		if (UNLIKELY(TRUE == check_result)) {
 			return OS_STATUS_DISABLEDINT;
 		}
@@ -550,7 +550,7 @@ FUNC(os_status_t, OS_CODE) os_start_schedule_table_abs(ScheduleTableType schedta
 	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtbl_ptr;
 	const os_schedtable_cfg_t *cfg_ptr;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
 	boolean check_result;
@@ -565,7 +565,7 @@ FUNC(os_status_t, OS_CODE) os_start_schedule_table_abs(ScheduleTableType schedta
 		if (UNLIKELY(FALSE == check_result)) {
 			return OS_STATUS_CALLEVEL;
 		}
-		check_result = os_context_check_irq_disabled(cur_context);
+		check_result = os_interrupt_is_disabled();
 		if (UNLIKELY(TRUE == check_result)) {
 			return OS_STATUS_DISABLEDINT;
 		}
@@ -620,7 +620,7 @@ FUNC(os_status_t, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType sc
 {
 	os_schedtable_inst_t *schedtable_ptr;
 	const os_schedtable_cfg_t *cfg_ptr;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 	os_status_t return_value = OS_STATUS_OK;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
@@ -636,7 +636,7 @@ FUNC(os_status_t, OS_CODE) os_start_schedule_table_synchron(ScheduleTableType sc
 		if (UNLIKELY(FALSE == check_result)) {
 			return OS_STATUS_CALLEVEL;
 		}
-		check_result = os_context_check_irq_disabled(cur_context);
+		check_result = os_interrupt_is_disabled();
 		if (UNLIKELY(TRUE == check_result)) {
 			return OS_STATUS_DISABLEDINT;
 		}
@@ -691,7 +691,7 @@ FUNC(os_status_t, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable_i
 	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schtbl_ptr;
 	const os_schedtable_cfg_t *cfg_ptr;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
 	boolean check_result;
@@ -706,7 +706,7 @@ FUNC(os_status_t, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable_i
 		if (UNLIKELY(FALSE == check_result)) {
 			return OS_STATUS_CALLEVEL;
 		}
-		check_result = os_context_check_irq_disabled(cur_context);
+		check_result = os_interrupt_is_disabled();
 		if (UNLIKELY(TRUE == check_result)) {
 			return OS_STATUS_DISABLEDINT;
 		}
@@ -753,7 +753,7 @@ FUNC(os_status_t, OS_CODE) os_set_schedule_table_app_id(ScheduleTableType schedt
 {
 	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtable_ptr;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
 	boolean check_result;
@@ -768,7 +768,7 @@ FUNC(os_status_t, OS_CODE) os_set_schedule_table_app_id(ScheduleTableType schedt
 		if (UNLIKELY(FALSE == check_result)) {
 			return OS_STATUS_CALLEVEL;
 		}
-		check_result = os_context_check_irq_disabled(cur_context);
+		check_result = os_interrupt_is_disabled();
 		if (UNLIKELY(TRUE == check_result)) {
 			return OS_STATUS_DISABLEDINT;
 		}
@@ -809,7 +809,7 @@ FUNC(os_status_t, OS_CODE) os_clear_schedule_table_app_id(ScheduleTableType sche
 {
 	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtable_ptr;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
 	boolean check_result;
@@ -824,7 +824,7 @@ FUNC(os_status_t, OS_CODE) os_clear_schedule_table_app_id(ScheduleTableType sche
 		if (UNLIKELY(FALSE == check_result)) {
 			return OS_STATUS_CALLEVEL;
 		}
-		check_result = os_context_check_irq_disabled(cur_context);
+		check_result = os_interrupt_is_disabled();
 		if (UNLIKELY(TRUE == check_result)) {
 			return OS_STATUS_DISABLEDINT;
 		}
@@ -863,7 +863,7 @@ os_next_schedule_table(ScheduleTableType schedule_table_id_from, ScheduleTableTy
 	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *sched_from_ptr;
 	os_schedtable_inst_t *sched_to_ptr;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
 	boolean check_result;
@@ -878,7 +878,7 @@ os_next_schedule_table(ScheduleTableType schedule_table_id_from, ScheduleTableTy
 		if (UNLIKELY(FALSE == check_result)) {
 			return OS_STATUS_CALLEVEL;
 		}
-		check_result = os_context_check_irq_disabled(cur_context);
+		check_result = os_interrupt_is_disabled();
 		if (UNLIKELY(TRUE == check_result)) {
 			return OS_STATUS_DISABLEDINT;
 		}
@@ -939,7 +939,7 @@ os_next_schedule_table_from_stop(ScheduleTableType schedule_table_id_from, Sched
 	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *sched_from_ptr;
 	os_schedtable_inst_t *sched_to_ptr;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
 	boolean check_result;
@@ -954,7 +954,7 @@ os_next_schedule_table_from_stop(ScheduleTableType schedule_table_id_from, Sched
 		if (UNLIKELY(FALSE == check_result)) {
 			return OS_STATUS_CALLEVEL;
 		}
-		check_result = os_context_check_irq_disabled(cur_context);
+		check_result = os_interrupt_is_disabled();
 		if (UNLIKELY(TRUE == check_result)) {
 			return OS_STATUS_DISABLEDINT;
 		}
@@ -1016,7 +1016,7 @@ FUNC(os_status_t, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable_i
 	os_schedtable_inst_t *schedtable_ptr;
 	const os_schedtable_cfg_t *schedtable_cfg_ptr;
 	TickType startTimeToWait = 0;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
 	boolean check_result;
@@ -1031,7 +1031,7 @@ FUNC(os_status_t, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable_i
 		if (UNLIKELY(FALSE == check_result)) {
 			return OS_STATUS_CALLEVEL;
 		}
-		check_result = os_context_check_irq_disabled(cur_context);
+		check_result = os_interrupt_is_disabled();
 		if (UNLIKELY(TRUE == check_result)) {
 			return OS_STATUS_DISABLEDINT;
 		}
@@ -1109,7 +1109,7 @@ FUNC(os_status_t, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedtabl
 	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtable_ptr;
 	const os_schedtable_cfg_t *schedtable_cfg_ptr;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
 	boolean check_result;
@@ -1124,7 +1124,7 @@ FUNC(os_status_t, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedtabl
 		if (UNLIKELY(FALSE == check_result)) {
 			return OS_STATUS_CALLEVEL;
 		}
-		check_result = os_context_check_irq_disabled(cur_context);
+		check_result = os_interrupt_is_disabled();
 		if (UNLIKELY(TRUE == check_result)) {
 			return OS_STATUS_DISABLEDINT;
 		}
@@ -1194,7 +1194,7 @@ os_get_schedule_table_status(ScheduleTableType schedtable_id, ScheduleTableStatu
 {
 	os_status_t return_value = OS_STATUS_OK;
 	const os_schedtable_inst_t *schedtable_ptr;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
 	boolean check_result;
@@ -1209,7 +1209,7 @@ os_get_schedule_table_status(ScheduleTableType schedtable_id, ScheduleTableStatu
 		if (UNLIKELY(FALSE == check_result)) {
 			return OS_STATUS_CALLEVEL;
 		}
-		check_result = os_context_check_irq_disabled(cur_context);
+		check_result = os_interrupt_is_disabled();
 		if (UNLIKELY(TRUE == check_result)) {
 			return OS_STATUS_DISABLEDINT;
 		}
@@ -1257,7 +1257,7 @@ FUNC(os_status_t, OS_CODE) os_set_schedule_table_async(ScheduleTableType schedta
 {
 	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtable_ptr;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
 	boolean check_result;
@@ -1272,7 +1272,7 @@ FUNC(os_status_t, OS_CODE) os_set_schedule_table_async(ScheduleTableType schedta
 		if (UNLIKELY(FALSE == check_result)) {
 			return OS_STATUS_CALLEVEL;
 		}
-		check_result = os_context_check_irq_disabled(cur_context);
+		check_result = os_interrupt_is_disabled();
 		if (UNLIKELY(TRUE == check_result)) {
 			return OS_STATUS_DISABLEDINT;
 		}
@@ -1311,7 +1311,7 @@ static FUNC(os_status_t, OS_CODE) os_start_scheduletable_rel_startup(ScheduleTab
 	os_schedtable_inst_t *schtbl_ptr;
 	const os_schedtable_cfg_t *cfg_ptr;
 	TickType max_offset;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 
 	if (SCHED_CHECK_ID(sid) == (boolean)FALSE) {
 		return OS_STATUS_ID_1;
@@ -1351,7 +1351,7 @@ static FUNC(os_status_t, OS_CODE) os_start_schedule_table_abs_startup(ScheduleTa
 	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtbl_ptr;
 	const os_schedtable_cfg_t *cfg_ptr;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 
 	if (UNLIKELY(SCHED_CHECK_ID(sid) == (boolean)FALSE)) {
 		return OS_STATUS_ID_1;
@@ -1390,7 +1390,7 @@ static FUNC(os_status_t, OS_CODE) os_start_schedule_table_synchron_startup(Sched
 {
 	os_schedtable_inst_t *schedtable_ptr;
 	const os_schedtable_cfg_t *schedtable_cfg_ptr;
-	os_int_state_t initial_state;
+	irqlevel_t initial_state;
 
 	os_status_t return_value = OS_STATUS_OK;
 

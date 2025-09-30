@@ -57,7 +57,6 @@ extern "C" {
 #define OS_TASK_GET_OBJNAME(task_cfg) ((task_cfg)->context.instance_name)
 #define OS_TASK_GET_CONTEXTINST_REF(task_cfg) (&(OS_TASK_GET_INSTANCE_REF(task_cfg)->ctx_instance))
 #define OS_TASK_GET_CORE_REF(task_cfg) ((task_cfg)->context.core)
-#define OS_TASK_GET_INTAPISTATE_REF(task_cfg) ((task_cfg)->context.int_api_state)
 #define OS_TASK_GET_ARCHCONTEXTCFG_REF(task_cfg) (&((task_cfg)->context.arch_ctx_cfg))
 #define OS_TASK_GET_APPONRWECFG_REF(task_cfg) ((task_cfg)->context.app_owner_cfg)
 #define GET_APP_CFG_BY_TASK_ID(task_id) ((os_task_cfg_ref_table[task_id])->context.app_owner_cfg)

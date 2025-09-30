@@ -91,7 +91,6 @@ typedef enum {
 /* Global Type & Structure Definition */
 struct os_core_inst {
 	uint32 status; /*! Core status */
-	os_int_api_state_t int_api_state; /*! Core Api Interrupt state */
 #if defined(CONFIG_RT_FRAMEWORK_ERROR) && (CONFIG_RT_FRAMEWORK_ERROR == 1)
 	struct os_error_info_s last_error_info;
 #endif
@@ -139,7 +138,6 @@ struct os_core_cfg_s {
 DeclareRtfwRefTable_H(core) /*! Reference to Cores configuration table  */
 
 /* Global Function Declaration */
-static inline os_int_api_state_t *os_core_get_interrupt_api_stateref(void);
 
 static inline CoreIdType os_get_core_id(void)
 {
@@ -148,13 +146,6 @@ static inline CoreIdType os_get_core_id(void)
 #else
 	return 0;
 #endif
-}
-
-static inline os_int_api_state_t *os_core_get_interrupt_api_stateref(void)
-{
-	os_ctx_cfg_t *const current_ctx = os_context_get_contexthdl();
-
-	return OS_CONTEXT_GET_INTAPISTATE_REF(current_ctx);
 }
 
 #ifdef __cplusplus

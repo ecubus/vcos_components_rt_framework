@@ -218,7 +218,7 @@ static FUNC(os_status_t, OS_CODE) os_ipicall_send_internal(const volatile os_ipi
 							     os_ipicall_data_t *data, os_ipicall_cast_mode broad_cast)
 {
 	os_status_t status = OS_STATUS_NOT_OK;
-	os_int_state_t int_state;
+	irqlevel_t int_state;
 
 	os_int_suspend_kernel(&int_state);
 	{
@@ -374,7 +374,7 @@ static FUNC(void, OS_CODE) os_ipicall_isr_handler(void)
 	os_ipicall_data_t com_data;
 	const os_core_cfg_t *core_cfg = OS_CORE_CFG_GET(os_get_core_id());
 	os_ipicall_index_t recv_idx;
-	os_int_state_t int_state;
+	irqlevel_t int_state;
 	os_ipicall_service_t ipicall_service;
 	os_ipicall_send_t *ipicall_send_ptr;
 	os_ipicall_return_t *ipicall_ret_ptr;

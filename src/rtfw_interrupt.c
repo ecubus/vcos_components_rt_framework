@@ -25,194 +25,202 @@
 
 /* Local Function Implementation */
 
-static inline void os_int_suspend_cat1(os_int_state_t *const cat1_state)
+__percpu_bss os_int_state_t core_int_state;
+
+#define core_int_state this_cpu_var(core_int_state)
+
+static inline_function void __os_int_set_disable_all_state(uint8 * const state)
+{
+	*state = INT_DISABLE_ALL_STATE_DISABLED;
+}
+
+static inline_function void __os_int_set_enable_all_state(uint8 *const state)
+{
+	*state = INT_DISABLE_ALL_STATE_ENABLED;
+}
+
+static inline_function void __os_int_suspend_cat1(irqlevel_t *const level)
 {
 #if defined(CONFIG_RT_FRAMEWORK_CAT1_INT_LEVEL_CONTROL) && (CONFIG_RT_FRAMEWORK_CAT1_INT_LEVEL_CONTROL == 1)
-	cat1_state->level = up_irq_level_save(CONFIG_RT_FRAMEWORK_MAX_CAT1_INT_LEVEL);
+	*level = up_irq_level_save(CONFIG_RT_FRAMEWORK_MAX_CAT1_INT_LEVEL);
 #else
-	cat1_state->global = up_irq_save();
+	*level = up_irq_save();
 #endif
 }
 
-static inline void os_int_resume_cat1(const os_int_state_t *const cat1_state)
+static inline_function void __os_int_resume_cat1(const irqlevel_t *const level)
 {
 #if defined(CONFIG_RT_FRAMEWORK_CAT1_INT_LEVEL_CONTROL) && (CONFIG_RT_FRAMEWORK_CAT1_INT_LEVEL_CONTROL == 1)
-	up_irq_level_restore(cat1_state->level);
+	up_irq_level_restore(*level);
 #else
-	up_irq_restore(cat1_state->global);
+	up_irq_restore(*level);
 #endif
 }
 
-static inline void os_int_suspend_cat2(os_int_state_t *const cat2_state)
+static inline_function void __os_int_suspend_cat2(irqlevel_t *const level)
 {
 #if defined(CONFIG_RT_FRAMEWORK_CAT2_INT_LEVEL_CONTROL) && (CONFIG_RT_FRAMEWORK_CAT2_INT_LEVEL_CONTROL == 1)
-	cat2_state->level = up_irq_level_save(CONFIG_RT_FRAMEWORK_MAX_CAT2_INT_LEVEL);
+	*level = up_irq_level_save(CONFIG_RT_FRAMEWORK_MAX_CAT2_INT_LEVEL);
 #else
-	cat2_state->global = up_irq_save();
+	*level = up_irq_save();
 #endif
 }
 
-static inline void os_int_resume_cat2(const os_int_state_t *const cat2_state)
+static inline_function void __os_int_resume_cat2(const irqlevel_t *const level)
 {
 #if defined(CONFIG_RT_FRAMEWORK_CAT2_INT_LEVEL_CONTROL) && (CONFIG_RT_FRAMEWORK_CAT2_INT_LEVEL_CONTROL == 1)
-	up_irq_level_restore(cat2_state->level);
+	up_irq_level_restore(*level);
 #else
-	up_irq_restore(cat2_state->global);
+	up_irq_restore(*level);
 #endif
 }
 
-/***********************************************************************************************************************
- *  分界线
- **********************************************************************************************************************/
+static inline_function boolean __os_interrupt_disabled(os_int_state_t *const this_int_state)
+{
+	return ((boolean)((this_int_state->int_disable_all_state |
+					   this_int_state->int_suspend_cat1_cnt |
+					   this_int_state->int_suspend_cat2_cnt) != 0u));
+}
+
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 
 FUNC(void, OS_CODE) os_disable_all_interrupts(void)
 {
-	os_status_t status = OS_STATUS_OK;
-	os_int_api_state_t *int_state = os_core_get_interrupt_api_stateref();
+	os_int_state_t *const this_int_state = &core_int_state;
 
-	if (UNLIKELY(os_interrupt_is_in_critical_section(int_state) == TRUE)) {
-		status = OS_STATUS_INT_API_ORDER;
-	} else {
-		os_int_suspend_cat1(&(int_state->suspend_all_prev_state));
-		os_interrupt_disable_all_enter(int_state);
+	if (UNLIKELY(__os_interrupt_disabled(this_int_state) == TRUE)) {
+		REPORT_SERVICE_ERROR(OSServiceId_DisableAllInterrupts, OS_STATUS_INT_API_ORDER, 0);
+		return;
 	}
 
-	REPORT_SERVICE_ERROR(OSServiceId_DisableAllInterrupts, status, 0);
+	__os_int_suspend_cat1(&(this_int_state->int_level_state_cat1));
+	__os_int_set_disable_all_state(&(this_int_state->int_disable_all_state));
 }
 
 FUNC(void, OS_CODE) os_enable_all_interrupts(void)
 {
-	os_status_t status = OS_STATUS_OK;
-	os_int_api_state_t *int_state = os_core_get_interrupt_api_stateref();
+	os_int_state_t *const this_int_state = &core_int_state;
 
-	if (UNLIKELY(os_interrupt_is_in_disable_all(int_state) == FALSE)) {
-		status = OS_STATUS_INT_API_ORDER;
-	} else {
-		os_interrupt_disable_all_exit(int_state);
-		os_int_resume_cat1(&(int_state->suspend_all_prev_state));
+	if (UNLIKELY(this_int_state->int_disable_all_state == INT_DISABLE_ALL_STATE_ENABLED)) {
+		REPORT_SERVICE_ERROR(OSServiceId_EnableAllInterrupts, OS_STATUS_INT_API_ORDER, 0);
+		return;
 	}
-	REPORT_SERVICE_ERROR(OSServiceId_EnableAllInterrupts, status, 0);
+
+	__os_int_set_enable_all_state(&(this_int_state->int_disable_all_state));
+	__os_int_resume_cat1(&(this_int_state->int_level_state_cat1));
 }
 
 FUNC(void, OS_CODE) os_suspend_all_interrupts(void)
 {
-	os_status_t status = OS_STATUS_OK;
-	os_int_api_state_t *int_state = os_core_get_interrupt_api_stateref();
+	os_int_state_t *const this_int_state = &core_int_state;
+	os_int_api_cnt_t int_suspend_cnt;
 
-	if (UNLIKELY(os_interrupt_is_in_disable_all(int_state) == TRUE)) {
-		status = OS_STATUS_INT_API_ORDER;
-	} else {
-		if (LIKELY(int_state->lock_state.suspend_all_cnt == 0u)) {
-			os_int_suspend_cat1(&int_state->suspend_all_prev_state);
-			int_state->suspend_os_snapshot = int_state->lock_state.suspend_os_cnt;
-		}
-		int_state->lock_state.suspend_all_cnt++;
-		if (int_state->lock_state.suspend_all_cnt == 0) {
-			status = OS_STATUS_INT_API_OVERFLOW;
-		}
+	if (UNLIKELY(this_int_state->int_disable_all_state == INT_DISABLE_ALL_STATE_DISABLED)) {
+		REPORT_SERVICE_ERROR(OSServiceId_SuspendAllInterrupts, OS_STATUS_INT_API_ORDER, 0);
+		return;
 	}
 
-	REPORT_SERVICE_ERROR(OSServiceId_SuspendAllInterrupts, status, 0);
+	int_suspend_cnt = this_int_state->int_suspend_cat1_cnt;
+
+	if (LIKELY(int_suspend_cnt == 0u)) {
+		__os_int_suspend_cat1(&(this_int_state->int_level_state_cat1));
+		this_int_state->int_suspend_cat2_record = this_int_state->int_suspend_cat2_cnt;
+		this_int_state->int_suspend_cat1_cnt = 1u;
+	} else {
+		++int_suspend_cnt;
+		if (UNLIKELY(int_suspend_cnt == 0u)) {
+			REPORT_SERVICE_ERROR(OSServiceId_SuspendAllInterrupts, OS_STATUS_INT_API_OVERFLOW, 0);
+			return;
+		}
+		this_int_state->int_suspend_cat1_cnt = int_suspend_cnt;
+	}
 }
 
 FUNC(void, OS_CODE) os_resume_all_interrupts(void)
 {
-	os_status_t status = OS_STATUS_OK;
-	os_int_api_state_t *int_state = os_core_get_interrupt_api_stateref();
+	os_int_state_t *const this_int_state = &core_int_state;
+	os_int_api_cnt_t int_suspend_cnt = this_int_state->int_suspend_cat1_cnt;
 
-	if (UNLIKELY(os_interrupt_is_in_suspend_all(int_state) == FALSE)) {
-		status = OS_STATUS_INT_API_ORDER;
-	} else {
-		int_state->lock_state.suspend_all_cnt--;
-		if (LIKELY(int_state->lock_state.suspend_all_cnt == 0u)) {
-			if (LIKELY(int_state->suspend_os_snapshot ==
-				int_state->lock_state.suspend_os_cnt)) {
-				os_int_resume_cat1(&(int_state->suspend_all_prev_state));
-			} else {
-				status = OS_STATUS_INT_API_ORDER;
-			}
-		}
+	if (UNLIKELY(int_suspend_cnt == 0u)) {
+		REPORT_SERVICE_ERROR(OSServiceId_ResumeAllInterrupts, OS_STATUS_INT_API_ORDER, 0);
+		return;
 	}
 
-	REPORT_SERVICE_ERROR(OSServiceId_ResumeAllInterrupts, status, 0);
+	if (LIKELY(int_suspend_cnt == 1u)) {
+		this_int_state->int_suspend_cat1_cnt = 0u;
+		if (LIKELY(this_int_state->int_suspend_cat2_record == this_int_state->int_suspend_cat2_cnt)) {
+			__os_int_resume_cat1(&(this_int_state->int_level_state_cat1));
+		} else {
+			REPORT_SERVICE_ERROR(OSServiceId_ResumeAllInterrupts, OS_STATUS_INT_API_ORDER, 0);
+		}
+	} else {
+		this_int_state->int_suspend_cat1_cnt = int_suspend_cnt - 1;
+	}
 }
 
 FUNC(void, OS_CODE) os_suspend_os_interrupts(void)
 {
-	os_status_t status = OS_STATUS_OK;
-	os_int_api_state_t *int_state = os_core_get_interrupt_api_stateref();
+	os_int_state_t *const this_int_state = &core_int_state;
+	os_int_api_cnt_t int_suspend_cnt;
 
-	if (UNLIKELY(os_interrupt_is_in_disable_all(int_state) == TRUE)) {
-		status = OS_STATUS_INT_API_ORDER;
-	} else {
-		if (LIKELY(int_state->lock_state.suspend_os_cnt == 0u)) {
-			os_int_suspend_cat2(&(int_state->suspend_os_prev_state));
-			int_state->suspend_all_snapshot = int_state->lock_state.suspend_all_cnt;
-		}
-		int_state->lock_state.suspend_os_cnt++;
-		if (int_state->lock_state.suspend_os_cnt == 0) {
-			status = OS_STATUS_INT_API_OVERFLOW;
-		}
+	if (UNLIKELY(this_int_state->int_disable_all_state == INT_DISABLE_ALL_STATE_DISABLED)) {
+		REPORT_SERVICE_ERROR(OSServiceId_SuspendOSInterrupts, OS_STATUS_INT_API_ORDER, 0);
+		return;
 	}
 
-	REPORT_SERVICE_ERROR(OSServiceId_SuspendOSInterrupts, status, 0);
+	int_suspend_cnt = this_int_state->int_suspend_cat2_cnt;
+	if (LIKELY(int_suspend_cnt == 0u)) {
+		__os_int_suspend_cat2(&(this_int_state->int_level_state_cat2));
+		this_int_state->int_suspend_cat1_record = this_int_state->int_suspend_cat1_cnt;
+		this_int_state->int_suspend_cat2_cnt = 1u;
+	} else {
+		++int_suspend_cnt;
+		if (UNLIKELY(int_suspend_cnt == 0u)) {
+			REPORT_SERVICE_ERROR(OSServiceId_SuspendOSInterrupts, OS_STATUS_INT_API_OVERFLOW, 0);
+			return;
+		}
+		this_int_state->int_suspend_cat2_cnt = int_suspend_cnt;
+	}
 }
 
 FUNC(void, OS_CODE) os_resume_os_interrupts(void)
 {
-	os_status_t status = OS_STATUS_OK;
-	os_int_api_state_t *int_state = os_core_get_interrupt_api_stateref();
+	os_int_state_t *const this_int_state = &core_int_state;
+	os_int_api_cnt_t int_suspend_cnt = this_int_state->int_suspend_cat2_cnt;
 
-	if (UNLIKELY(os_interrupt_is_in_suspend_os(int_state) == FALSE)) {
-		status = OS_STATUS_INT_API_ORDER;
-	} else {
-		int_state->lock_state.suspend_os_cnt--;
-		if (LIKELY(int_state->lock_state.suspend_os_cnt == 0u)) {
-			if (LIKELY(int_state->suspend_all_snapshot ==
-				int_state->lock_state.suspend_all_cnt)) {
-				os_int_resume_cat2(&(int_state->suspend_os_prev_state));
-			} else {
-				status = OS_STATUS_INT_API_ORDER;
-			}
-		}
+	if (UNLIKELY(int_suspend_cnt == 0)) {
+		REPORT_SERVICE_ERROR(OSServiceId_ResumeOSInterrupts, OS_STATUS_INT_API_ORDER, 0);
+		return;
 	}
 
-	REPORT_SERVICE_ERROR(OSServiceId_ResumeOSInterrupts, status, 0);
-}
-
-FUNC(void, OS_CODE) os_interrupt_init(os_int_api_state_t *const int_state)
-{
-	if (int_state != NULL_PTR) {
-		memset(int_state, 0, sizeof(*int_state));
+	if (LIKELY(int_suspend_cnt == 1u)) {
+		this_int_state->int_suspend_cat2_cnt = 0u;
+		if (LIKELY(this_int_state->int_suspend_cat1_record == this_int_state->int_suspend_cat1_cnt)) {
+			__os_int_resume_cat2(&(this_int_state->int_level_state_cat2));
+		} else {
+			REPORT_SERVICE_ERROR(OSServiceId_ResumeOSInterrupts, OS_STATUS_INT_API_ORDER, 0);
+		}
+	} else {
+		this_int_state->int_suspend_cat2_cnt = int_suspend_cnt - 1;
 	}
 }
 
 FUNC(boolean, OS_CODE) os_interrupt_is_disabled(void)
 {
-	return os_interrupt_is_in_critical_section(os_core_get_interrupt_api_stateref());
+	os_int_state_t *const this_int_state = &core_int_state;
+
+	return __os_interrupt_disabled(this_int_state);
 }
 
-FUNC(void, OS_CODE) os_int_suspend_kernel(os_int_state_t *const int_state)
+FUNC(void, OS_CODE) os_int_suspend_kernel(irqlevel_t *const irq_level)
 {
-	irqlevel_t irq_state = up_kernel_int_save();
-#if defined(CONFIG_RT_FRAMEWORK_INT_LEVEL) && (CONFIG_RT_FRAMEWORK_INT_LEVEL == 1)
-	int_state->level = irq_state;
-#else
-	int_state->global = irq_state;
-#endif
+	*irq_level = up_kernel_int_save();
 }
 
-FUNC(void, OS_CODE) os_int_resume_kernel(const os_int_state_t *const int_state)
+FUNC(void, OS_CODE) os_int_resume_kernel(const irqlevel_t *const irq_level)
 {
-	irqlevel_t irq_state;
-#if defined(CONFIG_RT_FRAMEWORK_INT_LEVEL) && (CONFIG_RT_FRAMEWORK_INT_LEVEL == 1)
-	irq_state = int_state->level;
-#else
-	irq_state = int_state->global;
-#endif
-	up_kernel_int_restore(irq_state);
+	up_kernel_int_restore(*irq_level);
 }
 
 FUNC(void, OS_CODE) os_int_disable_global(void)

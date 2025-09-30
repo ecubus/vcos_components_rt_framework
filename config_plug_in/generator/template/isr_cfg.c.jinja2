@@ -62,7 +62,6 @@ DeclareCounterISR(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, 
             /* .instance             = */            &ISROBJVAR({{core_id}}, {{candit}}_ID),
             /* .instance_name         = */           "{{candit}}",
             /* .core                = */             &OSCORECFGVAR(Os_{{core_id}}),
-            /* .int_api_state         = */           &(OSCOREOBJVAR(Os_{{core_id}}).int_api_state),
             /* .arch_ctx_cfg      = */
             {
                 /* .stack_addr       = */            (OsStackAddrType)NULL_PTR,
@@ -104,7 +103,6 @@ DeclareISR(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{core_
         /* .instance             = */            &ISROBJVAR({{core_id}}, {{candit}}_ID),
         /* .instance_name=      =*/              "{{candit}}",
         /* .core                = */             &OSCORECFGVAR(Os_{{core_id}}),
-        /* .int_api_state         = */           &(OSCOREOBJVAR(Os_{{core_id}}).int_api_state),
         /* .arch_ctx_cfg      = */
         {
             /* .stack_addr       = */            (OsStackAddrType)NULL_PTR,

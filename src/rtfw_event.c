@@ -38,7 +38,7 @@ FUNC(os_status_t, OS_CODE) os_wait_event(os_event_mask_t mask)
 		return OS_STATUS_CALLEVEL;
 	}
 #ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
-	check_ret = os_context_check_irq_disabled(cur_context);
+	check_ret = os_interrupt_is_disabled();
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}
@@ -77,7 +77,7 @@ FUNC(os_status_t, OS_CODE) rtfw_event_tickwait(os_event_mask_t mask, uint32_t ti
 	}
 
 #ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
-	check_ret = os_context_check_irq_disabled(cur_context);
+	check_ret = os_interrupt_is_disabled();
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}
@@ -112,7 +112,7 @@ FUNC(os_status_t, OS_CODE) os_set_event(TaskType task_id, os_event_mask_t mask)
 	if (UNLIKELY(FALSE == check_ret)) {
 		return OS_STATUS_CALLEVEL;
 	}
-	check_ret = os_context_check_irq_disabled(cur_context);
+	check_ret = os_interrupt_is_disabled();
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}
@@ -192,7 +192,7 @@ FUNC(os_status_t, OS_CODE) os_get_event(TaskType task_id, os_event_mask_t *mask)
 	if (UNLIKELY(FALSE == check_ret)) {
 		return OS_STATUS_CALLEVEL;
 	}
-	check_ret = os_context_check_irq_disabled(cur_context);
+	check_ret = os_interrupt_is_disabled();
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}
@@ -249,7 +249,7 @@ FUNC(os_status_t, OS_CODE) os_clear_event(os_event_mask_t mask)
 		return OS_STATUS_CALLEVEL;
 	}
 #ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
-	check_ret = os_context_check_irq_disabled(cur_context);
+	check_ret = os_interrupt_is_disabled();
 	if (UNLIKELY(TRUE == check_ret)) {
 		return OS_STATUS_DISABLEDINT;
 	}

@@ -282,7 +282,7 @@ FUNC(os_status_t, OS_CODE) os_get_spinlock(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
-	os_int_state_t int_state;
+	irqlevel_t int_state;
 	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 #if (CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1)
@@ -344,7 +344,7 @@ FUNC(os_status_t, OS_CODE) os_release_spinlock(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
-	os_int_state_t int_state;
+	irqlevel_t int_state;
 	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 
@@ -410,7 +410,7 @@ FUNC(os_status_t, OS_CODE) os_try_to_get_spinlock(const os_spin_id_t spin_id, tr
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
 	boolean lock_succ;
-	os_int_state_t int_state;
+	irqlevel_t int_state;
 	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 
@@ -532,7 +532,7 @@ FUNC(os_status_t, OS_CODE) os_get_spinlock_write(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
-	os_int_state_t int_state;
+	irqlevel_t int_state;
 	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 
@@ -635,7 +635,7 @@ FUNC(os_status_t, OS_CODE) os_release_spinlock_write(const os_spin_id_t spin_id)
 {
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
-	os_int_state_t int_state;
+	irqlevel_t int_state;
 	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 
@@ -744,7 +744,7 @@ FUNC(os_status_t, OS_CODE) os_try_to_get_spinlock_write(const os_spin_id_t spin_
 	os_spin_inst_t *lock_inst;
 	const os_spinlock_cfg_t *spin_cfg;
 	boolean lock_succ;
-	os_int_state_t int_state;
+	irqlevel_t int_state;
 	os_status_t check_stat;
 	os_ctx_cfg_t *const cur_context = os_context_get_contexthdl();
 

@@ -74,7 +74,6 @@ DeclareExtendedTask(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}
         /* .instance =             */ &TASKOBJVAR({{t_cfg}}),
         /* .instance_name =        */ "{{task}}",
         /* .core =                 */ &OSCORECFGVAR(Os_Core{{core_i}}),
-        /* .int_api_state =        */ &(OSCOREOBJVAR(Os_Core{{core_i}}).int_api_state),
         /* .arch_ctx_cfg =         */
         {
 {%- if task in task_stack_sharing_ref.keys() %}

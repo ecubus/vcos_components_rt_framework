@@ -57,7 +57,6 @@ extern "C" {
 #define OS_HOOK_GET_OBJNAME(hook_cfg) ((hook_cfg)->context.instance_name)
 #define OS_HOOK_GET_CONTEXTINST_REF(hook_cfg) (&(OS_HOOK_GET_INSTANCE_REF(hook_cfg)->ctx_instance))
 #define OS_HOOK_GET_CORE_REF(hook_cfg) ((hook_cfg)->context.core)
-#define OS_HOOK_GET_INTAPISTATE_REF(hook_cfg) ((hook_cfg)->context.int_api_state)
 #define OS_HOOK_GET_ARCHCONTEXTCFG_REF(hook_cfg) (&((hook_cfg)->context.arch_ctx_cfg))
 #define OS_HOOK_GET_APPONRWECFG_REF(hook_cfg) ((hook_cfg)->context.app_owner_cfg)
 #define OS_HOOK_GET_ACCESSINGAPPLMASK(hook_cfg) ((hook_cfg)->context.access_app_mask)

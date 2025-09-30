@@ -34,7 +34,6 @@ typedef uintptr_t register_t; /* Register type */
 typedef uint16_t os_spin_id_t;
 
 typedef int_global_state_t os_int_global_state_t;
-typedef uint16_t os_int_api_cnt_t; // TODO 性能优化可以变为 uint32
 
 typedef uint32_t os_context_id_t;
 

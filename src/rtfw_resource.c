@@ -55,7 +55,7 @@ FUNC(os_status_t, OS_CODE) os_get_resource(ResourceType resource_id)
 	if (os_context_check_curcontext_id(current_context, OS_CONTEXT_GETRESOURCE) == FALSE) {
 		return OS_STATUS_CALLEVEL;
 	}
-	if (os_context_check_irq_disabled(current_context) == TRUE) {
+	if (os_interrupt_is_disabled() == TRUE) {
 		return OS_STATUS_DISABLEDINT;
 	}
 
@@ -122,7 +122,7 @@ FUNC(os_status_t, OS_CODE) os_release_resource(ResourceType resource_id)
 	if (os_context_check_curcontext_id(current_context, OS_CONTEXT_RELEASERESOURCE) == FALSE) {
 		return OS_STATUS_CALLEVEL;
 	}
-	if (os_context_check_irq_disabled(current_context) == TRUE) {
+	if (os_interrupt_is_disabled() == TRUE) {
 		return OS_STATUS_DISABLEDINT;
 	}
 

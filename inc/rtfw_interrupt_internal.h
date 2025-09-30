@@ -58,22 +58,6 @@ extern FUNC(os_status_t, OS_CODE) os_disable_interrupt_source(isr_id_t isr_id);
 /* 函数说明详见 ClearPendingInterrupt */
 extern FUNC(os_status_t, OS_CODE) os_clear_pending_interrupt(isr_id_t isr_id);
 
-/*!  \brief         初始化中断状态，必须在使用任何中断API之前调用
- *  \details        None
- *
- *  \param[in]      int_state: 指向中断状态变量
- *  \param[out]     None
- *
- *  \return         None
- *
- *  \context        KERNEL
- *
- *  \reentrant      FALSE
- *
- *  \synchronous    TRUE
- */
-extern FUNC(void, OS_CODE) os_interrupt_init(os_int_api_state_t *const int_state);
-
 /*!  \brief         检查是否已经关闭中断
  *  \details        None
  *
@@ -105,7 +89,7 @@ extern FUNC(boolean, OS_CODE) os_interrupt_is_disabled(void);
  *
  *  \synchronous    TRUE
  */
-FUNC(void, OS_CODE) os_int_suspend_kernel(os_int_state_t *const int_state);
+FUNC(void, OS_CODE) os_int_suspend_kernel(irqlevel_t *const int_state);
 
 /*!  \brief         恢复内核使用的中断
  *  \details        None
@@ -121,7 +105,7 @@ FUNC(void, OS_CODE) os_int_suspend_kernel(os_int_state_t *const int_state);
  *
  *  \synchronous    TRUE
  */
-FUNC(void, OS_CODE) os_int_resume_kernel(const os_int_state_t *const int_state);
+FUNC(void, OS_CODE) os_int_resume_kernel(const irqlevel_t *const int_state);
 
 /*!  \brief         Disable Global Interrupt State  Controlled by CPU.
  *  \details        Nesting is not supported.

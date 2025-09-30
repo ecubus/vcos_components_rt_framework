@@ -52,7 +52,7 @@ static inline_function void os_hook_call(const os_hook_cfg_t *hook_cfg)
 	os_core_cfg_t *core = (os_core_cfg_t *)OS_HOOK_GET_CORE_REF(hook_cfg);
 	uint32 hook_action = 0;
 	struct tcb_s *hook_tcb;
-	os_int_state_t int_state;
+	irqlevel_t int_state;
 
 	os_int_suspend_kernel(&int_state);
 

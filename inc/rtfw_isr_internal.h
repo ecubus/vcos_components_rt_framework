@@ -58,7 +58,6 @@ extern "C" {
 #define OS_ISR_GET_OBJNAME(isr_cfg) ((isr_cfg)->context.instance_name)
 #define OS_ISR_GET_CONTEXTINST_REF(isr_cfg) ((isr_cfg)->context.ctx_instance)
 #define OS_ISR_GET_CORE_REF(isr_cfg) ((isr_cfg)->context.core)
-#define OS_ISR_GET_INTAPISTATE_REF(isr_cfg) ((isr_cfg)->context.int_api_state)
 #define OS_ISR_GET_ARCHCONTEXTCFG_REF(isr_cfg) (&((isr_cfg)->context.arch_ctx_cfg))
 #define OS_ISR_GET_APPONRWECFG_REF(isr_cfg) ((isr_cfg)->context.app_owner_cfg)
 #define OS_ISR_GET_ACCESSINGAPPLMASK(isr_cfg) ((isr_cfg)->context.access_app_mask)

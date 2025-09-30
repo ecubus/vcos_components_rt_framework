@@ -118,7 +118,7 @@ FUNC(os_status_t, OS_CODE) os_allow_access(void)
 	if (UNLIKELY(FALSE == os_context_check_curcontext_id(current_ctx_ref, OS_CONTEXT_ALLOWACCESS))) {
 		return OS_STATUS_CALLEVEL;
 	}
-	if (UNLIKELY(TRUE == os_context_check_irq_disabled(current_ctx_ref))) {
+	if (UNLIKELY(TRUE == os_interrupt_is_disabled())) {
 		return OS_STATUS_DISABLEDINT;
 	}
 	if (os_app_get_state(current_app_ref) != APPLICATION_RESTARTING) {
@@ -145,7 +145,7 @@ FUNC(os_status_t, OS_CODE) os_get_app_state(ApplicationType app_id, ApplicationS
 	if (UNLIKELY(FALSE == os_context_check_curcontext_id(current_ctx, OS_CONTEXT_GETAPPLICATIONSTATE))) {
 		return OS_STATUS_CALLEVEL;
 	}
-	if (UNLIKELY(TRUE == os_context_check_irq_disabled(current_ctx))) {
+	if (UNLIKELY(TRUE == os_interrupt_is_disabled())) {
 		return OS_STATUS_DISABLEDINT;
 	}
 #endif

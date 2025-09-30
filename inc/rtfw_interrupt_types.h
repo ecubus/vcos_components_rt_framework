@@ -24,44 +24,23 @@ extern "C" {
 #include <nuttx/config.h>
 #include "rtfw_types.h"
 
-typedef struct {
-	os_int_api_cnt_t in_disableall; /*!< Inside a DisableAllInterrupts() API sequence, max value is 1. */
-	os_int_api_cnt_t suspend_all_cnt; /*! Nesting counter for SuspendAllInterrupts()/ResumeAllInterrupts(). */
-	os_int_api_cnt_t suspend_os_cnt; /*! Nesting counter for SuspendOSInterrupts()/ResumeOSInterrupts(). */
-} os_int_lock_state_t;
+typedef uint16_t os_int_api_cnt_t;
+
+#define INT_DISABLE_ALL_STATE_DISABLED    ((uint8) 1u)
+#define INT_DISABLE_ALL_STATE_ENABLED    ((uint8) 0u)
 
 typedef struct {
-	/*! Interrupt state to be used for global lock. */
-	irqlevel_t global;
+	irqlevel_t int_level_state_cat1;
+	irqlevel_t int_level_state_cat2;
 
-#if defined(CONFIG_RT_FRAMEWORK_INT_LEVEL) && (CONFIG_RT_FRAMEWORK_INT_LEVEL == 1)
-	/*! Interrupt state to be used for level lock. */
-	irqlevel_t level;
-#endif
+	os_int_api_cnt_t int_suspend_cat1_cnt;
+	os_int_api_cnt_t int_suspend_cat2_cnt;
+
+	os_int_api_cnt_t int_suspend_cat1_record;
+	os_int_api_cnt_t int_suspend_cat2_record;
+
+	uint8 int_disable_all_state;
 } os_int_state_t;
-
-struct os_int_api_state {
-	/*! Holds the previous interrupt state for DisableAllInterrupts() and SuspendAllInterrupts(). */
-	os_int_state_t suspend_all_prev_state;
-
-	/*! Holds the previous interrupt level for SuspendOSInterrupts(). */
-	os_int_state_t suspend_os_prev_state;
-
-	/*! Holds the nesting counters and flag for interrupt locking state. */
-	os_int_lock_state_t lock_state;
-
-	/*! \brief    Snapshot of nesting counter for SuspendAllInterrupts().
-    *  \details  This is needed to detect nesting not in pairs. */
-	os_int_api_cnt_t suspend_all_snapshot;
-
-	/*! \brief    Snapshot of nesting counter for SuspendOSInterrupts().
-    *  \details  This is needed to detect nesting not in pairs. */
-	os_int_api_cnt_t suspend_os_snapshot;
-};
-
-/*! Management information for the interrupt API. */
-typedef struct os_int_api_state os_int_api_state_t;
-
 
 #ifdef __cplusplus
 }

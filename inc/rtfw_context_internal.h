@@ -25,7 +25,6 @@ extern "C" {
 #include "rtfw_types.h"
 #include "rtfw_context_types.h"
 #include "rtfw_interrupt_internal.h"
-#include "rtfw_interrupt_cbk.h"
 #include "rtfw_list.h"
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
 #include "rtfw_application_internal.h"
@@ -198,8 +197,6 @@ struct os_context_cfg {
 
 	const void *core; /*! The core to which this process belongs. */
 
-	os_int_api_state_t *int_api_state; /*! Current state of the interrupt API. */
-
 	os_arch_ctx_cfg_t arch_ctx_cfg; /*! The context configuration info which is specified to HW. */
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP == 1)
 	const os_app_cfg_t *app_owner_cfg; /*! Application that owns this task */
@@ -247,8 +244,6 @@ static inline os_context_id_t os_context_get_curcontext_id(const os_ctx_cfg_t *c
 static inline os_context_id_t os_context_switch_curcontext_id(const os_ctx_cfg_t *const ctx_ref,
 								  os_context_id_t current_ctx_id);
 
-/* 检查 中断是否处于 Disabled 状态 */
-static inline boolean os_context_check_irq_disabled(const os_ctx_cfg_t *const ctx_ref);
 /* 检查当前上下文类型是否允许访问  TRUE: 允许访问, FALSE: 不允许访问 */
 static inline boolean os_context_check_curcontext_id(const os_ctx_cfg_t *const ctx_ref, os_context_id_t context_id);
 
@@ -369,12 +364,6 @@ static inline os_context_id_t os_context_switch_curcontext_id(const os_ctx_cfg_t
 
 	OS_CONTEXT_GET_CURRENT_CONTEXTID(ctx_ref) = current_ctx_id;
 	return PrvContextID;
-}
-
-/* 检查 中断是否处于 Disabled 状态 */
-static inline boolean os_context_check_irq_disabled(const os_ctx_cfg_t *const ctx_ref)
-{
-	return os_interrupt_is_in_critical_section(OS_CONTEXT_GET_INTAPISTATE_REF(ctx_ref));
 }
 
 /* 获取 os_ctx_inst_t 中的 current_ctx_id

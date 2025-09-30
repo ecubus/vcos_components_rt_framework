@@ -255,12 +255,12 @@ FUNC(os_status_t, OS_CODE) os_counter_get_value(CounterType counter_id, TickRefT
 	const os_ctx_cfg_t *const current_context = os_context_get_contexthdl();
 	const os_counter_cfg_t *counter_cfg;
 	const os_app_cfg_t *app_cfg;
-	os_int_state_t int_state;
+	irqlevel_t int_state;
 
 	if (UNLIKELY(FALSE == os_context_check_curcontext_id(current_context, OS_CONTEXT_GETCOUNTERVALUE))) {
 		return OS_STATUS_CALLEVEL;
 	}
-	if (UNLIKELY(TRUE == os_context_check_irq_disabled(current_context))) {
+	if (UNLIKELY(TRUE == os_interrupt_is_disabled())) {
 		return OS_STATUS_DISABLEDINT;
 	}
 #ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
@@ -300,12 +300,12 @@ os_counter_get_elapsed_value(CounterType counter_id, TickRefType value, TickRefT
 	const os_counter_cfg_t *counter_cfg;
 	TickType max_allowed_value, current_tick;
 	const os_app_cfg_t *app_cfg;
-	os_int_state_t int_state;
+	irqlevel_t int_state;
 
 	if (UNLIKELY(FALSE == os_context_check_curcontext_id(current_context, OS_CONTEXT_GETELAPSEDVALUE))) {
 		return OS_STATUS_CALLEVEL;
 	}
-	if (UNLIKELY(TRUE == os_context_check_irq_disabled(current_context))) {
+	if (UNLIKELY(TRUE == os_interrupt_is_disabled())) {
 		return OS_STATUS_DISABLEDINT;
 	}
 #ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS
@@ -354,12 +354,12 @@ FUNC(os_status_t, OS_CODE) os_counter_increment(CounterType counter_id)
 	const os_ctx_cfg_t *current_context = os_context_get_contexthdl();
 	const os_counter_cfg_t *counter_cfg;
 	const os_app_cfg_t *app_cfg;
-	os_int_state_t int_state;
+	irqlevel_t int_state;
 
 	if (UNLIKELY(FALSE == os_context_check_curcontext_id(current_context, OS_CONTEXT_INCREMENTCOUNTER))) {
 		return OS_STATUS_CALLEVEL;
 	}
-	if (UNLIKELY(TRUE == os_context_check_irq_disabled(current_context))) {
+	if (UNLIKELY(TRUE == os_interrupt_is_disabled())) {
 		return OS_STATUS_DISABLEDINT;
 	}
 #ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS

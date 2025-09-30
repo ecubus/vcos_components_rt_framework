@@ -158,7 +158,7 @@ FUNC(os_status_t, OS_CODE) os_activate_task(TaskType task_id)
 	if (UNLIKELY(task_id >= os_task_cfg_ref_table_size)) {
 		return OS_STATUS_ID_1;
 	}
-	if (UNLIKELY(TRUE == os_context_check_irq_disabled(current_context))) {
+	if (UNLIKELY(TRUE == os_interrupt_is_disabled())) {
 		return OS_STATUS_DISABLEDINT;
 	}
 #endif
@@ -217,7 +217,7 @@ FUNC(os_status_t, OS_CODE) os_terminate_task(void)
 #if defined(CONFIG_RT_FRAMEWORK_EXTENDED_STATUS)
 	if (UNLIKELY(FALSE == os_context_check_curcontext_id(current_context, OS_CONTEXT_TERMINATETASK))) {
 		status = OS_STATUS_CALLEVEL;
-	} else if (UNLIKELY(TRUE == os_context_check_irq_disabled(current_context))) {
+	} else if (UNLIKELY(TRUE == os_interrupt_is_disabled())) {
 		status = OS_STATUS_DISABLEDINT;
 	} else {
 		status = os_context_check_locklist(current_context);
@@ -301,7 +301,7 @@ FUNC(os_status_t, OS_CODE) os_chain_task(TaskType task_id)
 		return OS_STATUS_ID_1;
 	}
 
-	if (UNLIKELY(os_context_check_irq_disabled(current_context) == (boolean)TRUE)) {
+	if (UNLIKELY(os_interrupt_is_disabled() == (boolean)TRUE)) {
 		return OS_STATUS_DISABLEDINT;
 	}
 
@@ -357,7 +357,7 @@ FUNC(os_status_t, OS_CODE) os_get_task_id(TaskRefType task_id_ref)
 		ret = OS_STATUS_PARAM_POINTER_1;
 	} else if (UNLIKELY(os_context_check_curcontext_id(current_context, OS_CONTEXT_GETTASKID) == (boolean)FALSE)) {
 		ret = OS_STATUS_CALLEVEL;
-	} else if (UNLIKELY(os_context_check_irq_disabled(current_context) == (boolean)TRUE)) {
+	} else if (UNLIKELY(os_interrupt_is_disabled() == (boolean)TRUE)) {
 		ret = OS_STATUS_DISABLEDINT;
 	} else {
 		const struct tcb_s *current_tcb = g_running_tasks[this_cpu()];
@@ -389,7 +389,7 @@ FUNC(os_status_t, OS_CODE) os_get_task_state(TaskType task_id, TaskStateRefType 
 	if (UNLIKELY(task_id >= os_task_cfg_ref_table_size)) {
 		return OS_STATUS_ID_1;
 	}
-	if (UNLIKELY(TRUE == os_context_check_irq_disabled(current_context))) {
+	if (UNLIKELY(TRUE == os_interrupt_is_disabled())) {
 		return OS_STATUS_DISABLEDINT;
 	}
 #endif
@@ -430,7 +430,7 @@ FUNC(os_status_t, OS_CODE) os_schedule(void)
 	if (UNLIKELY(FALSE == os_context_check_curcontext_id(current_context, OS_CONTEXT_SCHEDULE))) {
 		return OS_STATUS_CALLEVEL;
 	}
-	if (UNLIKELY(os_context_check_irq_disabled(current_context) == (boolean)TRUE)) {
+	if (UNLIKELY(os_interrupt_is_disabled() == (boolean)TRUE)) {
 		return OS_STATUS_DISABLEDINT;
 	}
 #endif
@@ -466,7 +466,7 @@ FUNC(os_status_t, OS_CODE) get_task_app_id(ApplicationIDType *appid_ref)
 		return OS_STATUS_CALLEVEL;
 	}
 
-	if (UNLIKELY(os_context_check_irq_disabled(current_context) == (boolean)TRUE)) {
+	if (UNLIKELY(os_interrupt_is_disabled() == (boolean)TRUE)) {
 		return OS_STATUS_DISABLEDINT;
 	}
 
@@ -484,7 +484,7 @@ FUNC(os_status_t, OS_CODE) rtfw_task_tickdelay(TickType ticks_to_delay)
 		return OS_STATUS_CALLEVEL;
 	}
 
-	if (UNLIKELY(os_context_check_irq_disabled(current_context) == (boolean)TRUE)) {
+	if (UNLIKELY(os_interrupt_is_disabled() == (boolean)TRUE)) {
 		return OS_STATUS_DISABLEDINT;
 	}
 
