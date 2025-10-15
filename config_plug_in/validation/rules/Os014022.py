@@ -7,17 +7,15 @@ import re
 
 class Os014022Rule(BasicRule):
     """
-    任务共栈校验:所有共栈task必须不含有resource 
+    任务共栈校验:所有共栈task必须不含有resource
     """
     ruleset_name = "Os014022"
     validation_result = True
 
-    def __init__(self, logs, ecuc_os_dict, validation_cfg, system_path) -> None:
+    def __init__(self, logs, validation_data) -> None:
         super().__init__()
         self.logs = logs
-        self.ecuc_os_dict = ecuc_os_dict
-        self.system_path = system_path
-        self.validation_cfg = validation_cfg
+        self.ecuc_os_dict = validation_data.bsw_ecuc_dict['Os']['ArPackages']['ActiveEcuC']['Os']
         self.validation_code = self.__class__.ruleset_name
         self.validation_summary = "All shared stack tasks must not contain any resources."
 

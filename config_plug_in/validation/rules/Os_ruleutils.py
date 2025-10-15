@@ -30,7 +30,14 @@ class OsRuleutils():
         result = lambda x: x.split('/')[-1] if (isinstance(x, str) and "/" in x) else ('' if x == "<empty>" or not x else x)
         return result(x)
 
-    def get_core_number(self, appName, ecuc_os_dict):
+    def get_core_id_from_ecuc_core_def(self, ecuc_dict, ecuc_core):
+        for k, v in ecuc_dict.items():
+            if "DefinitionRef" in v and "/EcuC/EcucHardware" in v["DefinitionRef"]:
+                if ecuc_core in v:
+                    return v[ecuc_core]['EcucCoreId']['Value']
+        return -1
+
+    def get_core_number(self, appName, ecuc_os_dict, ecuc_dict):
         """
         根据application名称,查询Ecuc配置返回该application所属的核号
         参数：
@@ -39,20 +46,14 @@ class OsRuleutils():
         返回值：
             coreid
         """
-        coreid = 0
         # 查找Application的OsApplicationCoreRef
         for k, v in ecuc_os_dict.items():
             if "DefinitionRef" in v and "/Os/OsApplication" in v["DefinitionRef"] and k == appName:
                 if "OsApplicationCoreRef" in v and v["OsApplicationCoreRef"]:
                     OsApplicationCoreRef_full = v["OsApplicationCoreRef"].get("ValueRef", "")
                     OsApplicationCoreRef = self.get_last_item_verify(OsApplicationCoreRef_full)
-                    if OsApplicationCoreRef.startswith("EcucCoreDefinition"):
-                        try:
-                            coreid = int(OsApplicationCoreRef.replace("EcucCoreDefinition", ""))
-                        except ValueError:
-                            coreid = 0
-                break
-        return coreid
+                    return self.get_core_id_from_ecuc_core_def(ecuc_dict, OsApplicationCoreRef)
+        return -1
 
     def get_ref_list(self, input_ref):
         """
@@ -121,7 +122,7 @@ class OsRuleutils():
                 if task_name in OsAppTaskRef_list:
                     app_name = k
         return app_name
-    
+
     def get_ioc_datatype(self, types_path)->list:
         """
         查找获取所有的Ioc支持的datatype类型, 返回列表
@@ -131,9 +132,9 @@ class OsRuleutils():
             ioc_datatype_list
         """
         ioc_datatype_list, os_types_list = [], []
-        basic_datatype_list = (['boolean', 'char', 'double', 'float', 'float32', 'float64', 'int', 'long', 'long double', 'long int', 'long long', 'long long int', 'short', 'short int', 'signed', 'signed char', 
-                           'signed int', 'signed long', 'signed long int', 'signed long long', 'signed long long int', 'signed short', 'signed short int', 'sint8', 'sint8_least', 'sint16', 'sint16_least', 
-                           'sint32', 'sint32_least', 'sint64', 'uint8', 'uint8_least', 'uint16', 'uint16_least', 'uint32', 'uint32_least', 'uint64', 'unsigned', 'unsigned char', 'unsigned int', 'unsigned long', 'unsigned long int', 
+        basic_datatype_list = (['boolean', 'char', 'double', 'float', 'float32', 'float64', 'int', 'long', 'long double', 'long int', 'long long', 'long long int', 'short', 'short int', 'signed', 'signed char',
+                           'signed int', 'signed long', 'signed long int', 'signed long long', 'signed long long int', 'signed short', 'signed short int', 'sint8', 'sint8_least', 'sint16', 'sint16_least',
+                           'sint32', 'sint32_least', 'sint64', 'uint8', 'uint8_least', 'uint16', 'uint16_least', 'uint32', 'uint32_least', 'uint64', 'unsigned', 'unsigned char', 'unsigned int', 'unsigned long', 'unsigned long int',
                            'unsigned long long', 'unsigned long long int', 'unsigned short', 'unsigned short int'])
 
         # 正则匹配Os_Types.h文件，获取所有typedef的自定义类型

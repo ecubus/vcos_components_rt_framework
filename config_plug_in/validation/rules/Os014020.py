@@ -12,12 +12,10 @@ class Os014020Rule(BasicRule):
     ruleset_name = "Os014020"
     validation_result = True
 
-    def __init__(self, logs, ecuc_os_dict, validation_cfg, system_path) -> None:
+    def __init__(self, logs, validation_data) -> None:
         super().__init__()
         self.logs = logs
-        self.ecuc_os_dict = ecuc_os_dict
-        self.system_path = system_path
-        self.validation_cfg = validation_cfg
+        self.ecuc_os_dict = validation_data.bsw_ecuc_dict['Os']['ArPackages']['ActiveEcuC']['Os']
         self.validation_code = self.__class__.ruleset_name
         self.validation_summary = "A task can only appear in one comb."
 
@@ -39,7 +37,7 @@ class Os014020Rule(BasicRule):
                 continue
             if "/Os/OsCore" in os_instance["DefinitionRef"]:
                 param_path = "/ActiveEcuC/Os/" + os_key
-                core_task = [] #用于记录本核所有共栈task 
+                core_task = [] #用于记录本核所有共栈task
                 for sub_key, sub_instance in os_instance.items():
                     if not isinstance(sub_instance, dict):
                         continue
@@ -51,7 +49,7 @@ class Os014020Rule(BasicRule):
                 """ coretask 中如果存在重复则报错 """
                 task_counts = Counter(core_task)
                 duplicates = [task for task, count in task_counts.items() if count > 1]
-                
+
                 if duplicates:
                     self.vlog(self.validation_code, self.validation_summary,
                                  f"duplicate task:{duplicates}", param_path, "fail")

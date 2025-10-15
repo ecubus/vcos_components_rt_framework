@@ -27,12 +27,11 @@ class Os011003Rule(BasicRule):
     ruleset_name = "Os011003"
     validation_result = False
 
-    def __init__(self, logs, ecuc_os_dict, validation_cfg, system_path) -> None:
+    def __init__(self, logs, validation_data) -> None:
         super().__init__()
         self.logs = logs
-        self.ecuc_os_dict = ecuc_os_dict
-        self.system_path = system_path
-        self.validation_cfg = validation_cfg
+        self.ecuc_os_dict = validation_data.bsw_ecuc_dict['Os']['ArPackages']['ActiveEcuC']['Os']
+        self.ecuc_dict = validation_data.bsw_ecuc_dict['EcuC']['ArPackages']['ActiveEcuC']['EcuC']
         self.validation_code = self.__class__.ruleset_name
         self.validation_summary = "No repeating of OsIsrInterruptSource for each Core"
         self.durable_init()
@@ -69,7 +68,7 @@ class Os011003Rule(BasicRule):
                 if "OsApplicationCoreRef" in os_instance and "/ActiveEcuC/EcuC/EcucHardware/" in os_instance[
                   "OsApplicationCoreRef"].get("ValueRef", "") and "OsAppIsrRef" in os_instance and isinstance(
                       os_instance["OsAppIsrRef"].get("ValueRef", ""), list):
-                    coreid_str = str(OsRuleutils().get_core_number(os_key, self.ecuc_os_dict))
+                    coreid_str = str(OsRuleutils().get_core_number(os_key, self.ecuc_os_dict, self.ecuc_dict))
                     for i in os_instance["OsAppIsrRef"]["ValueRef"]:
                         if coreid_str in coreid_dic:
                             coreid_dic[coreid_str].append(OsRuleutils().get_last_item_verify(i))
@@ -78,7 +77,7 @@ class Os011003Rule(BasicRule):
                 elif "OsApplicationCoreRef" in os_instance and "/ActiveEcuC/EcuC/EcucHardware/" in os_instance[
                   "OsApplicationCoreRef"].get("ValueRef", "") and "OsAppIsrRef" in os_instance and isinstance(
                       os_instance["OsAppIsrRef"].get("ValueRef", ""), str):
-                    coreid_str = str(OsRuleutils().get_core_number(os_key, self.ecuc_os_dict))
+                    coreid_str = str(OsRuleutils().get_core_number(os_key, self.ecuc_os_dict, self.ecuc_dict))
                     if coreid_str in coreid_dic:
                         coreid_dic[coreid_str].append(OsRuleutils().get_last_item_verify(os_instance["OsAppIsrRef"].get(
                           "ValueRef", "")))
