@@ -35,13 +35,6 @@
 #include "memory_protection_cfg.h"
 #endif
 
-/* Local Macro Definition */
-
-/* Local Enumeration Definition */
-
-/* Local type & Structure Definition */
-
-/* global Variable Definition */
 {%- set isr_cfg_dict = get_isr_cfg() %}
 {%- set irq_dispatch_is_level = check_isq_dispatch_method_is_level() %}
 {%- set app_cfg = get_app_cfg() %}
@@ -64,37 +57,37 @@ DeclareCounterISR(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, 
             /* .core                = */             &OSCORECFGVAR(Os_{{core_id}}),
             /* .arch_ctx_cfg      = */
             {
-                /* .stack_addr       = */            (OsStackAddrType)NULL_PTR,
-                /* .stack_size       = */            (OsStackSizeType)0,
-                /* .entry_addr       = */            (os_context_entry_t)&{{isr_cfg["IsrEntryFunc"]}},
-                /* .exit_addr        = */            (os_context_exit_t)NULL_PTR,
-                /* .entry_param      = */            (os_context_entry_para_t){{isr_cfg["IsrEntryParam"]}},
+                /* .stack_addr       = */ (OsStackAddrType)NULL_PTR,
+                /* .stack_size       = */ (OsStackSizeType)0,
+                /* .entry_addr       = */ (os_context_entry_t)&{{isr_cfg["IsrEntryFunc"]}},
+                /* .exit_addr        = */ (os_context_exit_t)NULL_PTR,
+                /* .entry_param      = */ (os_context_entry_para_t){{isr_cfg["IsrEntryParam"]}},
             },
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-            /* .app_owner_cfg        = */            &OSAPPCFGVAR({{appname}}),
-            /* .access_app_mask   = */            0xFFFFFFFFU,
+            /* .app_owner_cfg        = */ &OSAPPCFGVAR({{appname}}),
+            /* .access_app_mask      = */ 0xFFFFFFFFU,
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1) */
-            /* .initial_ctx_id    = */            {{isr_cfg["IsrContext"]}},
+            /* .initial_ctx_id       = */ {{isr_cfg["IsrContext"]}},
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
-            /* .mpu_access_right  = */              &{{candit.lower()}}_access_right,
+            /* .mpu_access_right     = */ &{{candit.lower()}}_access_right,
 #endif
         },
         /* .arch_isr_cfg */
         {
-            /* .level               = */            {{isr_cfg["IsrIntPriority"]}},
-            /* .vector_num           = */            {{isr_cfg["IsrIntSource"]}},
+            /* .level                = */ {{isr_cfg["IsrIntPriority"]}},
+            /* .vector_num           = */ {{isr_cfg["IsrIntSource"]}},
             {%- if irq_dispatch_is_level  %}
-            /* .irq                 = */            {{isr_cfg["IsrIntPriority"]}},
+            /* .irq                  = */ {{isr_cfg["IsrIntPriority"]}},
             {%- else %}
-            /* .irq                 = */            {{isr_cfg["IsrIntSource"]}},
+            /* .irq                  = */ {{isr_cfg["IsrIntSource"]}},
             {%- endif %}
-            /* .hw_handler           = */            (void*){{appval['CoreNumber']}},
+            /* .hw_handler           = */ (void*){{appval['CoreNumber']}},
         },
-        /* .type                    = */            {{isr_cfg["IsrCategory"]}},
-        /* .isr_id                   = */            OS_ISR_{{candit.upper()}}_ID,
-        /* .is_enabled_on_init         = */            {{isr_cfg["IsrEnableOnInit"]}},
+        /* .type                     = */ {{isr_cfg["IsrCategory"]}},
+        /* .isr_id                   = */ OS_ISR_{{candit.upper()}}_ID,
+        /* .is_enabled_on_init       = */ {{isr_cfg["IsrEnableOnInit"]}},
     },
-    /* .counter                     = */            (os_counter_cfg_t*)&COUNTERCFGVAR({{isr_counter[candit]}}_cfg),
+    /* .counter                      = */ (os_counter_cfg_t*)&COUNTERCFGVAR({{isr_counter[candit]}}_cfg),
 };
             {%- else %}
 DeclareISR(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{core_id}}, {{candit}}_ID) = {
@@ -105,35 +98,35 @@ DeclareISR(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{core_
         /* .core                = */             &OSCORECFGVAR(Os_{{core_id}}),
         /* .arch_ctx_cfg      = */
         {
-            /* .stack_addr       = */            (OsStackAddrType)NULL_PTR,
-            /* .stack_size       = */            (OsStackSizeType)0,
-            /* .entry_addr       = */            (os_context_entry_t)&{{isr_cfg["IsrEntryFunc"]}},
-            /* .exit_addr        = */            (os_context_exit_t)NULL_PTR,
-            /* .entry_param      = */            (os_context_entry_para_t){{isr_cfg["IsrEntryParam"]}},
+            /* .stack_addr           = */ (OsStackAddrType)NULL_PTR,
+            /* .stack_size           = */ (OsStackSizeType)0,
+            /* .entry_addr           = */ (os_context_entry_t)&{{isr_cfg["IsrEntryFunc"]}},
+            /* .exit_addr            = */ (os_context_exit_t)NULL_PTR,
+            /* .entry_param          = */ (os_context_entry_para_t){{isr_cfg["IsrEntryParam"]}},
         },
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-        /* .app_owner_cfg        = */            &OSAPPCFGVAR({{appname}}),
-        /* .access_app_mask   = */            0xFFFFFFFFU,
+        /* .app_owner_cfg            = */ &OSAPPCFGVAR({{appname}}),
+        /* .access_app_mask          = */ 0xFFFFFFFFU,
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1) */
-        /* .initial_ctx_id    = */            {{isr_cfg["IsrContext"]}},
+        /* .initial_ctx_id           = */ {{isr_cfg["IsrContext"]}},
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
-        /* .mpu_access_right  = */              &{{candit.lower()}}_access_right,
+        /* .mpu_access_right         = */ &{{candit.lower()}}_access_right,
 #endif
     },
     /* .arch_isr_cfg */
     {
-        /* .level               = */            {{isr_cfg["IsrIntPriority"]}},
-        /* .vector_num           = */            {{isr_cfg["IsrIntSource"]}},
+        /* .level                    = */ {{isr_cfg["IsrIntPriority"]}},
+        /* .vector_num               = */ {{isr_cfg["IsrIntSource"]}},
         {%- if irq_dispatch_is_level  %}
-        /* .irq                 = */            {{isr_cfg["IsrIntPriority"]}},
+        /* .irq                      = */ {{isr_cfg["IsrIntPriority"]}},
         {%- else %}
-        /* .irq                 = */            {{isr_cfg["IsrIntSource"]}},
+        /* .irq                      = */ {{isr_cfg["IsrIntSource"]}},
         {%- endif %}
-        /* .hw_handler           = */            (void*){{appval['CoreNumber']}},
+        /* .hw_handler               = */ (void*){{appval['CoreNumber']}},
     },
-    /* .type                    = */            {{isr_cfg["IsrCategory"]}},
-    /* .isr_id                   = */            OS_ISR_{{candit.upper()}}_ID,
-    /* .is_enabled_on_init         = */            {{isr_cfg["IsrEnableOnInit"]}},
+    /* .type                         = */ {{isr_cfg["IsrCategory"]}},
+    /* .isr_id                       = */ OS_ISR_{{candit.upper()}}_ID,
+    /* .is_enabled_on_init           = */ {{isr_cfg["IsrEnableOnInit"]}},
 };
             {%- endif %}
         {%- endfor %}
@@ -165,12 +158,3 @@ DeclareRtfwRefTable(OS_CONST_SECTION, isr, OS_ISR_CNT) = {
     {%- endfor %}
 {%- endfor %}
 };
-
-/* Local Variable Definition */
-
-/* Local Function Declaration */
-
-/* Local Function Implementation */
-
-/* global Function Implementation */
-

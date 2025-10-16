@@ -32,10 +32,6 @@ extern "C"
 /* Including File */
 #include "rtfw_task.h"
 
-/* global Macro Definition */
-
-/* global Enumeration Definition */
-
 {%- set app_cfg = get_app_cfg() %}
 
 typedef enum {
@@ -47,10 +43,6 @@ typedef enum {
     OS_TASK_CNT,
     OS_TASK_NONE
 } OS_TASKID_DEF;
-
-/* global type & Structure Definition */
-
-/* global Variable Declaration */
 
 {%- for app, app_val in app_cfg.items() %}
     {%- if app_val["AppTaskList"]: %}
@@ -70,8 +62,6 @@ extern CONST(OsObjIndexType, OS_CONST) {{app_val["AppTaskTable"]}}_size;
 extern void os_task_{{task.lower()}}(void *arg);
     {%- endfor %}
 {%- endfor %}
-
-/* global Function Implementation */
 
 #ifdef __cplusplus
 }

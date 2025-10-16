@@ -34,12 +34,12 @@
 {%- for resource_id, resource_val in resource_cfg.items() %}
     {%- if resource_val["OsResourceAccessingApplication"] %}
 DeclareResource(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{resource_id.upper()}}) = {
-    /* .obj_desc  = */          &RESOURCEOBJVAR({{resource_id.upper()}}),
-    /* .resource_id  = */       {{resource_id.upper()}},
-    /* .ceiling_priority  = */  {{resource_val["CeilingPriority"]}},
+    /* .obj_desc =              */ &RESOURCEOBJVAR({{resource_id.upper()}}),
+    /* .resource_id =           */ {{resource_id.upper()}},
+    /* .ceiling_priority =      */ {{resource_val["CeilingPriority"]}},
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
     {%- set app_mask = get_access_app_mask(resource_val["OsResourceAccessingApplication"], index_size=35) %}
-    /* .access_app_mask  = */   ({{app_mask}}),
+    /* .access_app_mask =       */ ({{app_mask}}),
 #endif
 };
     {%- endif %}
@@ -64,6 +64,7 @@ CONST(OsObjIndexType, OS_CONST) os_core{{core_id}}_resource_cfg_ref_table_size =
     {%- endif %}
 
 {%- endfor %}
+
 #define OS_STOP_SEC_CONST
 #include "rtfw_memmap.h"
 

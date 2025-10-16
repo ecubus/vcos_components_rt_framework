@@ -54,7 +54,7 @@ DeclareThreadStack(OS_CORE{{core_id}}_OS_SHAREHOOK_STACK_SECTION, OS_CORE{{core_
 DeclareThreadStack(OS_CORE{{core_id}}_{{os_hook_name.upper()}}_STACK_SECTION, OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID, {{os_hook_stacksize}});
             {%- endif %}
 DeclareHook(OS_CONST_SECTION, {{app_cfg[bsw_app_name]["AppInstSection"]}}, OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID) = {
-/* .context      = */
+/* .context =                */
     {
         /* .instance             = */            &HOOKOBJVAR(OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID),
         /* .instance_name        = */            "core{{core_id}}_{{os_hook_name}}",
@@ -62,30 +62,30 @@ DeclareHook(OS_CONST_SECTION, {{app_cfg[bsw_app_name]["AppInstSection"]}}, OS_CO
         /* .arch_ctx_cfg      = */
         {
             {%- if os_hook_cfg["os_sharehook"]["enabled"] %}
-            /* .stack_addr       = */            (OsStackAddrType)THREADSTACKVAR(OS_CORE{{core_id}}_OS_SHAREHOOK_ID),
-            /* .stack_size       = */            (OsStackSizeType)THREADSTACKSIZEVAR({{os_hook_cfg["os_sharehook"]["stack_size"]}}),
+            /* .stack_addr =       */ (OsStackAddrType)THREADSTACKVAR(OS_CORE{{core_id}}_OS_SHAREHOOK_ID),
+            /* .stack_size =       */ (OsStackSizeType)THREADSTACKSIZEVAR({{os_hook_cfg["os_sharehook"]["stack_size"]}}),
             {%- else %}
-            /* .stack_addr       = */            (OsStackAddrType)THREADSTACKVAR(OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID),
-            /* .stack_size       = */            (OsStackSizeType)THREADSTACKSIZEVAR({{os_hook_stacksize}}),
+            /* .stack_addr =       */ (OsStackAddrType)THREADSTACKVAR(OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID),
+            /* .stack_size =       */ (OsStackSizeType)THREADSTACKSIZEVAR({{os_hook_stacksize}}),
             {%- endif %}
-            /* .entry_addr       = */            (os_context_entry_t)NULL_PTR,
-            /* .exit_addr        = */            (os_context_exit_t)NULL_PTR,
-            /* .entry_param      = */            (os_context_entry_para_t)NULL_PTR,
+            /* .entry_addr =       */ (os_context_entry_t)NULL_PTR,
+            /* .exit_addr =        */ (os_context_exit_t)NULL_PTR,
+            /* .entry_param =      */ (os_context_entry_para_t)NULL_PTR,
         },
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-        /* .app_owner_cfg        = */            &OSAPPCFGVAR({{bsw_app_name}}),
+        /* .app_owner_cfg =        */ &OSAPPCFGVAR({{bsw_app_name}}),
         {%- set access_app = [bsw_app_name] %}
         {%- set access_str = get_access_app_mask(access_app, index_size=50) %}
-        /* .access_app_mask   = */               ({{access_str}}),
+        /* .access_app_mask =      */ ({{access_str}}),
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1) */
-        /* .initial_ctx_id    = */              {{os_hook_name.upper()}}_CONTEXT_ID,
+        /* .initial_ctx_id =       */ {{os_hook_name.upper()}}_CONTEXT_ID,
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
-        /* .mpu_access_right  = */              &{{bsw_app_name.lower()}}_access_right,
+        /* .mpu_access_right =     */ &{{bsw_app_name.lower()}}_access_right,
 #endif
     },
-    /* .hook_id = */                            OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID,
-    /* .nesting_mask = */                       {{os_hook_cfg[os_hook_name]["nesting_mask"]}},
-    /* .callback = */                           (void_hook_callback_t){{os_hook_name}},
+    /* .hook_id =                  */ OS_CORE{{core_id}}_{{os_hook_name.upper()}}_ID,
+    /* .nesting_mask =             */ {{os_hook_cfg[os_hook_name]["nesting_mask"]}},
+    /* .callback =                 */ (void_hook_callback_t){{os_hook_name}},
 };
         {%- endif %}
     {%- endfor %}
@@ -118,7 +118,7 @@ CONST(OsObjIndexType, OS_CONST) os_core{{core_id}}_hook_cfg_ref_table_size = NEL
 DeclareThreadStack({{hook_cfg["stack_name"]}}, {{hook_cfg["hook_id"]}}, {{hook_cfg["stack_size"]}});
             {%- endif %}
 DeclareHook(OS_CONST_SECTION, {{app_cfg[bsw_app_name]["AppInstSection"]}}, {{hook_cfg["hook_id"]}}) = {
-/* .context      = */
+/* .context =                */
     {
         /* .instance             = */            &HOOKOBJVAR({{hook_cfg["hook_id"]}}),
         /* .instance_name        = */            "core{{core_id}}_{{hook_cfg['app_hook_name'].lower()}}",
@@ -126,30 +126,30 @@ DeclareHook(OS_CONST_SECTION, {{app_cfg[bsw_app_name]["AppInstSection"]}}, {{hoo
         /* .arch_ctx_cfg      = */
         {
             {%- if os_hook_cfg["os_sharehook"]["enabled"] %}
-            /* .stack_addr       = */            (OsStackAddrType)THREADSTACKVAR(OS_CORE{{core_id}}_OS_SHAREHOOK_ID),
-            /* .stack_size       = */            (OsStackSizeType)THREADSTACKSIZEVAR({{os_hook_cfg["os_sharehook"]["stack_size"]}}),
+            /* .stack_addr =       */ (OsStackAddrType)THREADSTACKVAR(OS_CORE{{core_id}}_OS_SHAREHOOK_ID),
+            /* .stack_size =       */ (OsStackSizeType)THREADSTACKSIZEVAR({{os_hook_cfg["os_sharehook"]["stack_size"]}}),
             {%- else %}
-            /* .stack_addr       = */            (OsStackAddrType)THREADSTACKVAR({{hook_cfg["hook_id"]}}),
-            /* .stack_size       = */            (OsStackSizeType)THREADSTACKSIZEVAR({{hook_cfg['stack_size']}}),
+            /* .stack_addr =       */ (OsStackAddrType)THREADSTACKVAR({{hook_cfg["hook_id"]}}),
+            /* .stack_size =       */ (OsStackSizeType)THREADSTACKSIZEVAR({{hook_cfg['stack_size']}}),
             {%- endif %}
-            /* .entry_addr       = */            (os_context_entry_t)NULL_PTR,
-            /* .exit_addr        = */            (os_context_exit_t)NULL_PTR,
-            /* .entry_param      = */            (os_context_entry_para_t)NULL_PTR,
+            /* .entry_addr =       */ (os_context_entry_t)NULL_PTR,
+            /* .exit_addr =        */ (os_context_exit_t)NULL_PTR,
+            /* .entry_param =      */ (os_context_entry_para_t)NULL_PTR,
         },
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-        /* .app_owner_cfg        = */            &OSAPPCFGVAR({{app_name}}),
+        /* .app_owner_cfg =        */ &OSAPPCFGVAR({{app_name}}),
         {%- set access_app = [app_name] %}
         {%- set access_str = get_access_app_mask(access_app, index_size=50) %}
-        /* .access_app_mask   = */               ({{access_str}}),
+        /* .access_app_mask =      */ ({{access_str}}),
 #endif /* #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1) */
-        /* .initial_ctx_id    = */              {{hook_cfg['hook_name'].upper()}}_CONTEXT_ID,
+        /* .initial_ctx_id =       */ {{hook_cfg['hook_name'].upper()}}_CONTEXT_ID,
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
-        /* .mpu_access_right  = */              &{{app_name.lower()}}_access_right,
+        /* .mpu_access_right =     */ &{{app_name.lower()}}_access_right,
 #endif
     },
-    /* .hook_id = */                            {{hook_cfg["hook_id"]}},
-    /* .nesting_mask = */                       {{hook_cfg["nesting_mask"]}},
-    /* .callback = */                           (void_hook_callback_t){{hook_cfg['callback']}},
+    /* .hook_id =                  */ {{hook_cfg["hook_id"]}},
+    /* .nesting_mask =             */ {{hook_cfg["nesting_mask"]}},
+    /* .callback =                 */ (void_hook_callback_t){{hook_cfg['callback']}},
 };
         {%- endfor %}
 

@@ -29,7 +29,6 @@
 #include "isr_cfg.h"
 #include "rtfw_compiler_cfg.h"
 
-/* global Variable Definition */
 {%- set counter_cfg = get_counter_cfg() %}
 {%- set app_cfg = get_app_cfg() %}
 
@@ -39,21 +38,21 @@
             {%- if counter in counter_cfg %}
                 {%- set bsw_appname = app_cfg[app]["BswAppName"] %}
 DeclareCounter(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{counter}}_cfg, {{counter_cfg[counter]["ActionCnt"]}}) = {
-    /* .obj_desc              = */            &COUNTEROBJVAR({{counter}}_cfg),
-    /* .action_queue          = */            COUNTERACTIONQUEUE({{counter}}_cfg),
-    /* .queue_total_size      = */            {{counter_cfg[counter]["ActionCnt"]}}u,
-    /* .counter_id            = */            {{counter}},
-    /* .counter_name          = */            "{{counter}}",
-    /* .max_allowed_value     = */            {{counter_cfg[counter]["CounterMaxAllowedValue"]}}uL,
-    /* .tick_per_base         = */            {{counter_cfg[counter]["CounterTicksPerBase"]}}uL,
-    /* .min_cycle             = */            {{counter_cfg[counter]["CounterMinCycle"]}}uL,
-    /* .ticks_per_ms          = */            {{counter_cfg[counter]["TicksPerMs"]}}uL,
-    /* .timer_type            = */            {{counter_cfg[counter]["TimerType"]}},
+    /* .obj_desc =               */ &COUNTEROBJVAR({{counter}}_cfg),
+    /* .action_queue =           */ COUNTERACTIONQUEUE({{counter}}_cfg),
+    /* .queue_total_size =       */ {{counter_cfg[counter]["ActionCnt"]}}u,
+    /* .counter_id =             */ {{counter}},
+    /* .counter_name =           */ "{{counter}}",
+    /* .max_allowed_value =      */ {{counter_cfg[counter]["CounterMaxAllowedValue"]}}uL,
+    /* .tick_per_base =          */ {{counter_cfg[counter]["CounterTicksPerBase"]}}uL,
+    /* .min_cycle =              */ {{counter_cfg[counter]["CounterMinCycle"]}}uL,
+    /* .ticks_per_ms =           */ {{counter_cfg[counter]["TicksPerMs"]}}uL,
+    /* .timer_type =             */ {{counter_cfg[counter]["TimerType"]}},
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-    /* .owner_app_id         = */             {{app_cfg[app]["AppId"]}},
+    /* .owner_app_id =           */ {{app_cfg[app]["AppId"]}},
                 {%- set access_app = counter_cfg[counter]["CounterAccessApp"] + [app] %}
                 {%- set access_str = get_access_app_mask(access_app, index_size=49) %}
-    /* .access_app_mask       = */            ({{access_str}}),
+    /* .access_app_mask =        */ ({{access_str}}),
 #endif
 };
             {%- endif %}

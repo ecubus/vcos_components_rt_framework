@@ -1428,7 +1428,7 @@ os_schedule_table_init(const os_schedtable_cfg_t *const os_schedtable_cfg_table[
 	os_counter_inst_t *counter_ptr;
 	os_schedtable_inst_t *schtbl_ptr;
 	os_status_t os_schedtable_init_result;
-	const os_app_cfg_t *appCfg = NULL;
+	const os_app_cfg_t *application_cfg = NULL;
 	CoreIdType core_id = os_get_core_id();
 
 	if ((os_schedtable_cfg_table == NULL) || (size == 0U)) {
@@ -1445,10 +1445,10 @@ os_schedule_table_init(const os_schedtable_cfg_t *const os_schedtable_cfg_table[
 	/* Connect schedule tables to counters - only process tables for current core */
 	for (ScheduleTableType i = 0; i < size; i++) {
 		schdtable_cfg = os_schedtable_cfg_table[i];
-		appCfg = os_app_cfg_ref_table[schdtable_cfg->app_owner_id];
+		application_cfg = os_app_cfg_ref_table[schdtable_cfg->app_owner_id];
 
 		/* Skip schedule tables not belonging to current core */
-		if (appCfg->core_id != core_id) {
+		if (application_cfg->core_id != core_id) {
 			continue;
 		}
 
@@ -1467,21 +1467,21 @@ os_schedule_table_init(const os_schedtable_cfg_t *const os_schedtable_cfg_table[
 	/* Initialize auto-start schedule tables - only process tables for current core */
 	for (ScheduleTableType j = 0; j < size; j++) {
 		schdtable_cfg = os_schedtable_cfg_table[j];
-		appCfg = os_app_cfg_ref_table[schdtable_cfg->app_owner_id];
+		application_cfg = os_app_cfg_ref_table[schdtable_cfg->app_owner_id];
 
 		/* Skip schedule tables not belonging to current core */
-		if (appCfg->core_id != core_id) {
+		if (application_cfg->core_id != core_id) {
 			continue;
 		}
 
-		const os_schedtable_autostart_t *autoPtr = &(schdtable_cfg->autostart);
+		const os_schedtable_autostart_t *autostart_ptr = &(schdtable_cfg->autostart);
 
-		if (autoPtr->app_mode == OSAUTOSTARTMODE) {
-			if (autoPtr->type == SCHTBL_AUTOSTART_ABSOLUTE) {
-				(void)os_start_schedule_table_abs_startup(schdtable_cfg->schedtable_id, autoPtr->offset);
-			} else if (autoPtr->type == SCHTBL_AUTOSTART_RELATIVE) {
-				(void)os_start_scheduletable_rel_startup(schdtable_cfg->schedtable_id, autoPtr->offset);
-			} else if (autoPtr->type == SCHTBL_AUTOSTART_SYNCHRONE) {
+		if (autostart_ptr->autostart_mode == TRUE) {
+			if (autostart_ptr->type == SCHTBL_AUTOSTART_ABSOLUTE) {
+				(void)os_start_schedule_table_abs_startup(schdtable_cfg->schedtable_id, autostart_ptr->offset);
+			} else if (autostart_ptr->type == SCHTBL_AUTOSTART_RELATIVE) {
+				(void)os_start_scheduletable_rel_startup(schdtable_cfg->schedtable_id, autostart_ptr->offset);
+			} else if (autostart_ptr->type == SCHTBL_AUTOSTART_SYNCHRONE) {
 				(void)os_start_schedule_table_synchron_startup(schdtable_cfg->schedtable_id);
 			} else {
 				/* do nothing */

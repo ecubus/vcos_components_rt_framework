@@ -40,11 +40,11 @@ extern CONST(os_ipicall_service_t, OS_CONST) os_ipicall_service_table[];
     {%- for target_core in range(core_cnt) %}
         {%- if this_core !=  target_core %}
 DeclareIpicall(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, OS_CORE{{this_core}}_IPICALL{{target_core}}) = {
-  /* .instance  = */  &IPICALLOBJVAR(OS_CORE{{this_core}}_IPICALL{{target_core}}),
-  /* .ipicall_id  = */ OS_CORE{{this_core}}_IPICALL{{target_core}}_ID,
-  /* .src_core_id  = */ OS_CORE_ID_{{this_core}},
-  /* .target_core_id  = */ OS_CORE_ID_{{target_core}},
-  /* .service_ref  = */ os_ipicall_service_table
+  /* .instance =                */ &IPICALLOBJVAR(OS_CORE{{this_core}}_IPICALL{{target_core}}),
+  /* .ipicall_id =              */ OS_CORE{{this_core}}_IPICALL{{target_core}}_ID,
+  /* .src_core_id =             */ OS_CORE_ID_{{this_core}},
+  /* .target_core_id =          */ OS_CORE_ID_{{target_core}},
+  /* .service_ref =             */ os_ipicall_service_table
 };
         {%- endif %}
     {%- endfor %}

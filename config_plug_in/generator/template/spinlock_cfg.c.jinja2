@@ -31,13 +31,6 @@
 
 #if defined(CONFIG_RT_FRAMEWORK_SPINLOCK) && (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
 
-/* Local Macro Definition */
-
-/* Local Enumeration Definition */
-
-/* Local type & Structure Definition */
-
-/* Global Variable Definition */
 {%- set osmempool_spinlockid_set = get_osmempool_spinlock_id_set_ui() %}
 {%- set os_ioc_spinlock_id_set = get_ioc_spinlock_id_set() %}
 {%- set spinlock_cfg = get_spinlock_cfg() %}
@@ -46,41 +39,41 @@
     {%- set app_mask = get_access_app_mask(spin_val["AccessingApplication"], index_size=35) %}
 
 DeclareSpinlock(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{sid_u}}) = {
-    /* .obj_desc = */            &SPINLOCKOBJVAR({{sid_u}}),
-    /* .method = */              {{spin_val["Method"]}},
+    /* .obj_desc =               */ &SPINLOCKOBJVAR({{sid_u}}),
+    /* .method =                 */ {{spin_val["Method"]}},
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-    /* .access_app_mask = */     ({{app_mask}}),
+    /* .access_app_mask =        */ ({{app_mask}}),
 #endif
-    /* .check = */               {{spin_val["LockType"]}},
-    /* .spin_id  = */            {{sid_u}},
-    /* .order = */               {{spin_val["Order"]}},
+    /* .check =                  */ {{spin_val["LockType"]}},
+    /* .spin_id =                */ {{sid_u}},
+    /* .order =                  */ {{spin_val["Order"]}},
 };
 {%- endfor %}
 
 
 {%- for osmempool_spinlock_id in osmempool_spinlockid_set %}
 DeclareSpinlock(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{osmempool_spinlock_id | upper}}) = {
-    /* .obj_des = */              &SPINLOCKOBJVAR({{osmempool_spinlock_id | upper}}),
-    /* .method  = */              LOCK_CAT2_INTERRUPTS,
+    /* .obj_des =                */ &SPINLOCKOBJVAR({{osmempool_spinlock_id | upper}}),
+    /* .method =                 */ LOCK_CAT2_INTERRUPTS,
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-    /* .access_app_mask  = */     (RTFW_APPID2MASK(0) | (~RTFW_APPID2MASK(0))),
+    /* .access_app_mask =        */ (RTFW_APPID2MASK(0) | (~RTFW_APPID2MASK(0))),
 #endif
-    /* .check  = */               SPINLOCKCHECK_DISABLED,
-    /* .spin_id = */              {{osmempool_spinlock_id | upper}},
-    /* .order  = */               0,
+    /* .check =                  */ SPINLOCKCHECK_DISABLED,
+    /* .spin_id =                */ {{osmempool_spinlock_id | upper}},
+    /* .order =                  */ 0,
 };
 {%- endfor %}
 
 {%- for os_ioc_spinlock_id in os_ioc_spinlock_id_set %}
 DeclareSpinlock(OS_CONST_SECTION, OS_GLOBAL_BSS_SECTION, {{os_ioc_spinlock_id}}) = {
-    /* .obj_des = */              &SPINLOCKOBJVAR({{os_ioc_spinlock_id}}),
-    /* .method  = */              LOCK_NOTHING,
+    /* .obj_des =                */ &SPINLOCKOBJVAR({{os_ioc_spinlock_id}}),
+    /* .method =                 */ LOCK_NOTHING,
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-    /* .access_app_mask  = */     (RTFW_APPID2MASK(0) | (~RTFW_APPID2MASK(0))),
+    /* .access_app_mask =        */ (RTFW_APPID2MASK(0) | (~RTFW_APPID2MASK(0))),
 #endif
-    /* .check  = */               SPINLOCKCHECK_DISABLED,
-    /* .spin_id  = */             {{os_ioc_spinlock_id.upper()}},
-    /* .order  = */               0,
+    /* .check =                  */ SPINLOCKCHECK_DISABLED,
+    /* .spin_id =                */ {{os_ioc_spinlock_id.upper()}},
+    /* .order =                  */ 0,
 };
 {%- endfor %}
 
@@ -97,12 +90,4 @@ DeclareRtfwRefTable(OS_CONST_SECTION, spinlock, OS_SPINLOCK_CNT) = {
 };
 
 #endif /* (CONFIG_RT_FRAMEWORK_SPINLOCK == 1) */
-
-/* Local Variable Definition */
-
-/* Local Function Declaration */
-
-/* Local Function Implementation */
-
-/* Global Function Implementation */
 

@@ -29,13 +29,6 @@ extern "C"
 /* Including File */
 #include "rtfw_schedtable.h"
 
-/* global Macro Definition */
-#ifndef OSAUTOSTARTMODE
-#define OSAUTOSTARTMODE                     OSDEFAULTAPPMODE
-#define OSDEFAULTAPPMODE                    (2u)
-#endif
-
-/* global Enumeration Definition */
 {%- set schedtable_inst = get_schedtable_cfg() %}
 {%- set app_cfg = get_app_cfg() %}
 
@@ -53,23 +46,18 @@ typedef enum {
     OS_SCHED_TABLE_NONE,
 } OS_SCHEDTABLEID_DEF;
 
-/* global type & Structure Definition */
-
-/* global Variable Declaration */
 {%- for appname, appval in app_cfg.items() %}
     {%- if appval is mapping and "AppScheduleTableList" in appval and appval["AppScheduleTableList"] %}
+
 #define OS_START_SEC_CONST
 #include "rtfw_memmap.h"
 extern CONSTP2CONST(os_schedtable_cfg_t, OS_CONST, AUTOMATIC) {{appval["AppSchedTblTable"]}}[];
 extern CONST(OsObjIndexType, OS_CONST) {{appval["AppSchedTblTable"]}}_size;
 #define OS_STOP_SEC_CONST
 #include "rtfw_memmap.h"
+
     {%- endif %}
 {%- endfor %}
-
-/* global Function Declaration */
-
-/* global Function Implementation */
 
 #ifdef __cplusplus
 }

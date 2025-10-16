@@ -79,68 +79,68 @@ CONST(uint32, OS_CONST) ulCoreIdLog2PhyTable[OS_CORE_CNT] = {
 
 /*! Core{{core_num}} Configuration Implementation */
 DeclareCore(OS_CONST_SECTION, {{app_cfg[bsw_app_name]["AppInstSection"]}}, {{core}}) = {
-    /* .instance = */        &OSCOREOBJVAR({{core}}),
-    /* .core_id  = */        {{core_val["core_id"]}},
-    /* .physical_id  = */         (CoreIdType){{core_val["PhyId"]}},
+    /* .instance =               */ &OSCOREOBJVAR({{core}}),
+    /* .core_id =                */ {{core_val["core_id"]}},
+    /* .physical_id =            */ (CoreIdType){{core_val["PhyId"]}},
 #if defined(CONFIG_RT_FRAMEWORK_MULTIAPP) && (CONFIG_RT_FRAMEWORK_MULTIAPP== 1)
-    /* .kernel_app = */      (os_app_cfg_t*)&OSAPPCFGVAR({{bsw_app_name}}),
-    /* .app_ref  = */        os_core{{core_num}}_apps_cfg_ref_table,
-    /* .app_count  = */      &os_core{{core_num}}_apps_cfg_ref_table_size,
+    /* .kernel_app =             */ (os_app_cfg_t*)&OSAPPCFGVAR({{bsw_app_name}}),
+    /* .app_ref =                */ os_core{{core_num}}_apps_cfg_ref_table,
+    /* .app_count =              */ &os_core{{core_num}}_apps_cfg_ref_table_size,
 #endif
 #if defined(CONFIG_RT_FRAMEWORK_IOC) && (CONFIG_RT_FRAMEWORK_IOC == 1)
     {%- if core_ioc.get(core_val["core_id"], 0) > 0 %}
-    /* .ioc_refs = */        os_core{{core_num}}_ioc_cfg_ref_table,
-    /* .ioc_count = */       &os_core{{core_num}}_ioc_cfg_ref_table_size,
+    /* .ioc_refs =               */ os_core{{core_num}}_ioc_cfg_ref_table,
+    /* .ioc_count =              */ &os_core{{core_num}}_ioc_cfg_ref_table_size,
     {%- else %}
-    /* .ioc_refs = */        NULL_PTR,
-    /* .ioc_count = */       NULL_PTR,
+    /* .ioc_refs =               */ NULL_PTR,
+    /* .ioc_count =              */ NULL_PTR,
     {%- endif %}
 #endif /* CONFIG_RT_FRAMEWORK_IOC */
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
-    /* .ipicall_refs = */     os_core{{core_num}}_ipicalls_cfg_ref_table,
-    /* .ipicall_count = */    &os_core{{core_num}}_ipicalls_cfg_ref_table_size,
+    /* .ipicall_refs =           */ os_core{{core_num}}_ipicalls_cfg_ref_table,
+    /* .ipicall_count =          */ &os_core{{core_num}}_ipicalls_cfg_ref_table_size,
 #endif /* CONFIG_RT_FRAMEWORK_IPICALL */
 #if defined(CONFIG_RT_FRAMEWORK_RESOURCE) && (CONFIG_RT_FRAMEWORK_RESOURCE == 1)
     {%- set core_resource_map = get_core_referenced_resource() %}
     {%- if core_resource_map[core_num|string] %}
-    /* .resource_refs = */     os_core{{core_num}}_resource_cfg_ref_table,
-    /* .resource_count = */    &os_core{{core_num}}_resource_cfg_ref_table_size,
+    /* .resource_refs =          */ os_core{{core_num}}_resource_cfg_ref_table,
+    /* .resource_count =         */ &os_core{{core_num}}_resource_cfg_ref_table_size,
     {%- else %}
-    /* .resource_refs = */     NULL_PTR,
-    /* .resource_count = */    NULL_PTR,
+    /* .resource_refs =          */ NULL_PTR,
+    /* .resource_count =         */ NULL_PTR,
     {%- endif %}
 #endif /* CONFIG_RT_FRAMEWORK_RESOURCE */
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
 {%- if os_hook_cfg["os_startuphook"]["enabled"] %}
-    /* .startup_hook = */     &HOOKCFGVAR(OS_CORE{{core_num}}_{{"os_startuphook".upper()}}_ID),
+    /* .startup_hook =           */ &HOOKCFGVAR(OS_CORE{{core_num}}_{{"os_startuphook".upper()}}_ID),
 {%- else %}
-    /* .startup_hook = */     NULL_PTR,
+    /* .startup_hook =           */ NULL_PTR,
 {%- endif %}
 {%- if os_hook_cfg["os_shutdownhook"]["enabled"] %}
-    /* .shutdown_hook = */    &HOOKCFGVAR(OS_CORE{{core_num}}_{{"os_shutdownhook".upper()}}_ID),
+    /* .shutdown_hook =          */ &HOOKCFGVAR(OS_CORE{{core_num}}_{{"os_shutdownhook".upper()}}_ID),
 {%- else %}
-    /* .shutdown_hook = */    NULL_PTR,
+    /* .shutdown_hook =          */ NULL_PTR,
 {%- endif %}
 {%- if os_hook_cfg["os_errorhook"]["enabled"] %}
-    /* .error_hook = */       &HOOKCFGVAR(OS_CORE{{core_num}}_{{"os_errorhook".upper()}}_ID),
+    /* .error_hook =             */ &HOOKCFGVAR(OS_CORE{{core_num}}_{{"os_errorhook".upper()}}_ID),
 {%- else %}
-    /* .error_hook = */       NULL_PTR,
+    /* .error_hook =             */ NULL_PTR,
 {%- endif %}
 {%- if os_hook_cfg["os_protectionhook"]["enabled"] %}
-    /* .protection_hook = */  &HOOKCFGVAR(OS_CORE{{core_num}}_{{"os_protectionhook".upper()}}_ID),
+    /* .protection_hook =        */ &HOOKCFGVAR(OS_CORE{{core_num}}_{{"os_protectionhook".upper()}}_ID),
 {%- else %}
-    /* .protection_hook = */  NULL_PTR,
+    /* .protection_hook =        */ NULL_PTR,
 {%- endif %}
 {%- if os_hook_cnt > 0 %}
-    /* .hook_refs = */        os_core{{core_num}}_hook_cfg_ref_table,
-    /* .hook_count = */       &os_core{{core_num}}_hook_cfg_ref_table_size,
+    /* .hook_refs =              */ os_core{{core_num}}_hook_cfg_ref_table,
+    /* .hook_count =             */ &os_core{{core_num}}_hook_cfg_ref_table_size,
 {%- else %}
-    /* .hook_refs = */        NULL_PTR,
-    /* .hook_count = */       NULL_PTR,
+    /* .hook_refs =              */ NULL_PTR,
+    /* .hook_count =             */ NULL_PTR,
 {%- endif %}
 #endif
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
-    /* .mpu_access_right = */ &core{{core_num}}_prestart_task_access_right,
+    /* .mpu_access_right =       */ &core{{core_num}}_prestart_task_access_right,
 #endif
 };
 {%- endfor %}
@@ -150,12 +150,4 @@ DeclareRtfwRefTable(OS_CONST_SECTION, core, OS_CORE_CNT) = {
     &OSCORECFGVAR(Os_Core{{core["core_id"][-1]}}),
 {%-endfor%}
 };
-
-/* Local Variable Definition */
-
-/* Local Function Declaration */
-
-/* Local Function Implementation */
-
-/* global Function Implementation */
 

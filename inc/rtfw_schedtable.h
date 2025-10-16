@@ -48,9 +48,6 @@ extern "C" {
 
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
-/* Global Enumeration Definition */
-
-/* Global Type & Structure Definition */
 
 /* Global Function Declaration */
 

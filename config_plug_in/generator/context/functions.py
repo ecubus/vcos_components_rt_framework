@@ -826,6 +826,16 @@ class Function(FunctionBase):
         schedtable_dict = Function.get_os_module_list(context, "/Os/OsScheduleTable")
         schedtable_cfg = {}
 
+        # Statistics for optimization tracking
+        dedup_stats = {
+            "total_event_lists": 0,
+            "total_task_lists": 0,
+            "unique_event_lists": 0,
+            "unique_task_lists": 0,
+            "event_compression_ratio": 0,
+            "task_compression_ratio": 0
+        }
+
         for name, value in schedtable_dict.items():
             schedtable_cfg[name] = {}
 
@@ -886,16 +896,17 @@ class Function(FunctionBase):
                 else:
                     schedtable_cfg[name]["OsScheduleTableAutostart"]["OsScheduleTableStartValue"] = 0
 
-                # Get application mode
+                # Get autostart mode
                 if "OsScheduleTableAppModeRef" in value:
-                    schedtable_cfg[name]["OsScheduleTableAutostart"]["OsScheduleTableAppModeRef"] = utils.get_last_item(value["OsScheduleTableAppModeRef"]["ValueRef"])
+                    schedtable_auto_start = utils.get_last_item(value["OsScheduleTableAppModeRef"]["ValueRef"])
+                    schedtable_cfg[name]["OsScheduleTableAutostart"]["OsScheduleTableAppModeRef"] = "TRUE" if schedtable_auto_start == "OSAUTOSTARTMODE" else "FALSE"
                 else:
-                    schedtable_cfg[name]["OsScheduleTableAutostart"]["OsScheduleTableAppModeRef"] = "OSDEFAULTAPPMODE"
+                    schedtable_cfg[name]["OsScheduleTableAutostart"]["OsScheduleTableAppModeRef"] = "FALSE"
             else:
                 # If autostart is not configured, set default value to RELATIVE
                 schedtable_cfg[name]["OsScheduleTableAutostart"]["OsScheduleTableAutostartType"] = "SCHTBL_AUTOSTART_RELATIVE"
                 schedtable_cfg[name]["OsScheduleTableAutostart"]["OsScheduleTableStartValue"] = 0
-                schedtable_cfg[name]["OsScheduleTableAutostart"]["OsScheduleTableAppModeRef"] = "OSDEFAULTAPPMODE"
+                schedtable_cfg[name]["OsScheduleTableAutostart"]["OsScheduleTableAppModeRef"] = "FALSE"
 
             # Accessing application
             if "OsSchTblAccessingApplication" in value:
@@ -904,8 +915,16 @@ class Function(FunctionBase):
             else:
                 schedtable_cfg[name]["OsSchTblAccessingApplication"] = []
 
-            # Process expiry points
+            # Process expiry points with deduplication
             schedtable_cfg[name]["OsScheduleTableExpiryPoint"] = {}
+            schedtable_cfg[name]["_DeduplicatedEventLists"] = {}
+            schedtable_cfg[name]["_DeduplicatedTaskLists"] = {}
+
+            # Per-schedule-table deduplication dictionaries
+            local_event_lists = {}  # Event list deduplication within this schedule table
+            local_task_lists = {}   # Task list deduplication within this schedule table
+            local_event_list_counter = 0
+            local_task_list_counter = 0
 
             # Collect all ExpiryPoint_X keys and their offset values
             expiry_points = {}
@@ -923,8 +942,8 @@ class Function(FunctionBase):
             # Sort ExpiryPoint keys by their offset values
             sorted_expiry_points = sorted(expiry_points.keys(), key=lambda k: expiry_point_offsets[k])
 
-            # Process each expiry point (maintain sorted order)
-            for ep_name in sorted_expiry_points:
+            # Process each expiry point with deduplication
+            for ep_index, ep_name in enumerate(sorted_expiry_points):
                 ep_value = expiry_points[ep_name]
                 schedtable_cfg[name]["OsScheduleTableExpiryPoint"][ep_name] = {}
 
@@ -935,25 +954,29 @@ class Function(FunctionBase):
                 else:
                     schedtable_cfg[name]["OsScheduleTableExpiryPoint"][ep_name]["OsScheduleTblExpPointOffset"] = 0
 
-                # Process task activations - THIS IS THE KEY ADDITION
+                # Process task activations (Basic Tasks)
                 task_activations = []
-
-                # Check for task activation entries - look for OsScheduleTableTaskActivation_X keys
                 for ta_key, ta_value in ep_value.items():
                     if ta_key.startswith("OsScheduleTableTaskActivation_"):
                         if "OsScheduleTableActivateTaskRef" in ta_value and ta_value["OsScheduleTableActivateTaskRef"]["ValueRef"]:
-                            # Get task reference from ValueRef
                             task_ref = utils.get_last_item(ta_value["OsScheduleTableActivateTaskRef"]["ValueRef"])
-                            # Add to task activations list with OS_TASK_ prefix
                             task_activations.append(f"OS_TASK_{task_ref.upper()}_ID")
 
-                # Set the task activations list
-                schedtable_cfg[name]["OsScheduleTableExpiryPoint"][ep_name]["OsScheduleTableActivateTaskRef"] = task_activations
+                # Task list deduplication within this schedule table
+                if task_activations:
+                    dedup_stats["total_task_lists"] += 1
+                    task_key = tuple(sorted(task_activations))
+                    if task_key not in local_task_lists:
+                        list_name = f"SchedTable_ExpiryPoint_{ep_index}_{name}_TaskList"
+                        local_task_lists[task_key] = list_name
+                        schedtable_cfg[name]["_DeduplicatedTaskLists"][list_name] = task_activations
+                        local_task_list_counter += 1
+                        dedup_stats["unique_task_lists"] += 1
 
-                # Process event settings
+                    schedtable_cfg[name]["OsScheduleTableExpiryPoint"][ep_name]["_SharedTaskListName"] = local_task_lists[task_key]
+
+                # Process event settings (Extended Tasks)
                 event_settings = []
-
-                # Find all event setting entries for this expiry point
                 for es_key, es_value in ep_value.items():
                     if es_key.startswith("OsScheduleTableEventSetting_"):
                         # Get event mask and task reference
@@ -971,6 +994,21 @@ class Function(FunctionBase):
                             # Add as a tuple containing uppercase event mask and task ID
                             event_settings.append((event_mask, f"OS_TASK_{task_id}_ID"))
 
+                # Event list deduplication within this schedule table
+                if event_settings:
+                    dedup_stats["total_event_lists"] += 1
+                    event_key = tuple(sorted(event_settings))
+                    if event_key not in local_event_lists:
+                        list_name = f"SchedTable_ExpiryPoint_{ep_index}_{name}_EventList"
+                        local_event_lists[event_key] = list_name
+                        schedtable_cfg[name]["_DeduplicatedEventLists"][list_name] = event_settings
+                        local_event_list_counter += 1
+                        dedup_stats["unique_event_lists"] += 1
+
+                    schedtable_cfg[name]["OsScheduleTableExpiryPoint"][ep_name]["_SharedEventListName"] = local_event_lists[event_key]
+
+                # Save original data
+                schedtable_cfg[name]["OsScheduleTableExpiryPoint"][ep_name]["OsScheduleTableActivateTaskRef"] = task_activations
                 schedtable_cfg[name]["OsScheduleTableExpiryPoint"][ep_name]["OsScheduleTableSetEventRef"] = event_settings
 
                 # Adjustable expiry point - ensure all required keys exist
@@ -981,8 +1019,10 @@ class Function(FunctionBase):
 
                     # Ensure MaxShorten exists
                     if "OsScheduleTableMaxShorten" in adj_exp_point:
+                        # Convert to negative value as expected by runtime code
+                        shorten_value = adj_exp_point["OsScheduleTableMaxShorten"]["Value"]
                         schedtable_cfg[name]["OsScheduleTableExpiryPoint"][ep_name]["OsScheduleTblAdjustableExpPoint"]["OsScheduleTableMaxShorten"] = \
-                            adj_exp_point["OsScheduleTableMaxShorten"]["Value"]
+                            -shorten_value if shorten_value > 0 else shorten_value
                     else:
                         schedtable_cfg[name]["OsScheduleTableExpiryPoint"][ep_name]["OsScheduleTblAdjustableExpPoint"]["OsScheduleTableMaxShorten"] = 0
 
@@ -992,6 +1032,15 @@ class Function(FunctionBase):
                             adj_exp_point["OsScheduleTableMaxLengthen"]["Value"]
                     else:
                         schedtable_cfg[name]["OsScheduleTableExpiryPoint"][ep_name]["OsScheduleTblAdjustableExpPoint"]["OsScheduleTableMaxLengthen"] = 0
+
+        # Calculate compression ratios
+        if dedup_stats["total_event_lists"] > 0:
+            dedup_stats["event_compression_ratio"] = (1 - dedup_stats["unique_event_lists"] / dedup_stats["total_event_lists"]) * 100
+        if dedup_stats["total_task_lists"] > 0:
+            dedup_stats["task_compression_ratio"] = (1 - dedup_stats["unique_task_lists"] / dedup_stats["total_task_lists"]) * 100
+
+        # Add optimization statistics
+        schedtable_cfg["_OptimizationStats"] = dedup_stats
 
         return schedtable_cfg
 

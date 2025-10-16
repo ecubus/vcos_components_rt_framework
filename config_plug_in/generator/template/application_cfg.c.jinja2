@@ -51,70 +51,70 @@
     {% set bsw_appname = app_val["BswAppName"] %}
     {% set app_hook_cfg = all_app_hook_cfg[app_key] %}
 DeclareOsApplication(OS_CONST_SECTION, {{app_cfg[bsw_appname]["AppInstSection"]}}, {{app_key}}) = {
-    /* .instance  = */           &OSAPPOBJVAR({{app_key}}),
-    /* .app_name = */            "{{app_key}}",
+    /* .instance =                */ &OSAPPOBJVAR({{app_key}}),
+    /* .app_name =                */ "{{app_key}}",
     {%- if app_val["AppTaskList"]: %}
-    /* .task_refs  = */          {{app_val["AppTaskTable"]}},
-    /* .task_count  = */         &{{app_val["AppTaskTable"]}}_size,
+    /* .task_refs =               */ {{app_val["AppTaskTable"]}},
+    /* .task_count =              */ &{{app_val["AppTaskTable"]}}_size,
     {%- else: %}
-    /* .task_refs  = */          NULL_PTR,
-    /* .task_count  = */         NULL_PTR,
+    /* .task_refs =               */ NULL_PTR,
+    /* .task_count =              */ NULL_PTR,
     {%- endif %}
     {%- if app_val["AppIsrList"]: %}
-    /* .isr_refs  = */       {{app_val["AppIsrTable"]}},
-    /* .isr_count  = */      &{{app_val["AppIsrTable"]}}_size,
+    /* .isr_refs =                */ {{app_val["AppIsrTable"]}},
+    /* .isr_count =               */ &{{app_val["AppIsrTable"]}}_size,
     {%- else: %}
-    /* .isr_refs  = */       NULL_PTR,
-    /* .isr_count  = */      NULL_PTR,
+    /* .isr_refs =                */ NULL_PTR,
+    /* .isr_count =               */ NULL_PTR,
     {%- endif %}
 #if defined(CONFIG_RT_FRAMEWORK_SCHTBL) && (CONFIG_RT_FRAMEWORK_SCHTBL == 1)
     {%- if app_val["AppScheduleTableList"] and app_val["AppScheduleTableList"]|length > 0 %}
-    /* .scht_refs  = */          {{app_val["AppSchedTblTable"]}},
-    /* .scht_count  = */         &{{app_val["AppSchedTblTable"]}}_size,
+    /* .scht_refs =               */ {{app_val["AppSchedTblTable"]}},
+    /* .scht_count =              */ &{{app_val["AppSchedTblTable"]}}_size,
     {%- else %}
-    /* .scht_refs  = */          NULL_PTR,
-    /* .scht_count  = */         NULL_PTR,
+    /* .scht_refs =               */ NULL_PTR,
+    /* .scht_count =              */ NULL_PTR,
     {%- endif %}
 #endif /* (CONFIG_RT_FRAMEWORK_SCHTBL == 1) */
 #if defined(CONFIG_RT_FRAMEWORK_COUNTER) && (CONFIG_RT_FRAMEWORK_COUNTER == 1)
     {%- if app_val["AppCounterList"] and app_val["AppCounterList"]|length > 0 %}
-    /* .counter_refs  = */       {{app_val["AppCounterTable"]}},
-    /* .counter_count  = */      &{{app_val["AppCounterTable"]}}_size,
+    /* .counter_refs =            */ {{app_val["AppCounterTable"]}},
+    /* .counter_count =           */ &{{app_val["AppCounterTable"]}}_size,
     {%- else %}
-    /* .counter_refs  = */       NULL_PTR,
-    /* .counter_count  = */      NULL_PTR,
+    /* .counter_refs =            */ NULL_PTR,
+    /* .counter_count =           */ NULL_PTR,
     {%- endif %}
 #endif
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
-    /* .mpu_access_right  = */       &{{app_key.lower()}}_access_right,
+    /* .mpu_access_right =        */ &{{app_key.lower()}}_access_right,
 #endif
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
 {%- if "startuphook" in app_hook_cfg %}
-    /* .startup_hook = */     &HOOKCFGVAR({{app_hook_cfg['startuphook']['hook_id']}}),
+    /* .startup_hook =            */ &HOOKCFGVAR({{app_hook_cfg['startuphook']['hook_id']}}),
 {%- else %}
-    /* .startup_hook = */     NULL_PTR,
+    /* .startup_hook =            */ NULL_PTR,
 {%- endif %}
 {%- if "shutdownhook" in app_hook_cfg %}
-    /* .shutdown_hook = */    &HOOKCFGVAR({{app_hook_cfg['shutdownhook']['hook_id']}}),
+    /* .shutdown_hook =           */ &HOOKCFGVAR({{app_hook_cfg['shutdownhook']['hook_id']}}),
 {%- else %}
-    /* .shutdown_hook = */    NULL_PTR,
+    /* .shutdown_hook =           */ NULL_PTR,
 {%- endif %}
 {%- if "errorhook" in app_hook_cfg %}
-    /* .error_hook = */       &HOOKCFGVAR({{app_hook_cfg['errorhook']['hook_id']}}),
+    /* .error_hook =              */ &HOOKCFGVAR({{app_hook_cfg['errorhook']['hook_id']}}),
 {%- else %}
-    /* .error_hook = */       NULL_PTR,
+    /* .error_hook =              */ NULL_PTR,
 {%- endif %}
 {%- if app_hook_cfg | length > 0 %}
-    /* .hook_refs = */        {{app_val["AppHookTable"]}},
-    /* .hook_count = */       &{{app_val["AppHookTable"]}}_size,
+    /* .hook_refs =               */ {{app_val["AppHookTable"]}},
+    /* .hook_count =              */ &{{app_val["AppHookTable"]}}_size,
 {%- else %}
-    /* .hook_refs = */        NULL_PTR,
-    /* .hook_count = */       NULL_PTR,
+    /* .hook_refs =               */ NULL_PTR,
+    /* .hook_count =              */ NULL_PTR,
 {%- endif %}
 #endif
-    /* .core_id  = */            OS_CORE_ID_{{app_val["CoreNumber"]}},
-    /* .app_id  = */             {{app_val["AppId"]}},
-    /* .is_privileged  = */      {{app_val["AppPrivileged"]}},
+    /* .core_id =                 */ OS_CORE_ID_{{app_val["CoreNumber"]}},
+    /* .app_id =                  */ {{app_val["AppId"]}},
+    /* .is_privileged =           */ {{app_val["AppPrivileged"]}},
 };
 
 {%- endfor %}
