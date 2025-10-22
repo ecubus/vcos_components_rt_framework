@@ -24,12 +24,10 @@ class Os014017Rule(BasicRule):
     ruleset_name = "Os014017"
     validation_result = False
 
-    def __init__(self, logs, ecuc_os_dict, validation_cfg, system_path) -> None:
+    def __init__(self, logs, validation_data) -> None:
         super().__init__()
         self.logs = logs
-        self.ecuc_os_dict = ecuc_os_dict
-        self.system_path = system_path
-        self.validation_cfg = validation_cfg
+        self.ecuc_os_dict = validation_data.bsw_ecuc_dict['Os']['ArPackages']['ActiveEcuC']['Os']
         self.validation_code = self.__class__.ruleset_name
         self.validation_summary = "An event can be referenced by a task only once"
         self.durable_init()

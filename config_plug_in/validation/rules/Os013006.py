@@ -24,12 +24,11 @@ class Os013006Rule(BasicRule):
     ruleset_name = "Os013006"
     validation_result = False
 
-    def __init__(self, logs, ecuc_os_dict, validation_cfg, system_path) -> None:
+    def __init__(self, logs, validation_data) -> None:
         super().__init__()
         self.logs = logs
-        self.ecuc_os_dict = ecuc_os_dict
-        self.system_path = system_path
-        self.validation_cfg = validation_cfg
+        self.ecuc_os_dict = validation_data.bsw_ecuc_dict['Os']['ArPackages']['ActiveEcuC']['Os']
+        self.ecuc_dict = validation_data.bsw_ecuc_dict['EcuC']['ArPackages']['ActiveEcuC']['EcuC']
         self.validation_code = self.__class__.ruleset_name
         self.validation_summary = "Tasks/Applications that reference the same resource cannot be cross-core"
         self.durable_init()
@@ -66,7 +65,7 @@ class Os013006Rule(BasicRule):
                     app_name = OsRuleutils().get_app_from_task(task_name, self.ecuc_os_dict)
                     if app_name:
                         resource_app_set.add(app_name)
-                        coreid = OsRuleutils().get_core_number(app_name, self.ecuc_os_dict)
+                        coreid = OsRuleutils().get_core_number(app_name, self.ecuc_os_dict, self.ecuc_dict)
                         if coreid is not None:
                             resource_core_set.add(coreid)
                 validation_data = {}
