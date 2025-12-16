@@ -39,17 +39,6 @@
 {%- set SchedTable_Cfg = get_schedtable_cfg() %}
 {%- set ns = namespace(declared_task=[], declared_event=[]) %}
 
-/* === OPTIMIZATION STATISTICS === */
-/*
- * Original Event Lists: {{SchedTable_Cfg["_OptimizationStats"]["total_event_lists"]}}
- * Deduplicated Event Lists: {{SchedTable_Cfg["_OptimizationStats"]["unique_event_lists"]}}
- * Event List Compression: {{SchedTable_Cfg["_OptimizationStats"]["event_compression_ratio"]|round(2)}}%
- *
- * Original Task Lists: {{SchedTable_Cfg["_OptimizationStats"]["total_task_lists"]}}
- * Deduplicated Task Lists: {{SchedTable_Cfg["_OptimizationStats"]["unique_task_lists"]}}
- * Task List Compression: {{SchedTable_Cfg["_OptimizationStats"]["task_compression_ratio"]|round(2)}}%
- */
-
 /* === SCHEDULE TABLE INSTANCE DEFINITIONS === */
 {%- for appname, appval in app_cfg.items() %}
     {%- if appval is mapping and "AppScheduleTableList" in appval and appval["AppScheduleTableList"] %}
