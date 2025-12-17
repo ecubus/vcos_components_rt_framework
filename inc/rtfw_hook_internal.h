@@ -138,6 +138,10 @@ FUNC(void, OS_CODE) os_call_startup_hook(const os_core_cfg_t *core_cfg);
 FUNC(protection_return_t, OS_CODE) os_call_protection_hook(StatusType error_status);
 #endif
 
+#if defined(CONFIG_RT_FRAMEWORK_SHUTDOWN_HOOK) && (CONFIG_RT_FRAMEWORK_SHUTDOWN_HOOK == 1)
+FUNC(void, OS_CODE) os_call_shutdown_hook(StatusType error_status);
+#endif
+
 extern FUNC(os_status_t, OS_CODE) rtfw_call_void_callback_hook(const os_hook_cfg_t *hook_cfg);
 
 #define OS_STOP_SEC_CODE

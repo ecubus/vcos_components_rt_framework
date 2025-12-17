@@ -96,6 +96,8 @@ typedef enum {
 	OS_SYSCALLID_IOCWRITE,
 	OS_SYSCALLID_IOCREAD,
 #endif /* CONFIG_RT_FRAMEWORK_IOC */
+	OS_SYSCALLID_SHUTDOWNOS,
+	OS_SYSCALLID_SHUTDOWNALLCORES,
 	OS_SYSCALLID_COUNT
 } os_syscall_t;
 
@@ -148,6 +150,7 @@ typedef union {
 	void *param_void_ref_type;
 	void const *param_const_void_ref_type;
 	va_list param_va_list;
+	StatusType param_error_status;
 } os_syscall_param_t;
 
 typedef union {

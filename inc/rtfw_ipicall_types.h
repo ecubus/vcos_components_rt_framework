@@ -86,6 +86,9 @@ struct os_ipicall_test_param;
 typedef struct os_ipicall_test_param os_ipicall_test_param_t;
 #endif
 
+struct os_ipicall_shutdown_all_cores_param;
+typedef struct os_ipicall_shutdown_all_cores_param os_ipicall_shutdown_all_cores_param_t;
+
 struct Os_IpiCall_Test_Parameter;
 typedef struct Os_IpiCall_Test_Parameter Os_IpiCall_Test_ParameterType;
 

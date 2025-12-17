@@ -401,6 +401,31 @@ FUNC(void, OS_CODE) rtfw_call_posttask_hook(void)
 }
 #endif
 
+#if defined(CONFIG_RT_FRAMEWORK_SHUTDOWN_HOOK) && (CONFIG_RT_FRAMEWORK_SHUTDOWN_HOOK == 1)
+FUNC(void, OS_CODE) os_call_shutdown_hook(StatusType error_status)
+{
+	const os_hook_cfg_t *shutdown_hook;
+	const os_app_cfg_t *app_cfg;
+	OsObjIndexType index;
+	const os_core_cfg_t *core_cfg = OS_CORE_CFG_GET(os_get_core_id());
+
+	for (index = 0; index < *(core_cfg->app_count); index++) {
+		app_cfg = core_cfg->app_refs[index];
+		shutdown_hook = app_cfg->shutdown_hook;
+		if (shutdown_hook != NULL_PTR) {
+			(void)os_hook_call_status_hook(OS_HOOK_GET_HOOKID(shutdown_hook), error_status);
+		}
+	}
+
+	os_core_shutdown_sync();
+
+	shutdown_hook = OS_CORE_GET_SHUTDOWN_HOOK(core_cfg);
+	if (shutdown_hook != NULL_PTR) {
+		(void)os_hook_call_status_hook(OS_HOOK_GET_HOOKID(shutdown_hook), error_status);
+	}
+}
+#endif
+
 FUNC(os_status_t, OS_CODE) rtfw_call_void_callback_hook(const os_hook_cfg_t *hook_cfg)
 {
 	os_status_t status = OS_STATUS_OK;

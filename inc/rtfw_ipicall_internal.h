@@ -139,6 +139,10 @@ struct os_ipicall_test_param {
 };
 #endif
 
+struct os_ipicall_shutdown_all_cores_param {
+	StatusType error_status;
+};
+
 union os_ipicall_param_e {
 	os_ipicall_activate_task_param_t avtivate_task_param;
 	os_ipicall_get_task_state_param_t get_task_state_param;
@@ -165,6 +169,7 @@ union os_ipicall_param_e {
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL_TEST) && (CONFIG_RT_FRAMEWORK_IPICALL_TEST == 1)
 	os_ipicall_test_param_t ipc_test_param;
 #endif
+	os_ipicall_shutdown_all_cores_param_t shutdown_all_cores_param;
 };
 
 struct os_ipicall_send_s {
@@ -282,6 +287,8 @@ extern FUNC(os_status_t, OS_CODE)
 extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_ipc_test_function(os_ipicall_data_t *param);
 extern FUNC(os_status_t, OS_CODE) os_ipicall_ipc_test_function(uint32 target_core, uint32 test_value);
 #endif
+extern FUNC(os_status_t, OS_CODE) os_ipicall_shutdown_all_cores(uint32 target_core_mask, StatusType error_status);
+extern FUNC(os_status_t, OS_CODE) os_ipicall_recv_shutdown_all_cores(os_ipicall_data_t *param);
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"
 

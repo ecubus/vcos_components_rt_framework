@@ -1423,5 +1423,41 @@ FUNC(StatusType, OS_CODE) IocRead(IocIdType ioc_id, void *data)
 }
 #endif
 
+FUNC(void, OS_CODE) ShutdownOS(StatusType error_status)
+{
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
+#endif
+		os_shutdown_os(error_status);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_SHUTDOWNOS;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_error_status = error_status;
+
+		up_syscall(&syscall);
+	}
+#endif
+}
+
+FUNC(void, OS_CODE) ShutdownAllCores(StatusType error_status)
+{
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	if (FALSE == syscall_is_required()) {
+#endif
+		os_shutdown_all_cores(error_status);
+#if defined(CONFIG_RT_FRAMEWORK_SYSCALL) && (CONFIG_RT_FRAMEWORK_SYSCALL == 1)
+	} else {
+		syscall_data_t syscall;
+
+		syscall.syscall_id = OS_SYSCALLID_SHUTDOWNALLCORES;
+		syscall.syscall_param[OS_SYSCALLPARAMINDEX_1].param_error_status = error_status;
+
+		up_syscall(&syscall);
+	}
+#endif
+}
+
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"

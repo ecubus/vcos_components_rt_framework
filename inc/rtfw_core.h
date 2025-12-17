@@ -87,7 +87,7 @@ FUNC(void, OS_CODE) os_core_sync_phase_two(void);
  *
  *  \synchronous    TRUE
  */
-FUNC(void, OS_CODE) Os_CoreShutdownSync(void);
+FUNC(void, OS_CODE) os_core_shutdown_sync(void);
 
 /*!  \brief         After this service the OS on all AUTOSAR cores is shut down. Allowed at TASK level and ISR level
  *                  and also internally by the OS. The function will never return. The function will force other cores
@@ -105,12 +105,12 @@ FUNC(void, OS_CODE) Os_CoreShutdownSync(void);
  *
  *  \synchronous    TRUE
  */
-FUNC(void, OS_CODE) Os_ShutdownAllCores(StatusType Error);
+FUNC(void, OS_CODE) os_shutdown_all_cores(StatusType error_status);
 
 /*!  \brief         Shut down the specific core.
  *  \details        None
  *
- *  \param[in]      None
+ *  \param[in]      error_status: The error status
  *  \param[out]     None
  *
  *  \return         None
@@ -121,7 +121,23 @@ FUNC(void, OS_CODE) Os_ShutdownAllCores(StatusType Error);
  *
  *  \synchronous    TRUE
  */
-FUNC(void, OS_CODE) Os_ShutdownCore(StatusType Error);
+FUNC(void, OS_CODE) os_shutdown_core(StatusType error_status);
+
+/*!  \brief         Shut down the os.
+ *  \details        None
+ *
+ *  \param[in]      error_status: The error status
+ *  \param[out]     None
+ *
+ *  \return         None
+ *
+ *  \context        ANY|TASK|ISR1|ISR2|KERNEL
+ *
+ *  \reentrant      TRUE
+ *
+ *  \synchronous    TRUE
+ */
+FUNC(void, OS_CODE) os_shutdown_os(StatusType error_status);
 
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"
