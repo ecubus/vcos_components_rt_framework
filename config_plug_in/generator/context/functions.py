@@ -305,6 +305,8 @@ class Function(FunctionBase):
                     if isinstance(param_value, dict) and "DefinitionRef" in param_value:
                         if "/Os/OsIoc/OsIocIncludeHeader" in param_value["DefinitionRef"]:
                             header_value = param_value.get("Value", "")
+                            if not isinstance(header_value, list):
+                                header_value = [header_value]
                             if header_value:
                                 ioc_include_headers.extend([h for h in header_value if h is not None and h != ""])
         return ioc_include_headers
@@ -333,8 +335,6 @@ class Function(FunctionBase):
                     OsIocSendingOsApplicationRef_list = []
                     OsIocReceivingOsApplicationRef_list = []
                     OsIocInitValue = 0
-                    OsIocSenderId = 0
-                    OsIocReceiverId = 0
                     datatype,OsIocDataType,OsIocDataTypeRef = "uint8","","uint8"
                     OsIocFunctionImplementationKind = "FUNCTION"
                     if "DefinitionRef" in OsIocData_value and "Os/OsIoc/OsIocCommunication/OsIocDataProperties" in OsIocData_value[
@@ -370,7 +370,7 @@ class Function(FunctionBase):
                             {"OsIocFunctionImplementationKind": OsIocFunctionImplementationKind})
                         if "OsIocSenderId" in OsIocData_value and OsIocData_value["OsIocSenderId"]["Value"] is not None:
                             OsIocSenderId = OsIocData_value["OsIocSenderId"]["Value"]
-                        OsIocSenderProperties_content.update({"OsIocSenderId": OsIocSenderId})
+                            OsIocSenderProperties_content.update({"OsIocSenderId": OsIocSenderId})
                         if "OsIocSendingOsApplicationRef" in OsIocData_value and OsIocData_value[
                                 "OsIocSendingOsApplicationRef"]["ValueRef"] and isinstance(
                                     OsIocData_value["OsIocSendingOsApplicationRef"]["ValueRef"], list):
@@ -399,7 +399,7 @@ class Function(FunctionBase):
                                 {"OsIocCallback Hook Stack": OsIocData_value["OsIocCallback Hook Stack"]["Value"]})
                         if "OsIocReceiverId" in OsIocData_value and OsIocData_value["OsIocReceiverId"]["Value"] is not None:
                             OsIocReceiverId = OsIocData_value["OsIocReceiverId"]["Value"]
-                        OsIocReceiverProperties_content.update({"OsIocReceiverId": OsIocReceiverId})
+                            OsIocReceiverProperties_content.update({"OsIocReceiverId": OsIocReceiverId})
                         if "OsIocReceivingOsApplicationRef" in OsIocData_value and isinstance(
                                 OsIocData_value["OsIocReceivingOsApplicationRef"]["ValueRef"], list):
                             for OsIocReceivingOsApplicationRef_i in OsIocData_value["OsIocReceivingOsApplicationRef"][
