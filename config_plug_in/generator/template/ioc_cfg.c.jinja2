@@ -108,7 +108,7 @@ static FUNC(void, OS_CODE) os_ioc_init_{{ioc_name}} ( void * data );
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"
 
-static locate_data({{memmap_section}}) {{dataType}} {{ioc_name}};
+static locate_data({{memmap_section}}) {{dataType}} os_ioc_{{ioc_name}};
 
   {%- set filtered_receivers = ioc_config[ioc_name].OsIocReceiverProperties | selectattr('OsIocReceiverPullCB') | list %}
   {%- set ioc_call_back_num = filtered_receivers | length %}
@@ -147,7 +147,7 @@ DeclareIocWrite(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
 #endif
     },
     /* .read                     */ &IOCREADCFGVAR({{ioc_name}}),
-    /* .data                     */ (void *)(&{{ioc_name}}),
+    /* .data                     */ (void *)(&os_ioc_{{ioc_name}}),
     /* .copy_cbk                 */ os_ioc_copy_{{ioc_name}},
     /* .init_cbk                 */ os_ioc_init_{{ioc_name}},
     /* .callbacks                */ { {{ioc_call_back_num}}, {% if ioc_call_back_num > 0 %}{{ ioc_name }}_call_back_refs{% else %}NULL_PTR{% endif %} },
@@ -167,7 +167,7 @@ DeclareIocRead(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
 #endif
     },
     /* .write                    */ &IOCWRITECFGVAR({{ioc_name}}),
-    /* .data                     */ (void *)(&{{ioc_name}}),
+    /* .data                     */ (void *)(&os_ioc_{{ioc_name}}),
     /* .copy_cbk                 */ os_ioc_copy_{{ioc_name}},
 };
 
@@ -220,7 +220,7 @@ static FUNC(void, OS_CODE) os_ioc_init_{{ioc_name}} ( void* data )
 
     {%- set basic_datatype = (baseDataType in ["uint8","uint16","uint32"]) %}
 
-static locate_data({{memmap_section}}) {{dataType}} {{ioc_name}}[{{queuelen}}];
+static locate_data({{memmap_section}}) {{dataType}} os_ioc_{{ioc_name}}[{{queuelen}}];
 
     {%- set filtered_receivers = ioc_config[ioc_name].OsIocReceiverProperties | selectattr('OsIocReceiverPullCB') | list %}
     {%- set ioc_call_back_num = filtered_receivers | length %}
@@ -275,7 +275,7 @@ DeclareIocSend(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
     /* .recv                    */ &IOCRECEIVECFGVAR({{ioc_name}}),
     /* .callbacks               */ { {{ioc_call_back_num}}, {% if ioc_call_back_num > 0 %}{{ ioc_name }}_call_back_refs{% else %}NULL_PTR{% endif %} },
     /* .write_cbk               */ {% if not basic_datatype %} IocSendBlk_{{ioc_name}}_Callback {% else %} NULL_PTR {% endif %},
-    /* .data                    */ (void *){{ioc_name}},
+    /* .data                    */ (void *)os_ioc_{{ioc_name}},
     /* .size                    */ {{queuelen}},
 };
 
@@ -299,7 +299,7 @@ DeclareIocReceive(OS_CONST_SECTION, {{memmap_section}}, {{ioc_name}}) = {
     },
     /* .send                    */ &IOCSENDCFGVAR({{ioc_name}}),
     /* .read_cbk                */ {% if not basic_datatype %}IocReceiveBlk_{{ioc_name}}_Callback {% else %} NULL_PTR {% endif %},
-    /* .data                    */ (void *){{ioc_name}},
+    /* .data                    */ (void *)os_ioc_{{ioc_name}},
     /* .size                    */ {{queuelen}},
 };
 
