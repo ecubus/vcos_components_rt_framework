@@ -53,9 +53,11 @@
 #define OS_IPICALL_GETTASKSTATE ((os_ipicall_service_id_t)19)
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL_TEST) && (CONFIG_RT_FRAMEWORK_IPICALL_TEST == 1)
 #define OS_IPICALL_IPC_TEST_FUNCTION ((os_ipicall_service_id_t)20)
-#define OS_IPICALL_SERVICE_MAX ((os_ipicall_service_id_t)21)
+#define OS_IPICALL_SHUTDOWN_ALL_CORES ((os_ipicall_service_id_t)21)
+#define OS_IPICALL_SERVICE_MAX ((os_ipicall_service_id_t)22)
 #else
-#define OS_IPICALL_SERVICE_MAX ((os_ipicall_service_id_t)20)
+#define OS_IPICALL_SHUTDOWN_ALL_CORES ((os_ipicall_service_id_t)20)
+#define OS_IPICALL_SERVICE_MAX ((os_ipicall_service_id_t)21)
 #endif
 
 #define OS_START_SEC_CONST
@@ -90,6 +92,7 @@ os_ipicall_service_table[OS_IPICALL_SERVICE_MAX] = {
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL_TEST) && (CONFIG_RT_FRAMEWORK_IPICALL_TEST == 1)
 	[OS_IPICALL_IPC_TEST_FUNCTION] = &os_ipicall_recv_ipc_test_function,
 #endif
+	[OS_IPICALL_SHUTDOWN_ALL_CORES] = &os_ipicall_recv_shutdown_all_cores,
 };
 
 #define OS_STOP_SEC_CONST
@@ -888,6 +891,23 @@ FUNC(os_status_t, OS_CODE) os_ipicall_hook_call_void_hook(uint32 target_core, Ho
 	return os_ipicall_send_async(target_core, &param);
 }
 #endif
+
+FUNC(os_status_t, OS_CODE) os_ipicall_shutdown_all_cores(uint32 target_core_mask, StatusType error_status)
+{
+	os_ipicall_data_t param;
+
+	param.send_element.service = OS_IPICALL_SHUTDOWN_ALL_CORES;
+	param.send_element.in_param.shutdown_all_cores_param.error_status = error_status;
+
+	return os_ipicall_broad_cast(target_core_mask, &param);
+}
+
+FUNC(os_status_t, OS_CODE) os_ipicall_recv_shutdown_all_cores(os_ipicall_data_t *param)
+{
+	os_shutdown_core(param->send_element.in_param.shutdown_all_cores_param.error_status);
+
+	return OS_STATUS_OK;
+}
 
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"

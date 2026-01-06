@@ -547,6 +547,20 @@ static void sys_ioc_read(syscall_data_t *syscall_data, uint32_t *regs)
 }
 #endif
 
+static void sys_shutdown_os(syscall_data_t *syscall_data, uint32_t *regs)
+{
+	(void)regs;
+
+	os_shutdown_os(syscall_data->syscall_param[OS_SYSCALLPARAMINDEX_1].param_error_status);
+}
+
+static void sys_shutdown_all_cores(syscall_data_t *syscall_data, uint32_t *regs)
+{
+	(void)regs;
+
+	os_shutdown_all_cores(syscall_data->syscall_param[OS_SYSCALLPARAMINDEX_1].param_error_status);
+}
+
 #define OS_STOP_SEC_CODE
 #include "rtfw_memmap.h"
 
@@ -623,6 +637,8 @@ static VAR(syscall_entry_t, OS_CONST) os_syscall_table[] = {
 	[OS_SYSCALLID_IOCWRITE] = sys_ioc_write,
 	[OS_SYSCALLID_IOCREAD] = sys_ioc_read,
 #endif /* CONFIG_RT_FRAMEWORK_IOC */
+	[OS_SYSCALLID_SHUTDOWNOS] = sys_shutdown_os,
+	[OS_SYSCALLID_SHUTDOWNALLCORES] = sys_shutdown_all_cores,
 };
 
 #define OS_STOP_SEC_CONST
