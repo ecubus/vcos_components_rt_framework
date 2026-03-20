@@ -15,6 +15,8 @@
 
 /* Including File */
 #include <nuttx/config.h>
+#include <nuttx/spinlock.h>
+
 #include "string.h"
 #include "rtfw_counter.h"
 #include "rtfw_core.h"
@@ -158,7 +160,6 @@ static inline os_status_t os_ipicall_get_send_buffer(const volatile os_ipicall_c
 	current_index = ipicall_cfg->instance->send_idx;
 	while ((next_index = next_buffer_index(current_index)) != ipicall_cfg->instance->receive_idx) {
 		if (ipicall_cfg->instance->send_buffer[current_index].ack == OS_IPICALL_ACK) {
-			ipicall_cfg->instance->send_idx = next_index;
 			data->index = current_index;
 			status = OS_STATUS_OK;
 			break;
@@ -234,6 +235,11 @@ static FUNC(os_status_t, OS_CODE) os_ipicall_send_internal(const volatile os_ipi
 			ipicall_cfg->instance->send_buffer[data->index].in_param = data->send_element.in_param;
 			ipicall_cfg->instance->send_buffer[data->index].send_app_id = data->send_element.send_app_id;
 			ipicall_cfg->instance->send_buffer[data->index].ack = data->send_element.ack;
+			SP_DSB();
+
+			ipicall_cfg->instance->send_idx = next_buffer_index(data->index);
+			SP_DSB();
+
 			/* trigger target core interrupt */
 			if (broad_cast == OS_IPICALL_UNICAST) {
 				status = (os_status_t)up_trigger_ipicall((CoreIdType)(ipicall_cfg->target_core_id));
@@ -394,38 +400,36 @@ static FUNC(void, OS_CODE) os_ipicall_isr_handler(void)
 		if (ipicall_inst == NULL_PTR) {
 			continue;
 		}
-		if (os_ipicall_new_request_available(ipicall_cfg) == TRUE) {
-			do {
-				recv_idx = ipicall_inst->receive_idx;
-				ipicall_send_ptr = &(ipicall_inst->send_buffer[recv_idx]);
-				if ((ipicall_send_ptr->ack == OS_IPICALL_ASYNC_NACK) ||
-				    (ipicall_send_ptr->ack == OS_IPICALL_SYNC_NACK)) {
-					com_data.send_element.service = ipicall_send_ptr->service;
-					com_data.send_element.in_param = ipicall_send_ptr->in_param;
-					com_data.send_element.send_app_id = ipicall_send_ptr->send_app_id;
-					ipicall_service = ipicall_cfg->service_ref[com_data.send_element.service];
+		while (os_ipicall_new_request_available(ipicall_cfg) == TRUE) {
+			recv_idx = ipicall_inst->receive_idx;
+			ipicall_send_ptr = &(ipicall_inst->send_buffer[recv_idx]);
+			if ((ipicall_send_ptr->ack == OS_IPICALL_ASYNC_NACK) ||
+				(ipicall_send_ptr->ack == OS_IPICALL_SYNC_NACK)) {
+				com_data.send_element.service = ipicall_send_ptr->service;
+				com_data.send_element.in_param = ipicall_send_ptr->in_param;
+				com_data.send_element.send_app_id = ipicall_send_ptr->send_app_id;
+				ipicall_service = ipicall_cfg->service_ref[com_data.send_element.service];
 
-					if ((com_data.send_element.service < OS_IPICALL_SERVICE_MAX) &&
-					    (ipicall_service != NULL_PTR)) {
-						ipicall_status = ipicall_service(&com_data);
-					} else {
-						ipicall_status = OS_STATUS_IPICALL_UNAVAILABLE;
-					}
-
-					if (ipicall_send_ptr->ack == OS_IPICALL_ASYNC_NACK) {
-						ipicall_send_ptr->ack = OS_IPICALL_ACK;
-					}
-
-					if (ipicall_send_ptr->ack == OS_IPICALL_SYNC_NACK) {
-						ipicall_ret_ptr = &(ipicall_inst->result_buffer[recv_idx]);
-						ipicall_ret_ptr->service = com_data.send_element.service;
-						ipicall_ret_ptr->out_param = com_data.ret_element.out_param;
-						ipicall_ret_ptr->return_status = ipicall_status;
-						ipicall_send_ptr->ack = OS_IPICALL_SYNC_PENDING;
-					}
+				if ((com_data.send_element.service < OS_IPICALL_SERVICE_MAX) &&
+					(ipicall_service != NULL_PTR)) {
+					ipicall_status = ipicall_service(&com_data);
+				} else {
+					ipicall_status = OS_STATUS_IPICALL_UNAVAILABLE;
 				}
-				ipicall_inst->receive_idx = next_buffer_index(ipicall_inst->receive_idx);
-			} while (os_ipicall_new_request_available(ipicall_cfg) == TRUE);
+
+				if (ipicall_send_ptr->ack == OS_IPICALL_ASYNC_NACK) {
+					ipicall_send_ptr->ack = OS_IPICALL_ACK;
+				}
+
+				if (ipicall_send_ptr->ack == OS_IPICALL_SYNC_NACK) {
+					ipicall_ret_ptr = &(ipicall_inst->result_buffer[recv_idx]);
+					ipicall_ret_ptr->service = com_data.send_element.service;
+					ipicall_ret_ptr->out_param = com_data.ret_element.out_param;
+					ipicall_ret_ptr->return_status = ipicall_status;
+					ipicall_send_ptr->ack = OS_IPICALL_SYNC_PENDING;
+				}
+			}
+			ipicall_inst->receive_idx = next_buffer_index(ipicall_inst->receive_idx);
 		}
 	}
 	os_int_resume_kernel(&int_state);
