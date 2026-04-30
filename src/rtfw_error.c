@@ -31,13 +31,15 @@ static inline_function void set_last_error_info(struct os_error_info_s *error_in
 	error_info->status = (StatusType) status;
 	error_info->app_id = OS_CONTEXT_GET_CURRENT_APPID(context);
 	error_info->context_id = OS_CONTEXT_GET_INITCONTEXTID(context);
-	if ((OS_CONTEXT_ANYISR & error_info->context_id) != 0) {
+	if ((OS_CONTEXT_ANYISR & error_info->context_id) != 0U) {
 		error_info->call_id.isr_id = OS_CONTEXT_GET_CURRENT_ISRID(context);
-	} else if ((OS_CONTEXT_ANYTASK & error_info->context_id) != 0) {
+	} else if ((OS_CONTEXT_ANYTASK & error_info->context_id) != 0U) {
 		error_info->call_id.task_id = OS_CONTEXT_GET_CURRENT_TASKID(context);
+	} else {
+		/* Hook context or startup context: call_id field is not applicable */
 	}
 	/* Clear all saved parameters */
-	memset(error_info->parameter, 0, sizeof(error_info->parameter));
+	(void)memset(error_info->parameter, 0, sizeof(error_info->parameter));
 }
 
 #if defined(CONFIG_RT_FRAMEWORK_PROTECTION_HOOK) && (CONFIG_RT_FRAMEWORK_PROTECTION_HOOK == 1)
@@ -168,7 +170,7 @@ FUNC(StatusType, OS_CODE) os_get_error_info(struct os_error_info_s *error_info)
 
 	DEBUGASSERT(error_info != NULL_PTR);
 
-	memcpy(error_info, &core->last_error_info, sizeof(struct os_error_info_s));
+	(void)memcpy(error_info, &core->last_error_info, sizeof(struct os_error_info_s));
 	return OS_STATUS_OK;
 }
 
@@ -192,7 +194,7 @@ FUNC(void, OS_CODE) vservice_error_report(OSServiceIdType service_id, os_status_
 	error_info->service_id = service_id;
 	set_last_error_info(error_info, error_status);
 
-	for(idx = 0; idx < param_cnt; idx++) {
+	for(idx = 0U; idx < param_cnt; idx++) {
 		error_info->parameter[idx] = va_arg(ap, uintptr_t);
 	}
 

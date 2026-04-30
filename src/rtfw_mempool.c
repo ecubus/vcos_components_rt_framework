@@ -196,7 +196,7 @@ FUNC(void, OS_CODE) os_print_mempool_info_by_name(const char *name)
 	const os_mempool_module_cfg_t *module_cfg = NULL;
 
 	for (uint32 i = 0U; mempool_module_map[i].name != NULL; ++i) {
-		if (strcmp(mempool_module_map[i].name, name) == 0) {
+		if (strcmp(mempool_module_map[i].name, name) == 0U) {
 			module_cfg = mempool_module_map[i].ptr;
 			break;
 		}

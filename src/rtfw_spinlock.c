@@ -228,7 +228,7 @@ FUNC(void, OS_CODE) os_spinlock_init(void)
 		return;
 	}
 
-	for (index = 0; index < os_spinlock_cfg_ref_table_size; index++) {
+	for (index = 0U; index < os_spinlock_cfg_ref_table_size; index++) {
 		spin_cfg = os_spinlock_cfg_ref_table[index];
 		if ((spin_cfg == NULL) || (spin_cfg->spin_id >= os_spinlock_cfg_ref_table_size) ||
 		    (os_spinlock_cfg_ref_table[spin_cfg->spin_id] == NULL)) {
@@ -423,13 +423,14 @@ FUNC(os_status_t, OS_CODE) os_try_to_get_spinlock(const os_spin_id_t spin_id, tr
 	}
 #endif
 
+	if (UNLIKELY(success == NULL)) {
+		return OS_STATUS_PARAM_POINTER_2;
+	}
+
 	spin_cfg = os_spinlock_cfg_ref_table[spin_id];
 	lock_inst = spin_cfg->obj_desc;
 
 	if (UNLIKELY(SPINLOCKCHECK_ENABLED == spin_cfg->check)) {
-		if (UNLIKELY(success == NULL)) {
-			return OS_STATUS_PARAM_POINTER_2;
-		}
 		check_stat = os_context_check_curcontext_id(cur_context, OS_CONTEXT_TRYTOGETSPINLOCK);
 		if (UNLIKELY(check_stat == FALSE)) {
 			return OS_STATUS_CALLEVEL;
@@ -621,6 +622,14 @@ FUNC(os_status_t, OS_CODE) os_release_spinlock_read(const os_spin_id_t spin_id)
 			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
+
+		if (UNLIKELY(lock_inst->spin == OS_SPINLOCK_UNLOCK)) {
+			return OS_STATUS_NOT_OK;
+		}
+
+		if (UNLIKELY((lock_inst->spin & OS_SPINLOCK_WRITE_LOCKED) != (os_spin_t)OS_SPINLOCK_WRITE_UNLOCKED)) {
+			return OS_STATUS_NOT_OK;
+		}
 	} else {
 		/* do nothing */
 	}
@@ -662,6 +671,14 @@ FUNC(os_status_t, OS_CODE) os_release_spinlock_write(const os_spin_id_t spin_id)
 			return OS_STATUS_ACCESS_RIGHT;
 		}
 #endif /* CONFIG_RT_FRAMEWORK_ACCESSCHECK == 1 */
+
+		if (UNLIKELY(lock_inst->spin == OS_SPINLOCK_UNLOCK)) {
+			return OS_STATUS_NOT_OK;
+		}
+
+		if (UNLIKELY(lock_inst->owner_context != cur_context)) {
+			return OS_STATUS_NOT_OK;
+		}
 	} else {
 		/* do nothing */
 	}
@@ -698,13 +715,14 @@ FUNC(os_status_t, OS_CODE) os_try_to_get_spinlock_read(const os_spin_id_t spin_i
 		return OS_STATUS_ID_1;
 	}
 
+	if (UNLIKELY(success == NULL)) {
+		return OS_STATUS_PARAM_POINTER_2;
+	}
+
 	spin_cfg = os_spinlock_cfg_ref_table[spin_id];
 	lock_inst = spin_cfg->obj_desc;
 
 	if (UNLIKELY(SPINLOCKCHECK_ENABLED == spin_cfg->check)) {
-		if (UNLIKELY(success == NULL)) {
-			return OS_STATUS_PARAM_POINTER_2;
-		}
 
 		check_stat = spin_local_core_check(lock_inst);
 		if (UNLIKELY(check_stat != OS_STATUS_OK)) {
@@ -756,13 +774,14 @@ FUNC(os_status_t, OS_CODE) os_try_to_get_spinlock_write(const os_spin_id_t spin_
 		return OS_STATUS_ID_1;
 	}
 
+	if (UNLIKELY(success == NULL)) {
+		return OS_STATUS_PARAM_POINTER_2;
+	}
+
 	spin_cfg = os_spinlock_cfg_ref_table[spin_id];
 	lock_inst = spin_cfg->obj_desc;
 
 	if (UNLIKELY(SPINLOCKCHECK_ENABLED == spin_cfg->check)) {
-		if (UNLIKELY(success == NULL)) {
-			return OS_STATUS_PARAM_POINTER_2;
-		}
 		check_stat = os_context_check_curcontext_id(cur_context, OS_CONTEXT_TRYTOGETSPINLOCK);
 		if (UNLIKELY(check_stat == FALSE)) {
 			return OS_STATUS_CALLEVEL;

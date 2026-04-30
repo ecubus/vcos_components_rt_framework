@@ -156,10 +156,24 @@ FUNC(os_status_t, OS_CODE) os_set_event(TaskType task_id, os_event_mask_t mask)
 
 FUNC(os_status_t, OS_CODE) os_set_event_asyn(TaskType task_id, os_event_mask_t mask)
 {
-	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[task_id];
-	const os_ctx_cfg_t *task_context = &(task_cfg->context);
-	os_task_event_t *task_event = task_cfg->event_hdl;
-	CoreIdType task_core_id = OS_CONTEXT_GET_OWNER_COREID(task_context);
+	const os_task_cfg_t *task_cfg;
+	const os_ctx_cfg_t *task_context;
+	os_task_event_t *task_event;
+	CoreIdType task_core_id;
+
+	if (UNLIKELY(task_id >= os_task_cfg_ref_table_size)) {
+		return OS_STATUS_ID_1;
+	}
+
+	task_cfg = os_task_cfg_ref_table[task_id];
+
+	if (UNLIKELY(task_cfg->event_hdl == NULL_PTR)) {
+		return OS_STATUS_NOT_EXTENDED_TASK;
+	}
+
+	task_context = &(task_cfg->context);
+	task_event = task_cfg->event_hdl;
+	task_core_id = OS_CONTEXT_GET_OWNER_COREID(task_context);
 
 	if (task_core_id == os_get_core_id()) {
 #ifdef CONFIG_RT_FRAMEWORK_EXTENDED_STATUS

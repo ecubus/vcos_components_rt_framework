@@ -154,7 +154,7 @@ FUNC(void, OS_CODE) rtfw_isr_init(const os_isr_cfg_t *const os_isr_cfg_table[], 
 		return;
 	}
 
-	for (index = 0; index < size; index++) {
+	for (index = 0U; index < size; index++) {
 		isr_cfg = os_isr_cfg_table[index];
 		if (isr_cfg == NULL) {
 			continue;

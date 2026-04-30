@@ -72,10 +72,10 @@ static inline void os_counter_check_on_core(const os_app_cfg_t *const os_app_cfg
 		return;
 	}
 
-	for (app_index = 0; app_index < app_num; app_index++) {
+	for (app_index = 0U; app_index < app_num; app_index++) {
 		app_cfg = os_app_cfg_table[app_index];
 		if ((NULL != app_cfg->counter_count) && (NULL != app_cfg->counter_refs)) {
-			for (counter_index = 0; counter_index < *(app_cfg->counter_count); counter_index++) {
+			for (counter_index = 0U; counter_index < *(app_cfg->counter_count); counter_index++) {
 				counter_id = app_cfg->counter_refs[counter_index]->counter_id;
 				counter_cfg = os_counter_cfg_ref_table[counter_id];
 				counter_inst = counter_cfg->obj_desc;
@@ -115,10 +115,12 @@ static inline TickType os_counter_get_internal_value(const os_counter_cfg_t *cou
 	struct hrtimer_queue_s *hrtimer_queue = &(counter_inst->hrtimer_queue);
 	hrtimer_tick_t hrtime = hrtimer_get_time(hrtimer_queue);
 	hrtimer_tick_t hrtime_passed = hrtimer_passed(hrtime, counter_inst->hrtimer_value);
+	clock_t period = (clock_t)counter_cfg->max_allowed_value + 1;
+	clock_t reduced = hrtime_passed % period;
 
 	counter_inst->hrtimer_value = hrtime;
 	counter_inst->counter_value =
-		os_counter_add(counter_inst->counter_value, (TickType)hrtime_passed, counter_cfg->max_allowed_value);
+		os_counter_add(counter_inst->counter_value, (TickType)reduced, counter_cfg->max_allowed_value);
 
 	return counter_inst->counter_value;
 }
@@ -148,7 +150,7 @@ FUNC(void, OS_CODE) os_counter_init(const os_counter_cfg_t *const os_counter_cfg
 	const struct hrtimer_ops_s *hrtimer_ops = NULL;
 	CoreIdType core_id = os_get_core_id();
 
-	for (OsObjIndexType i = 0; i < size; i++) {
+	for (OsObjIndexType i = 0U; i < size; i++) {
 		counter_cfg = os_counter_cfg_table[i];
 		app_cfg = os_app_cfg_ref_table[counter_cfg->owner_app_id];
 		if (app_cfg->core_id != core_id) {
@@ -181,7 +183,7 @@ FUNC(void, OS_CODE) os_counter_start(const os_counter_cfg_t *const os_counter_cf
 	struct hrtimer_queue_s *hrtimer_queue;
 	CoreIdType core_id = os_get_core_id();
 
-	for (OsObjIndexType i = 0; i < size; i++) {
+	for (OsObjIndexType i = 0U; i < size; i++) {
 		counter_cfg = os_counter_cfg_table[i];
 		app_cfg = os_app_cfg_ref_table[counter_cfg->owner_app_id];
 		if (app_cfg->core_id != core_id) {

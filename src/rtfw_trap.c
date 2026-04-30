@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <inttypes.h>
 #include <nuttx/config.h>
 #include "rtfw_core_internal.h"
@@ -45,7 +44,7 @@ void rtfw_expt_detail_info_print(void)
 	EXP_INFO("Core %u: Thread Type: %u\r\n", up_cpu_index(), expt_detail.thread_type);
 	EXP_INFO("Core %u: Thread ID: %lu\r\n", up_cpu_index(), expt_detail.thread_id);
 	EXP_INFO("Backtrace Depth: %lu\r\n", expt_detail.backtrace_depth);
-	for (uint8_t i = 0; i < expt_detail.backtrace_depth; i++) {
+	for (uint8_t i = 0U; i < expt_detail.backtrace_depth; i++) {
 		EXP_INFO("Backtrace Address[%u]: 0x%lX\r\n", i, expt_detail.backtrace_addr[i]);
 	}
 }
@@ -69,7 +68,7 @@ void rtfw_expt_detail_save(void)
 	if (os_context_is_any_isr(current_context)) {
 		expt_detail->thread_type = os_expt_thread_type_isr;
 		expt_detail->thread_id = OS_CONTEXT_GET_CURRENT_ISRID(current_context);
-	} else if(os_context_is_any_task(current_context)) {
+	} else if (os_context_is_any_task(current_context)) {
 		expt_detail->thread_type = os_expt_thread_type_task;
 		expt_detail->thread_id = OS_CONTEXT_GET_CURRENT_TASKID(current_context);
 	} else {

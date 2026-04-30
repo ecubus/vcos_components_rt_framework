@@ -49,7 +49,7 @@ static noinline_function FUNC(void, OS_CODE) os_thread_enter_hook(void)
 	hook_tcb = &(hook_inst->thread.tcb);
 #endif
 
-	if ((hook_tcb->flags & TCB_FLAG_THREAD_IS_SUSPENDED) == 0) {
+	if ((hook_tcb->flags & TCB_FLAG_THREAD_IS_SUSPENDED) == 0U) {
 		hook_tcb->flags &= ~TCB_FLAG_THREAD_IN_KERNEL_MPU_SET;
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
 		up_mpu_enable_set(OS_HOOK_GET_CONTEXTINST_REF(hook_cfg)->current_mpu_access_right->set_num);
