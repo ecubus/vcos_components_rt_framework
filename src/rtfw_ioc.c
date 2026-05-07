@@ -100,9 +100,9 @@ static inline os_status_t os_ioc_call_callbacks(const os_ioc_callbacks_config_t 
 
 	if (NULL != callbacks) {
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)
-		for (uint32 callback_index = 0; callback_index < callbacks->callback_count; callback_index++) {
+		for (uint32 callback_index = 0U; callback_index < callbacks->callback_count; callback_index++) {
 			if (E_OK != rtfw_call_void_callback_hook(callbacks->callback_refs[callback_index])) {
-				ret = OS_STATUS_OK;
+				ret = OS_STATUS_NOT_OK;
 			}
 		}
 #else
@@ -126,8 +126,8 @@ static inline void os_ioc_ring_index_increase(os_ioc_ring_idx *index, os_ioc_rin
 		REPORT_FATAL_ERROR();
 	}
 
-	if ((*index) == (size - 1u)) {
-		(*index) = 0;
+	if ((*index) == (size - 1U)) {
+		(*index) = 0U;
 	} else {
 		(*index)++;
 	}
@@ -257,7 +257,7 @@ FUNC(void, OS_CODE) os_ioc_init(const os_ioc_cfg_t *const os_ioc_cfg_table[], Os
 	const os_ioc_cfg_t *base_cfg;
 	uint16 index = 0;
 
-	for (index = 0; index < size; index++) {
+	for (index = 0U; index < size; index++) {
 		base_cfg = os_ioc_cfg_table[index];
 		if (base_cfg == NULL_PTR) {
 			continue;
@@ -408,7 +408,9 @@ FUNC(os_status_t, OS_CODE) os_ioc_empty_queue(IocIdType ioc_id)
 
 	os_status_t ret = OS_STATUS_NOT_OK;
 
+	os_ioc_get_lock(&(recv_cfg->ioc));
 	os_ioc_ring_reset(&(send_inst->write_idx), &(recv_inst->read_idx));
+	os_ioc_release_lock(&(recv_cfg->ioc));
 
 	ret = OS_STATUS_OK;
 

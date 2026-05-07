@@ -51,7 +51,7 @@ static inline_function bool syscall_is_required(void)
 	}
 
 #if defined(CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION) && (CONFIG_RT_FRAMEWORK_MEMORY_PROTECTION == 1)
-	if (up_get_mpu_set() != 0) {
+	if (up_get_mpu_set() != 0U) {
 		return TRUE;
 	}
 #endif

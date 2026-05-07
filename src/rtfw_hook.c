@@ -29,11 +29,11 @@
 
 static inline_function uint32 os_hook_get_hook_action(os_context_id_t pre_context_id, boolean is_hook_call)
 {
-	uint32 hook_action = 0;
+	uint32 hook_action = 0U;
 
-	if (pre_context_id & OS_CONTEXT_ANYHOOK) {
+	if ((pre_context_id & OS_CONTEXT_ANYHOOK) != 0U) {
 		hook_action = (is_hook_call ? HOOK_CALL_FROM_HOOK : HOOK_RETURN_TO_HOOK);
-	} else if (pre_context_id & OS_CONTEXT_ANYTASK) {
+	} else if ((pre_context_id & OS_CONTEXT_ANYTASK) != 0U) {
 		hook_action = (is_hook_call ? HOOK_CALL_FROM_TASK : HOOK_RETURN_TO_TASK);
 	} else {
 		hook_action = (is_hook_call ? HOOK_CALL_FROM_IRQ : HOOK_RETURN_TO_IRQ);
@@ -56,10 +56,10 @@ static inline_function void os_hook_call(const os_hook_cfg_t *hook_cfg)
 
 	os_int_suspend_kernel(&int_state);
 
-	if (pre_context_id & OS_CONTEXT_ANYHOOK) {
+	if ((pre_context_id & OS_CONTEXT_ANYHOOK) != 0U) {
 		pre_hook_cfg = OS_CONTEXT_GET_HOOK_CFG_REF(pre_context);
 		pre_hook_inst = OS_HOOK_GET_INSTANCE_REF(pre_hook_cfg);
-		if (((pre_hook_inst->accumulated_hook_ctx & hook_cfg->nesting_mask) == 0) ||
+		if (((pre_hook_inst->accumulated_hook_ctx & hook_cfg->nesting_mask) == 0U) ||
 		    (pre_hook_inst->cur_nesting_depth >= OS_HOOK_MAX_NESTING)) {
 			os_int_resume_kernel(&int_state);
 			return;
@@ -189,7 +189,7 @@ FUNC(void, OS_CODE) os_hook_init(const os_hook_cfg_t *const os_hook_cfg_table[],
 		return;
 	}
 
-	for (index = 0; index < size; index++) {
+	for (index = 0U; index < size; index++) {
 		hook_cfg = os_hook_cfg_table[index];
 		if (hook_cfg == NULL) {
 			continue;
@@ -409,7 +409,7 @@ FUNC(void, OS_CODE) os_call_shutdown_hook(StatusType error_status)
 	OsObjIndexType index;
 	const os_core_cfg_t *core_cfg = OS_CORE_CFG_GET(os_get_core_id());
 
-	for (index = 0; index < *(core_cfg->app_count); index++) {
+	for (index = 0U; index < *(core_cfg->app_count); index++) {
 		app_cfg = core_cfg->app_refs[index];
 		shutdown_hook = app_cfg->shutdown_hook;
 		if (shutdown_hook != NULL_PTR) {

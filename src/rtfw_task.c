@@ -82,7 +82,7 @@ FUNC(void, OS_CODE) os_task_init(const os_task_cfg_t *const os_task_cfg_table[],
 		return;
 	}
 
-	for (index = 0; index < size; index++) {
+	for (index = 0U; index < size; index++) {
 		task_cfg = os_task_cfg_table[index];
 		if ((task_cfg == NULL)) {
 			continue;
@@ -244,11 +244,21 @@ FUNC(os_status_t, OS_CODE) os_terminate_task(void)
 
 FUNC(os_status_t, OS_CODE) os_activate_task_asyn(TaskType task_id)
 {
-	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[task_id];
-	const os_ctx_cfg_t *task_context = OS_TASK_GET_CONTEXT_REF(task_cfg);
-	CoreIdType task_core_id = OS_CONTEXT_GET_OWNER_COREID(task_context);
-	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+	const os_task_cfg_t *task_cfg;
+	const os_ctx_cfg_t *task_context;
+	CoreIdType task_core_id;
+	os_task_inst_t *task_inst;
 	int ret;
+
+	if (UNLIKELY(task_id >= os_task_cfg_ref_table_size)) {
+		return OS_STATUS_ID_1;
+	}
+
+	task_cfg = os_task_cfg_ref_table[task_id];
+
+	task_context = OS_TASK_GET_CONTEXT_REF(task_cfg);
+	task_core_id = OS_CONTEXT_GET_OWNER_COREID(task_context);
+	task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
 
 #if defined(CONFIG_RT_FRAMEWORK_ACCESSCHECK)
 	const os_ctx_cfg_t *const current_ctx = os_context_get_contexthdl();
@@ -333,6 +343,12 @@ FUNC(os_status_t, OS_CODE) os_chain_task(TaskType task_id)
 	CoreIdType task_core_id = OS_CONTEXT_GET_OWNER_COREID(task_context);
 
 	if (task_core_id == os_get_core_id()) {
+#if defined(CONFIG_RT_FRAMEWORK_ACCESSCHECK)
+		if (UNLIKELY(os_app_check_is_accessible(OS_CONTEXT_GET_APPONRWECFG_REF(task_context)) !=
+			     OS_STATUS_OK)) {
+			return OS_STATUS_NOT_ACCESSIBLE;
+		}
+#endif
 		ret = nxsem_post(&(task_inst->thread.act_sem));
 		if (ret == -EOVERFLOW) {
 			return OS_STATUS_LIMIT;
@@ -436,7 +452,7 @@ FUNC(os_status_t, OS_CODE) os_schedule(void)
 #endif
 
 #if defined(CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK) && (CONFIG_RT_FRAMEWORK_SHARE_TASK_STACK == 1)
-	const os_task_cfg_t * task_cfg = os_task_cfg_ref_table[OS_CONTEXT_GET_CURRENT_TASKID(current_context)];
+	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[OS_CONTEXT_GET_CURRENT_TASKID(current_context)];
 
 	if (task_cfg->task_share_stack != NULL_PTR) {
 		return OS_STATUS_CALLEVEL_SHARED_STACK;

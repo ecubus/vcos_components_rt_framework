@@ -79,7 +79,7 @@ FUNC(void, OS_CODE) StartOS(void)
 #endif
 
 #if defined(CONFIG_RT_FRAMEWORK_SPINLOCK) && (CONFIG_RT_FRAMEWORK_SPINLOCK == 1)
-	if (os_get_core_id() == 0) {
+	if (os_get_core_id() == 0U) {
 		os_spinlock_init();
 	}
 #endif /* CONFIG_RT_FRAMEWORK_SPINLOCK */

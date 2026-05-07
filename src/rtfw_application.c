@@ -48,7 +48,7 @@ FUNC(void, OS_CODE) os_app_init(const os_app_cfg_t *const os_app_cfg_table[], Os
 		return;
 	}
 
-	for (index = 0; index < size; index++) {
+	for (index = 0U; index < size; index++) {
 		app_cfg = os_app_cfg_table[index];
 		if ((app_cfg == NULL) || (app_cfg->core_id != core_id)) {
 			continue;

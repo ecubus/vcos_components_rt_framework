@@ -189,7 +189,7 @@ FUNC(void, OS_CODE) os_resume_os_interrupts(void)
 	os_int_state_t *const this_int_state = &core_int_state;
 	os_int_api_cnt_t int_suspend_cnt = this_int_state->int_suspend_cat2_cnt;
 
-	if (UNLIKELY(int_suspend_cnt == 0)) {
+	if (UNLIKELY(int_suspend_cnt == 0U)) {
 		REPORT_SERVICE_ERROR(OSServiceId_ResumeOSInterrupts, OS_STATUS_INT_API_ORDER, 0);
 		return;
 	}

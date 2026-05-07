@@ -192,7 +192,7 @@ FUNC(void, OS_CODE) os_ipicall_init(const os_ipicall_cfg_t *const os_ipicall_cfg
 	OsObjIndexType cfg_idx, buffer_idx;
 	CoreIdType core_id = os_get_core_id();
 
-	for (cfg_idx = 0; cfg_idx < count; cfg_idx++) {
+	for (cfg_idx = 0U; cfg_idx < count; cfg_idx++) {
 		ipicall_cfg = os_ipicall_cfg_table[cfg_idx];
 		if (ipicall_cfg == NULL_PTR) {
 			continue;
@@ -203,7 +203,7 @@ FUNC(void, OS_CODE) os_ipicall_init(const os_ipicall_cfg_t *const os_ipicall_cfg
 			} else {
 				if (ipicall_cfg->src_core_id == core_id) {
 					ipicall_inst->send_idx = 0U;
-					for (buffer_idx = 0; buffer_idx < QUEUE_DEPTH; buffer_idx++) {
+					for (buffer_idx = 0U; buffer_idx < QUEUE_DEPTH; buffer_idx++) {
 						ipicall_inst->send_buffer[buffer_idx].ack = OS_IPICALL_ACK;
 					}
 				}
@@ -410,9 +410,13 @@ static FUNC(void, OS_CODE) os_ipicall_isr_handler(void)
 				com_data.send_element.send_app_id = ipicall_send_ptr->send_app_id;
 				ipicall_service = ipicall_cfg->service_ref[com_data.send_element.service];
 
-				if ((com_data.send_element.service < OS_IPICALL_SERVICE_MAX) &&
-					(ipicall_service != NULL_PTR)) {
-					ipicall_status = ipicall_service(&com_data);
+				if (com_data.send_element.service < OS_IPICALL_SERVICE_MAX) {
+					ipicall_service = ipicall_cfg->service_ref[com_data.send_element.service];
+					if (ipicall_service != NULL_PTR) {
+						ipicall_status = ipicall_service(&com_data);
+					} else {
+						ipicall_status = OS_STATUS_IPICALL_UNAVAILABLE;
+					}
 				} else {
 					ipicall_status = OS_STATUS_IPICALL_UNAVAILABLE;
 				}
@@ -438,9 +442,18 @@ static FUNC(void, OS_CODE) os_ipicall_isr_handler(void)
 /*! activate task belongs to other core */
 FUNC(os_status_t, OS_CODE) os_ipicall_recv_activate_task(os_ipicall_data_t *param)
 {
-	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[param->send_element.in_param.avtivate_task_param.task_id];
-	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+	TaskType task_id = param->send_element.in_param.avtivate_task_param.task_id;
+	const os_task_cfg_t *task_cfg;
+	os_task_inst_t *task_inst;
 	int ret;
+
+	if (UNLIKELY(task_id >= os_task_cfg_ref_table_size)) {
+		return OS_STATUS_ID_1;
+	}
+
+	task_cfg = os_task_cfg_ref_table[task_id];
+
+	task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
 
 #ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
 	const os_ctx_cfg_t *task_context = OS_TASK_GET_CONTEXT_REF(task_cfg);
@@ -460,9 +473,18 @@ FUNC(os_status_t, OS_CODE) os_ipicall_recv_activate_task(os_ipicall_data_t *para
 /*! activate task belongs to other core */
 FUNC(os_status_t, OS_CODE) os_ipicall_recv_activate_task_asyn(os_ipicall_data_t *param)
 {
-	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[param->send_element.in_param.avtivate_task_param.task_id];
-	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+	TaskType task_id = param->send_element.in_param.avtivate_task_param.task_id;
+	const os_task_cfg_t *task_cfg;
+	os_task_inst_t *task_inst;
 	int ret;
+
+	if (UNLIKELY(task_id >= os_task_cfg_ref_table_size)) {
+		return OS_STATUS_ID_1;
+	}
+
+	task_cfg = os_task_cfg_ref_table[task_id];
+
+	task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
 
 #ifdef CONFIG_RT_FRAMEWORK_ACCESSCHECK
 	const os_ctx_cfg_t *task_context = OS_TASK_GET_CONTEXT_REF(task_cfg);
@@ -483,9 +505,17 @@ FUNC(os_status_t, OS_CODE) os_ipicall_recv_activate_task_asyn(os_ipicall_data_t 
 /*! get task state */
 FUNC(os_status_t, OS_CODE) os_ipicall_recv_get_task_state(os_ipicall_data_t *param)
 {
-	const os_task_cfg_t *task_cfg =
-		os_task_cfg_ref_table[param->send_element.in_param.get_task_state_param.task_id];
-	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+	TaskType task_id = param->send_element.in_param.get_task_state_param.task_id;
+	const os_task_cfg_t *task_cfg;
+	os_task_inst_t *task_inst;
+
+	if (UNLIKELY(task_id >= os_task_cfg_ref_table_size)) {
+		return OS_STATUS_ID_1;
+	}
+
+	task_cfg = os_task_cfg_ref_table[task_id];
+
+	task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
 
 	param->ret_element.out_param.get_task_state_param.task_state = os_get_task_state_internal(task_inst);
 
@@ -495,7 +525,14 @@ FUNC(os_status_t, OS_CODE) os_ipicall_recv_get_task_state(os_ipicall_data_t *par
 /*! get application state */
 FUNC(os_status_t, OS_CODE) os_ipicall_recv_get_application_state(os_ipicall_data_t *param)
 {
-	const os_app_cfg_t *app_cfg = os_app_cfg_ref_table[param->send_element.in_param.get_app_state_param.app_id];
+	ApplicationIDType app_id = param->send_element.in_param.get_app_state_param.app_id;
+	const os_app_cfg_t *app_cfg;
+
+	if (UNLIKELY(app_id >= os_app_cfg_ref_table_size)) {
+		return OS_STATUS_ID_1;
+	}
+
+	app_cfg = os_app_cfg_ref_table[app_id];
 
 	param->ret_element.out_param.get_app_state_param.app_state = app_cfg->instance->state;
 	return OS_STATUS_OK;
@@ -505,8 +542,17 @@ FUNC(os_status_t, OS_CODE) os_ipicall_recv_get_application_state(os_ipicall_data
 FUNC(os_status_t, OS_CODE) os_ipicall_recv_get_event(os_ipicall_data_t *param)
 {
 	os_event_mask_t mask = 0;
-	const os_task_cfg_t *task_cfg = os_task_cfg_ref_table[param->send_element.in_param.get_event_param.task_id];
-	os_task_inst_t *task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
+	TaskType task_id = param->send_element.in_param.get_event_param.task_id;
+	const os_task_cfg_t *task_cfg;
+	os_task_inst_t *task_inst;
+
+	if (UNLIKELY(task_id >= os_task_cfg_ref_table_size)) {
+		return OS_STATUS_ID_1;
+	}
+
+	task_cfg = os_task_cfg_ref_table[task_id];
+
+	task_inst = OS_TASK_GET_INSTANCE_REF(task_cfg);
 
 	if (UNLIKELY(task_inst->thread.tcb.flags & TCB_FLAG_THREAD_IS_SUSPENDED)) {
 		return OS_STATUS_STOPPED;
@@ -519,14 +565,26 @@ FUNC(os_status_t, OS_CODE) os_ipicall_recv_get_event(os_ipicall_data_t *param)
 
 FUNC(os_status_t, OS_CODE) os_ipicall_recv_set_event(os_ipicall_data_t *param)
 {
-	return os_set_event(param->send_element.in_param.set_event_param.task_id,
-			    param->send_element.in_param.set_event_param.mask);
+	TaskType task_id = param->send_element.in_param.set_event_param.task_id;
+	os_event_mask_t mask = param->send_element.in_param.set_event_param.mask;
+
+	if (UNLIKELY(task_id >= os_task_cfg_ref_table_size)) {
+		return OS_STATUS_ID_1;
+	}
+
+	return os_set_event(task_id, mask);
 }
 
 FUNC(os_status_t, OS_CODE) os_ipicall_recv_set_event_asyn(os_ipicall_data_t *param)
 {
-	return os_set_event_asyn(param->send_element.in_param.set_event_param.task_id,
-				 param->send_element.in_param.set_event_param.mask);
+	TaskType task_id = param->send_element.in_param.set_event_param.task_id;
+	os_event_mask_t mask = param->send_element.in_param.set_event_param.mask;
+
+	if (UNLIKELY(task_id >= os_task_cfg_ref_table_size)) {
+		return OS_STATUS_ID_1;
+	}
+
+	return os_set_event_asyn(task_id, mask);
 }
 
 #if defined(CONFIG_RT_FRAMEWORK_HOOK) && (CONFIG_RT_FRAMEWORK_HOOK == 1)

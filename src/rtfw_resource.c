@@ -33,7 +33,7 @@ FUNC(void, OS_CODE) os_resource_init(const os_resource_cfg_t * const os_resource
 		return;
 	}
 
-	for (index = 0; index < size; index++) {
+	for (index = 0U; index < size; index++) {
 		resourcetp = os_resource_cfg_table[index];
 		resource_inst = os_resource_cfg_table[index]->obj_desc;
 		resource_inst->resource_id = resourcetp->resource_id;

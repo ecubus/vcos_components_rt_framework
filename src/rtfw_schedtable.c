@@ -225,6 +225,8 @@ static inline void os_get_sched_table_sync_update_status(const os_schedtable_cfg
 		} else {
 			schedtable_ptr->state = SCHEDULETABLE_RUNNING;
 		}
+	} else {
+		/* sync_state is NOT_PROVIDED — state remains as-is, no update needed */
 	}
 }
 
@@ -314,7 +316,7 @@ static inline void os_sched_table_sync_expiry_point_zero(os_schedtable_inst_t *s
 static FUNC(void, OS_CODE) os_update_sched_table_state(os_schedtable_inst_t *stbl)
 {
 	TickType delta;
-	TickType inital_offset;
+	TickType initial_offset;
 	TickType final_offset;
 	os_schedtable_inst_t *next_schedtable_ptr;
 	const os_schedtable_cfg_t *next_schedtable_cfg_ptr;
@@ -344,29 +346,30 @@ static FUNC(void, OS_CODE) os_update_sched_table_state(os_schedtable_inst_t *stb
 		if ((cfg_ptr->repeating == SCHTBL_REPEATING) || (stbl->next != NULL)) {
 			if (stbl->next == NULL) {  /* Calculate the first expiry point of a periodic schedule table */
 
-				inital_offset = os_get_sched_table_initial_offset(stbl);
+				initial_offset = os_get_sched_table_initial_offset(stbl);
 
-				/* inital_offset and one_step_adjust satisfy the following conditions:
+				/* initial_offset and one_step_adjust satisfy the following conditions:
 				* 1. delta is only positive
 				* 2. one_step_adjust can be positive or negative
 				* 3. |delta| > |one_step_adjust|
 				*/
 				if (stbl->sync.one_step_adjust != 0U) {
 					os_counter_reload_action(&cfg_ptr->action_config,
-								 inital_offset + stbl->sync.one_step_adjust);
+								 initial_offset + stbl->sync.one_step_adjust);
 					stbl->sync.one_step_adjust = 0U;
 				} else {
-					os_counter_reload_action(&cfg_ptr->action_config, inital_offset);
+					os_counter_reload_action(&cfg_ptr->action_config, initial_offset);
 				}
 			} else { /* Next schedule table */
 				next_schedtable_ptr = stbl->next;
+				stbl->next = NULL_PTR;
 
-				inital_offset = os_get_sched_table_initial_offset(next_schedtable_ptr);
+				initial_offset = os_get_sched_table_initial_offset(next_schedtable_ptr);
 				stbl->state = SCHEDULETABLE_STOPPED;
 				next_schedtable_ptr->state = SCHEDULETABLE_RUNNING;
 				next_schedtable_cfg_ptr = os_get_sched_table_cfg_by_id(next_schedtable_ptr->schedtable_id);
 
-				os_counter_add_rel_action(&next_schedtable_cfg_ptr->action_config, inital_offset);
+				os_counter_add_rel_action(&next_schedtable_cfg_ptr->action_config, initial_offset);
 			}
 		} else {
 			stbl->state = SCHEDULETABLE_STOPPED;
@@ -398,11 +401,11 @@ static FUNC(os_status_t, OS_CODE) os_sched_table_check_consistency(const os_sche
 {
 	const os_schedtable_cfg_t *cfg_ptr = os_get_sched_table_cfg_by_id(schedtbl_ptr->schedtable_id);
 	TickType max_allowed_value = os_get_sched_table_max_value(schedtbl_ptr);
-	TickType prev_offset = 0;
-	TickType curr_offset = 0;
-	TickType last_offset = 0;
-	TickType offset_diff = 0;
-	TickType final_diff = 0;
+	TickType prev_offset = 0U;
+	TickType curr_offset = 0U;
+	TickType last_offset = 0U;
+	TickType offset_diff = 0U;
+	TickType final_diff = 0U;
 	sint32 i = 0;
 
 	/* Check if expiry points exist */
@@ -421,10 +424,12 @@ static FUNC(os_status_t, OS_CODE) os_sched_table_check_consistency(const os_sche
 		if (cfg_ptr->duration > (max_allowed_value + 1UL)) {
 			return OS_STATUS_NOT_OK;
 		}
+	} else {
+		/* NO_SYNC strategy: no duration constraint applies */
 	}
 
 	/* Validate each expiry point's offset */
-	for (i = 0; i < (sint32)cfg_ptr->expiry_point_cnt; i++) {
+	for (i = 0U; i < (sint32)cfg_ptr->expiry_point_cnt; i++) {
 		curr_offset = EXPIRE_POINT_GET(cfg_ptr, i)->offset;
 		offset_diff = curr_offset - prev_offset;
 
@@ -735,9 +740,17 @@ FUNC(os_status_t, OS_CODE) os_stop_schedule_table(ScheduleTableType schedtable_i
 		    (schtbl_ptr->state == SCHEDULETABLE_RUNNING_AND_SYNCHRONOUS)) {
 			os_counter_delete_action(&cfg_ptr->action_config);
 		}
+
+		if (schtbl_ptr->next != NULL_PTR) {
+			schtbl_ptr->next->state = SCHEDULETABLE_STOPPED;
+			schtbl_ptr->next = NULL_PTR;
+		}
+
+		schtbl_ptr->current_expiry_index = 0U;
 		schtbl_ptr->state = SCHEDULETABLE_STOPPED;
 
 		os_int_resume_kernel(&initial_state);
+
 	} else {
 #if defined(CONFIG_RT_FRAMEWORK_IPICALL) && (CONFIG_RT_FRAMEWORK_IPICALL == 1)
 		return os_ipicall_stop_schedule_table((uint32)core_id, schedtable_id);
@@ -1015,7 +1028,7 @@ FUNC(os_status_t, OS_CODE) os_sync_schedule_table(ScheduleTableType schedtable_i
 	os_status_t return_value = OS_STATUS_OK;
 	os_schedtable_inst_t *schedtable_ptr;
 	const os_schedtable_cfg_t *schedtable_cfg_ptr;
-	TickType startTimeToWait = 0;
+	TickType startTimeToWait = 0U;
 	irqlevel_t initial_state;
 	CoreIdType core_id = OS_CORE_CNT;
 	const os_ctx_cfg_t *cur_context = os_context_get_contexthdl();
@@ -1171,7 +1184,7 @@ FUNC(os_status_t, OS_CODE) os_deviate_schedule_table(ScheduleTableType schedtabl
 
 		/* Update deviation value */
 		schedtable_ptr->sync.deviation = deviate_value;
-		schedtable_ptr->sync.one_step_adjust = 0;
+		schedtable_ptr->sync.one_step_adjust = 0U;
 		/* Update driving counter */
 		os_update_sched_table_sync_timestamp(schedtable_ptr, schedtable_cfg_ptr);
 		/* Update status */
@@ -1290,6 +1303,12 @@ FUNC(os_status_t, OS_CODE) os_set_schedule_table_async(ScheduleTableType schedta
 		schedtable_ptr = os_get_sched_table_by_id(schedtable_id);
 
 		os_int_suspend_kernel(&initial_state);
+
+		if (UNLIKELY((schedtable_ptr->state != SCHEDULETABLE_RUNNING_AND_SYNCHRONOUS) &&
+			     (schedtable_ptr->state != SCHEDULETABLE_RUNNING))) {
+			os_int_resume_kernel(&initial_state);
+			return OS_STATUS_STOPPED_1;
+		}
 
 		schedtable_ptr->state = SCHEDULETABLE_RUNNING;
 
@@ -1436,14 +1455,14 @@ os_schedule_table_init(const os_schedtable_cfg_t *const os_schedtable_cfg_table[
 	}
 
 	/* Initialize all schedule table IDs (maintain global consistency) */
-	for (index = 0; index < size; index++) {
+	for (index = 0U; index < size; index++) {
 		schdtable_cfg = (const os_schedtable_cfg_t *)os_schedtable_cfg_table[index];
 		schtbl_ptr = os_schedtable_cfg_table[index]->instance;
 		schtbl_ptr->schedtable_id = schdtable_cfg->schedtable_id;
 	}
 
 	/* Connect schedule tables to counters - only process tables for current core */
-	for (ScheduleTableType i = 0; i < size; i++) {
+	for (ScheduleTableType i = 0U; i < size; i++) {
 		schdtable_cfg = os_schedtable_cfg_table[i];
 		application_cfg = os_app_cfg_ref_table[schdtable_cfg->app_owner_id];
 
@@ -1465,7 +1484,7 @@ os_schedule_table_init(const os_schedtable_cfg_t *const os_schedtable_cfg_table[
 	}
 
 	/* Initialize auto-start schedule tables - only process tables for current core */
-	for (ScheduleTableType j = 0; j < size; j++) {
+	for (ScheduleTableType j = 0U; j < size; j++) {
 		schdtable_cfg = os_schedtable_cfg_table[j];
 		application_cfg = os_app_cfg_ref_table[schdtable_cfg->app_owner_id];
 
@@ -1507,11 +1526,11 @@ FUNC(void, OS_CODE) schedule_table_action_callback(struct hrtimer_s *hrtimer)
 
 			exp_point = EXPIRE_POINT_GET(cfg_ptr, schedtable_ptr->current_expiry_index);
 
-			for (i = 0; i < (uint32_t)exp_point->task_list_cnt; i++) {
+			for (i = 0U; i < (uint32_t)exp_point->task_list_cnt; i++) {
 				(void)os_activate_task_asyn(exp_point->task_list[i]);
 			}
 
-			for (i = 0; i < (uint32_t)exp_point->event_list_cnt; i++) {
+			for (i = 0U; i < (uint32_t)exp_point->event_list_cnt; i++) {
 				(void)os_set_event_asyn(exp_point->event_list[i].task, exp_point->event_list[i].mask);
 			}
 		}

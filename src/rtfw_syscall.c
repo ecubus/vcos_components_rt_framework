@@ -653,9 +653,17 @@ FUNC(void, OS_CODE) rtfw_syscall_handler(void *syscall_args, uint32_t *regs)
 
 	up_syscall_set_enter_int_state(regs);
 
+	if (UNLIKELY(syscall_args == NULL)) {
+		up_syscall_set_exit_int_state(regs);
+		return;
+	}
+
 	syscall_data = (syscall_data_t *)syscall_args;
 
-	os_syscall_table[syscall_data->syscall_id](syscall_data, regs);
+	if (LIKELY((syscall_data->syscall_id < (OsObjIndexType)OS_SYSCALLID_COUNT) &&
+		   (os_syscall_table[syscall_data->syscall_id] != NULL_PTR))) {
+		os_syscall_table[syscall_data->syscall_id](syscall_data, regs);
+	}
 
 	up_syscall_set_exit_int_state(regs);
 }
