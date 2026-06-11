@@ -711,6 +711,8 @@ class Function(FunctionBase):
         target = Function.get_target(context)
         if target in ("AURIX2G_TC397"):
             return True
+        elif target in ("FC7300F8MDT"):
+            return False
         elif target in ("E3650", "J6E"):
             return False
         else:
@@ -729,6 +731,8 @@ class Function(FunctionBase):
         elif compiler == "gcc":
             if target in ("AURIX2G_TC397"):
                 ret.append('CONFIG_TRICORE_TOOLCHAIN_GNU=y')
+            elif target in ("FC7300F8MDT"):
+                ret.append('CONFIG_ARM_TOOLCHAIN_GNU=y')
             elif target in ("E3650"):
                 ret.append('CONFIG_ARM_TOOLCHAIN_GNU=y')
         elif compiler == "ghs":
