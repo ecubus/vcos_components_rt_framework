@@ -20,6 +20,7 @@
 #include "rtfw_error.h"
 #include "core_cfg.h"
 
+#if (CONFIG_RT_FRAMEWORK_NCORES > 1)
 #define OS_CORE_SYNC_MASK ((0x1U << (CONFIG_RT_FRAMEWORK_NCORES)) - 1U)
 #define OS_CORE_SYNC_FLAG ((0x1U << (CONFIG_RT_FRAMEWORK_NCORES)) - 1U)
 
@@ -27,7 +28,9 @@
 Atomic g_coresync_flag_one;
 Atomic g_coresync_flag_two;
 Atomic g_coreshutdown_sync;
+#endif
 
+#if (CONFIG_RT_FRAMEWORK_NCORES > 1)
 static inline void os_core_sync_all_cores(Atomic *const sync_value_ref)
 {
 	sint32 core_id = (sint32)os_get_core_id();
@@ -36,10 +39,12 @@ static inline void os_core_sync_all_cores(Atomic *const sync_value_ref)
 	while (((*sync_value_ref) & OS_CORE_SYNC_MASK) != OS_CORE_SYNC_FLAG) {
 	}
 }
+#endif
 
 #define OS_START_SEC_CODE
 #include "rtfw_memmap.h"
 
+#if (CONFIG_RT_FRAMEWORK_NCORES > 1)
 FUNC(void, OS_CODE) os_core_sync_phase_one(void)
 {
 	os_core_sync_all_cores(&g_coresync_flag_one);
@@ -54,6 +59,7 @@ FUNC(void, OS_CODE) os_core_shutdown_sync(void)
 {
 	os_core_sync_all_cores(&g_coreshutdown_sync);
 }
+#endif
 
 FUNC(void, OS_CODE) os_shutdown_core(StatusType error_status)
 {
@@ -84,11 +90,13 @@ FUNC(void, OS_CODE) os_shutdown_os(StatusType error_status)
 
 FUNC(void, OS_CODE) os_shutdown_all_cores(StatusType error_status)
 {
+#if (CONFIG_RT_FRAMEWORK_NCORES > 1)
 	CoreIdType core_id = os_get_core_id();
 
 	uint32 core_mask = ((0x00000001U<<(uint32)OS_CORE_CNT) - 1U) & (~(0x00000001U<<(uint32)core_id));
 
 	os_ipicall_shutdown_all_cores(core_mask, error_status);
+#endif
 
 	os_shutdown_core(error_status);
 }
