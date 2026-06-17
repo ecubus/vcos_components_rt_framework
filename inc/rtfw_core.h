@@ -55,7 +55,11 @@ extern "C" {
  *  \synchronous    TRUE
  */
 
+#if (CONFIG_RT_FRAMEWORK_NCORES > 1)
 FUNC(void, OS_CODE) os_core_sync_phase_one(void);
+#else
+#define os_core_sync_phase_one()
+#endif
 
 /*!  \brief         启动时第二次核间同步
  *  \details        None
@@ -71,7 +75,11 @@ FUNC(void, OS_CODE) os_core_sync_phase_one(void);
  *
  *  \synchronous    TRUE
  */
+#if (CONFIG_RT_FRAMEWORK_NCORES > 1)
 FUNC(void, OS_CODE) os_core_sync_phase_two(void);
+#else
+#define os_core_sync_phase_two()
+#endif
 
 /*!  \brief         下电时核间同步
  *  \details        None
@@ -87,7 +95,11 @@ FUNC(void, OS_CODE) os_core_sync_phase_two(void);
  *
  *  \synchronous    TRUE
  */
+#if (CONFIG_RT_FRAMEWORK_NCORES > 1)
 FUNC(void, OS_CODE) os_core_shutdown_sync(void);
+#else
+#define os_core_shutdown_sync()
+#endif
 
 /*!  \brief         After this service the OS on all AUTOSAR cores is shut down. Allowed at TASK level and ISR level
  *                  and also internally by the OS. The function will never return. The function will force other cores
